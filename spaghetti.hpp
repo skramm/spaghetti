@@ -27,6 +27,16 @@ Usage:
 
  -# instanciate the class
  SpagFSM<States,Events,T> fsm;
+
+
+ \todo find a way to ease up the usage for no timer (dummy timer struct)
+
+ \todo add some way to provide callback signature
+
+ \todo add some way to define "passage states", that is states that have some callback but on which we juste pass to another state without any condition (i.e. right away)
+
+ \todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
+
 */
 
 #ifndef HG_SPAGHETTI_FSM_HPP
@@ -189,6 +199,7 @@ template<typename STATE, typename EVENT,typename TIM>
 class SpagFSM
 {
 	public:
+/// Constructor
 		SpagFSM() // : _current( static_cast<STATE>(0) )
 		{
 			LOG_FUNC;
@@ -254,7 +265,7 @@ class SpagFSM
 		}
 
 /// Assigns an timeout transition event to switch from event \c st1 to event \c st2
-		void AssignTimeOut( STATE st1, int nb_sec, STATE st2 )
+		void assignTimeOut( STATE st1, int nb_sec, STATE st2 )
 		{
 			LOG_FUNC;
 			assert( check_state( st1 ) );
@@ -263,7 +274,7 @@ class SpagFSM
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
-		void AssignTransitionAlways( EVENT ev, STATE st )
+		void assignTransitionAlways( EVENT ev, STATE st )
 		{
 			LOG_FUNC;
 			for( auto& e: _transition_mat.at( ev ) )
@@ -472,3 +483,16 @@ struct NoTimer
 } // namespace spag end
 
 #endif // HG_SPAGHETTI_FSM_HPP
+
+/**
+\page p_codingConventions Coding style
+
+Most of it is pretty obvious by parsing the code, but here are some additional points:
+
+- TABS for indentation, SPACE for spacing
+- Identifiers
+ - \c camelCaseIsUsed for functions, variables
+ - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
+ - Types are CamelCase (UpperCase first letter). Example: \c ThisIsAType
+
+*/

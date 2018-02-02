@@ -113,16 +113,16 @@ int main()
 #endif // 0
 
 //	std::cout << "fsm: nb states=" << fsm.nb_states() << " nb_events=" << fsm.nb_events() << "\n";
-	fsm.AssignTimeOut( ST_INIT,   5, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.AssignTimeOut( ST_RED,    5, ST_GREEN  );
-	fsm.AssignTimeOut( ST_GREEN,  5, ST_ORANGE );
-	fsm.AssignTimeOut( ST_ORANGE, 2, ST_RED   );
+	fsm.assignTimeOut( ST_INIT,   5, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
+	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );
+	fsm.assignTimeOut( ST_ORANGE, 2, ST_RED   );
 
-	fsm.AssignTransitionAlways( EV_RESET,      ST_INIT ); // if reception of message EV_RESET, then switch to state ST_RED, whatever the current state is
-	fsm.AssignTransitionAlways( EV_WARNING_ON, ST_WARNING_ON );
+	fsm.assignTransitionAlways( EV_RESET,      ST_INIT ); // if reception of message EV_RESET, then switch to state ST_RED, whatever the current state is
+	fsm.assignTransitionAlways( EV_WARNING_ON, ST_WARNING_ON );
 
-	fsm.AssignTimeOut( ST_WARNING_ON,  1, ST_WARNING_OFF );
-	fsm.AssignTimeOut( ST_WARNING_OFF, 1, ST_WARNING_ON );
+	fsm.assignTimeOut( ST_WARNING_ON,  1, ST_WARNING_OFF );
+	fsm.assignTimeOut( ST_WARNING_OFF, 1, ST_WARNING_ON );
 
 	fsm.assignCallback( ST_RED,    TL_red );
 	fsm.assignCallback( ST_ORANGE, TL_orange );
