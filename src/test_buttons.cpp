@@ -24,8 +24,8 @@ void cb_Unlocked()
 //-----------------------------------------------------------------------------------
 void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events>>& fsm )
 {
-	fsm.AssignExtTransition( st_Locked, ev_Coin, st_Unlocked );
-	fsm.AssignExtTransition( st_Unlocked, ev_Push, st_Locked );
+	fsm.assignExtTransition( st_Locked, ev_Coin, st_Unlocked );
+	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
 
 	fsm.assignCallback( st_Locked,   cb_Locked );
 	fsm.assignCallback( st_Unlocked, cb_Unlocked );

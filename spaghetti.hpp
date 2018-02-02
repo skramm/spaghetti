@@ -2,50 +2,6 @@
 \file spaghetti.hpp
 \brief Provides storage of what to do when an event, internal (timeout) or external, occurs.
 
-No event loop here, you must provide it.
-
-Dependencies: ONLY standard headers (no boost here, although it could be required in client code)
-
-\section BuildOption Build options
-
-You can define the following symbols \b before including this file:
-- \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
-- \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
-
-Usage:
- -# define the states
-\code
- enum States { st_Tired, st_WakingUp, st_Perfect, NB_STATES };
-\endcode
-
- -# define the events
-\code
- enum Events { ev_Breakfast, ev_Work, ev_, NB_EVENTS };
-\endcode
-
- -# Provide a Timer class \c T, if needed (see below)
-
- -# instanciate the class
- SpagFSM<States,Events,T> fsm;
-
- sample programs:
-<a href="../src/html/files.html" target="_blank">sample programs</a>
-
-../src/html/files.html
-
-\ref ../src/html/index.html
-
-\todo find a way to ease up the usage for no timer (dummy timer struct)
-
-\todo add some way to provide callback signature
-
-\todo add some way to define "passage states", that is states that have some callback but on which we juste pass to another state without any condition (i.e. right away)
-
-\todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
-
-\todo write tutorial
-
-\todo add serialisation capability
 */
 
 #ifndef HG_SPAGHETTI_FSM_HPP
@@ -135,7 +91,6 @@ struct FsmData
 	{
 		_startTime = std::chrono::high_resolution_clock::now();
 	}
-//	std::chrono::time_point _startTime;
 	std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
 
 /// a state-change event, used for logging, see _history
@@ -286,7 +241,7 @@ class SpagFSM
 #endif
 
 /// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
-		void AssignExtTransition( STATE st1, EVENT ev, STATE st2 )
+		void assignExtTransition( STATE st1, EVENT ev, STATE st2 )
 		{
 			LOG_FUNC;
 			assert( check_state( st1 ) );
@@ -329,7 +284,6 @@ class SpagFSM
 		}
 		void start() const
 		{
-			LOG_FUNC;
 			runAction();
 		}
 
@@ -519,19 +473,67 @@ struct NoTimer
 #endif // HG_SPAGHETTI_FSM_HPP
 
 /**
-\page p_codingConventions Coding style
+\mainpage Spaghetti C++ library
 
-Most of it is pretty obvious by parsing the code, but here are some additional points:
 
-- TABS for indentation, SPACE for spacing
-- Identifiers
- - \c camelCaseIsUsed for functions, variables
- - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
- - Types are CamelCase (UpperCase first letter). Example: \c ThisIsAType
+No event loop here, you must provide it.
 
-\page p_BuildSymbols Build Options
+Dependencies: ONLY standard headers (no boost here, although it could be required in client code)
 
-These symbols can change the behaviour of the library, you can define them either by adding them in your makefile (with GCC, its \c -DSPAG_SOME_SYMBOL ), or by hardcoding in your program, like this:
+\section BuildOption Build options
+
+You can define the following symbols \b before including this file:
+- \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
+- \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+
+Usage:
+ -# define the states
+\code
+ enum States { st_Tired, st_WakingUp, st_Perfect, NB_STATES };
+\endcode
+
+ -# define the events
+\code
+ enum Events { ev_Breakfast, ev_Work, ev_, NB_EVENTS };
+\endcode
+
+ -# Provide a Timer class \c T, if needed (see below)
+
+ -# instanciate the class:
+ \code
+ SpagFSM<States,Events,T> fsm;
+\endcode
+
+ -# configure the FSM,
+
+ -# run the FSM:
+ \code
+	fsm.start();
+ \endcode
+
+ \section sec_usage Usage
+
+
+ \subsection ssec_configure Configuring the FSM
+
+
+ \subsection ssec_running Running the FSM
+
+
+ \subsection ss_tools Additional tools
+
+
+ sample programs:
+<a href="../src/html/files.html" target="_blank">sample programs</a>
+
+
+
+
+
+\subsection ssec_BuildSymbols Build Options
+
+These symbols can change the behavior of the library, you can define them either by adding them in your makefile
+(with GCC, its \c -DSPAG_SOME_SYMBOL ), or by hardcoding in your program, like this:
 
 \code
 #define SPAG_SOME_SYMBOL
@@ -540,10 +542,10 @@ These symbols can change the behaviour of the library, you can define them eithe
 
 They all start with these 5 characters: \c SPAG_
 
-
-- Symbol \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
-- Symbol \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
-- Symbol: \c SPAG_FRIENDLY_CHECKING: A lot of checking is done to ensure no nasty bug will crash your program.
+The available options/symbols are:
+- \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
+- \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+- \c SPAG_FRIENDLY_CHECKING: A lot of checking is done to ensure no nasty bug will crash your program.
 However, in case of incorrect usage of the library by your client code (say, invalid size of container),
 the default behavior is to spit a standard error message that can be difficult to understand.
 So if you define this symbol at build time, instead of getting this:
@@ -560,5 +562,43 @@ Exiting...
 \endcode
 If this symbol is not defined, regular checking is done with the classical \c assert(). As usual, this checking can be removed by defining the symbol \c NDEBUG.
 
+\section sec_misc Misc.
+
+\subsection sec_related Related software
+
+ - Boost MSM: http://www.boost.org/doc/libs/release/libs/msm/
+ - Boost Statechart: http://www.boost.org/doc/libs/release/libs/statechart/
+ - tinyFSM: https://github.com/digint/tinyfsm
+
+
+
+\section sec_devinfo Developper information
+
+\subsection_codingConventions Coding style
+
+Most of it is pretty obvious by parsing the code, but here are some additional points:
+
+- TABS for indentation, SPACE for spacing
+- Identifiers
+ - \c camelCaseIsUsed for functions, variables
+ - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
+ - Types are CamelCase (UpperCase first letter). Example: \c ThisIsAType
+
+*/
+
+/**
+\todo find a way to ease up the usage for no timer (dummy timer struct)
+
+\todo add some way to provide callback signature
+
+\todo add some way to define "passage states", that is states that have some callback but on which we just pass to another state without any condition (i.e. right away)
+
+\todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
+
+\todo write tutorial
+
+\todo add serialisation capability
+
+\todo add graphviz dot output
 
 */
