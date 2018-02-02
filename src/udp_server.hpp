@@ -1,7 +1,8 @@
 /**
 \file udp_server.hpp
-\brief holds definition of class udp_server
-S. Kramm - 2018/01
+\brief holds definition of class udp_server, based on boost::asio
+
+Author: S. Kramm, LITIS, Rouen France - 2018/01
 */
 
 #ifndef HG_UDP_SERVER_HPP
@@ -51,7 +52,6 @@ class udp_server
 
 	protected:
 		Buffer_t _recv_buffer;
-
 
 /// This virtual function NEEDS to be implemented in inherited class
 		virtual std::vector<BYTE> GetResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const = 0;

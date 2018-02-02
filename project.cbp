@@ -26,6 +26,7 @@
 		<Unit filename="README.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
+		<Unit filename="src/doxyfile" />
 		<Unit filename="src/test_buttons.cpp" />
 		<Unit filename="src/test_traffic_lights_1.cpp" />
 		<Unit filename="src/test_traffic_lights_2.cpp" />

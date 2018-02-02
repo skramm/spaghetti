@@ -28,8 +28,12 @@ Usage:
  -# instanciate the class
  SpagFSM<States,Events,T> fsm;
 
- sample programs: src/html/index.html
+ sample programs:
+<a href="../src/html/files.html" target="_blank">sample programs</a>
 
+../src/html/files.html
+
+\ref ../src/html/index.html
 
 \todo find a way to ease up the usage for no timer (dummy timer struct)
 
