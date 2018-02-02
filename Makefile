@@ -99,12 +99,12 @@ cleanall: clean cleandoc
 
 
 # generic compile rule
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE)
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
 	$(CXX) -o $@ -c $< $(CFLAGS)
 
 # linking
-$(BIN_DIR)/%: $(OBJ_DIR)/%.o
+$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(THE_FILE)
 	@echo $(COLOR_3) " - Link demo $@." $(COLOR_OFF)
 	$(CXX) -o $@ -s $(subst $(BIN_DIR)/,$(OBJ_DIR)/,$@).o  $(LDFLAGS)
 

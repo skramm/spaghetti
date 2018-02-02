@@ -59,7 +59,9 @@ int main( int argc, char* argv[] )
 
 			default: std:: cout << "invalid key\n";
 		}
+#ifdef SPAG_ENABLE_LOGGING
 		fsm.printLoggedData( std::cout );
+#endif
 	}
 	while( 1 );
 }

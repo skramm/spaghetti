@@ -36,12 +36,16 @@ Usage:
 #include <algorithm>
 #include <functional>
 #include <cassert>
+#include <fstream>
+
+#ifdef SPAG_ENABLE_LOGGING
+	#include <chrono>
+#endif
 
 #ifdef SPAG_PRINT_STATES
 	#include <iostream>
 #endif
 
-#include <fstream>
 
 #if 0
 	#define LOG_FUNC std::cout << "* start " << __FUNCTION__ << "()\n"
@@ -84,24 +88,54 @@ struct TimerEvent
 	}
 };
 //-----------------------------------------------------------------------------------
-/// holds current state, and additional logged data (if requested, see symbol \c SPAG_ENABLE_LOGGING at \ref BuildOption )
+/// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref BuildOption )
+#ifdef SPAG_ENABLE_LOGGING
+template<typename STATE,typename EVENT>
+#else
 template<typename STATE>
+#endif
 struct FsmData
 {
 	STATE _current = static_cast<STATE>(0);
 
 #ifdef SPAG_ENABLE_LOGGING
+	FsmData()
+	{
+		_startTime = std::chrono::high_resolution_clock::now();
+	}
+//	std::chrono::time_point _startTime;
+	std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
+
+/// a state-change event, used for logging, see _history
+	struct StateChangeEvent
+	{
+		STATE state;
+		EVENT event;
+		std::chrono::duration<double> elapsed;
+
+		friend std::ostream& operator << ( std::ostream& s, const StateChangeEvent& sce )
+		{
+			s << sce.elapsed.count() << ": event: " << sce.event << ": switch to state " << sce.state << '\n';
+			return s;
+		}
+	};
+
 	std::vector<size_t>  _stateCounter;    ///< per state counter
 	std::vector<size_t>  _eventCounter;    ///< per event counter
-#endif
+/// Dynamic history of a given run: holds a state and the event that led to it. For the latter, the value EVENT_NB_EVENTS is used to store a "timeout" event.
+	std::vector<StateChangeEvent> _history;
 
-#ifdef SPAG_ENABLE_LOGGING
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
-		_stateCounter.resize( nbStates, 0 );
-		_eventCounter.resize( nbEvents+1, 0 );   // last element is used for timer events
+		_stateCounter.resize( nbStates,   0 );
+		_eventCounter.resize( nbEvents+1, 0 );   // last element is used for timeout events
 	}
-
+	void clear()
+	{
+		_history.clear();
+		_stateCounter.clear();
+		_eventCounter.clear();
+	}
 	/// Print dynamic data to \c str
 	void printLoggedData( std::ostream& str ) const
 	{
@@ -114,16 +148,28 @@ struct FsmData
 		for( size_t i=0; i<_eventCounter.size(); i++ )
 			str << i << ": " << _eventCounter[i] << '\n';
 		str << '\n';
+		str << " - Run history:\n";
+		for( size_t i=0; i<_history.size(); i++ )
+			str << _history[i];
 	}
 #endif
 
+#ifdef SPAG_ENABLE_LOGGING
+	void switchState( STATE st, EVENT ev )
+	{
+		_current = st;
+		assert( ev < EVENT::NB_EVENTS+1 );
+		assert( st < STATE::NB_STATES );
+		_eventCounter.at( ev )++;
+		_stateCounter[st]++;
+		_history.push_back( StateChangeEvent{ st, ev, std::chrono::high_resolution_clock::now() - _startTime } );
+	}
+#else
 	void switchState( STATE st )
 	{
 		_current = st;
-#ifdef SPAG_ENABLE_LOGGING
-		_stateCounter[_current]++;
-#endif
 	}
+#endif
 };
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
@@ -250,10 +296,13 @@ class SpagFSM
 			std::cout << "-processing timeout event, delay was " << _timeout.at( _data._current ).nbSec << " s.\n";
 #endif
 			assert( _timeout.at( _data._current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
-			_data.switchState( _timeout.at( _data._current ).nextState );
+
 #ifdef SPAG_ENABLE_LOGGING
-			_data._eventCounter.at(EVENT::NB_EVENTS)++;
+			_data.switchState( _timeout.at( _data._current ).nextState, EVENT::NB_EVENTS );
+#else
+			_data.switchState( _timeout.at( _data._current ).nextState );
 #endif
+
 			runAction();
 		}
 
@@ -261,6 +310,7 @@ class SpagFSM
 		void processExtEvent( EVENT ev ) const
 		{
 			LOG_FUNC;
+			assert( check_event(ev) );
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing event " << ev << "\n";
 #endif
@@ -268,10 +318,13 @@ class SpagFSM
 			{
 				if( _timeout.at( _data._current ).enabled )               // 1 - cancel the waiting timer, if any
 					timer->timerCancel();
-				_data.switchState( _transition_mat.at( ev ).at( _data._current ) ); // 2 - switch to next state
+
 #ifdef SPAG_ENABLE_LOGGING
-				_data._eventCounter.at(ev)++;
+				_data.switchState( _transition_mat[ev].at( _data._current ), ev ); // 2 - switch to next state
+#else
+				_data.switchState( _transition_mat[ev].at( _data._current ) );
 #endif
+
 				runAction();                                        // 3 - call the callback function
 			}
 #ifdef SPAG_PRINT_STATES
@@ -350,7 +403,11 @@ class SpagFSM
 		}
 
 	private:
+#ifdef SPAG_ENABLE_LOGGING
+		mutable FsmData<STATE,EVENT>       _data;
+#else
 		mutable FsmData<STATE>             _data;
+#endif
 		std::vector<std::vector<STATE>>    _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore, 1; handle)
 		std::vector<TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
