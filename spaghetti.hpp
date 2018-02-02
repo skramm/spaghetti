@@ -28,6 +28,8 @@ Usage:
  -# instanciate the class
  SpagFSM<States,Events,T> fsm;
 
+ sample programs: src/html/index.html
+
 
 \todo find a way to ease up the usage for no timer (dummy timer struct)
 
@@ -538,7 +540,8 @@ They all start with these 5 characters: \c SPAG_
 - Symbol \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
 - Symbol \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
 - Symbol: \c SPAG_FRIENDLY_CHECKING: A lot of checking is done to ensure no nasty bug will crash your program.
-However, in case of incorrect usage of the library by your client code (say, invalid size of container), most of the libraries just spit standard error message that can be difficult to understand.
+However, in case of incorrect usage of the library by your client code (say, invalid size of container),
+the default behavior is to spit a standard error message that can be difficult to understand.
 So if you define this symbol at build time, instead of getting this:
 \code
 myfile: /usr/local/include/spaghetti.hpp:236: void spag::SpagFSM<STATE, EVENT, TIM>::assignTransitionMat(const std::vector<std::vector<T> >&) [with STATE = SERSTAT; EVENT = EN_EVENTS; TIM = AsioWrapper]: Assertion `mat.size() == EVENT::NB_EVENTS' failed.
@@ -551,5 +554,7 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
  - EVENT::NB_EVENTS value=8
 Exiting...
 \endcode
+If this symbol is not defined, regular checking is done with the classical \c assert(). As usual, this checking can be removed by defining the symbol \c NDEBUG.
+
 
 */

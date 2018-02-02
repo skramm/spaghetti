@@ -57,11 +57,14 @@ help:
 demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
-doc: html/index.html
+doc: html/index.html src/html/index.html
 	@echo "- Done target $@"
 
-html/index.html: $(THE_FILE) doxyfile
+html/index.html: $(THE_FILE) doxyfile README.md
 	doxygen doxyfile
+
+src/html/index.html: $(SRC_FILES)
+	cd src; doxygen doxyfile
 
 install:
 	cp spaghetti.hpp $(DEST_PATH)
@@ -93,6 +96,7 @@ clean:
 
 cleandoc:
 	-rm -r html/*
+	-rm -r src/html/*
 
 cleanall: clean cleandoc
 	-rm $(BIN_DIR)/*

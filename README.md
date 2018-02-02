@@ -15,12 +15,13 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
  - "you pay for what you need" code (which means that there are some build-time options)
  - user code provides the event loop (waiting loop)
  - logging capability
+ - provided with some sample programs, see src/html/index.html
 
 # FAQ
 
 - Q: Why that name ?
 - A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
-(see https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster ).
+(see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
 
