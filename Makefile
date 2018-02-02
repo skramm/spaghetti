@@ -60,7 +60,7 @@ demo: $(EXEC_FILES)
 doc: html/index.html src/html/index.html
 	@echo "- Done target $@"
 
-html/index.html: $(THE_FILE) doxyfile README.md
+html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css
 	doxygen doxyfile
 
 src/html/index.html: $(SRC_FILES)

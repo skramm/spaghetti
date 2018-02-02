@@ -473,18 +473,14 @@ struct NoTimer
 #endif // HG_SPAGHETTI_FSM_HPP
 
 /**
-\mainpage Spaghetti C++ library
+\page p_manual Spaghetti manual
 
 
 No event loop here, you must provide it.
 
 Dependencies: ONLY standard headers (no boost here, although it could be required in client code)
 
-\section BuildOption Build options
-
-You can define the following symbols \b before including this file:
-- \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
-- \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+\section sec_steps Main steps
 
 Usage:
  -# define the states
@@ -511,6 +507,9 @@ Usage:
 	fsm.start();
  \endcode
 
+ -# enter your waiting loop, that will call appropriate member function.
+
+
  \section sec_usage Usage
 
 
@@ -532,7 +531,7 @@ Usage:
 
 \subsection ssec_BuildSymbols Build Options
 
-These symbols can change the behavior of the library, you can define them either by adding them in your makefile
+These symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
 (with GCC, its \c -DSPAG_SOME_SYMBOL ), or by hardcoding in your program, like this:
 
 \code
@@ -582,7 +581,7 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 - Identifiers
  - \c camelCaseIsUsed for functions, variables
  - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
- - Types are CamelCase (UpperCase first letter). Example: \c ThisIsAType
+ - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
 
 */
 
