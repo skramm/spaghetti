@@ -1,7 +1,7 @@
 /**
 \file udp_server.hpp
 \brief holds definition of class udp_server
-S. Kramm - 2017/01
+S. Kramm - 2018/01
 */
 
 #ifndef HG_UDP_SERVER_HPP
@@ -13,7 +13,7 @@ S. Kramm - 2017/01
 
 typedef unsigned char BYTE;
 //-----------------------------------------------------------------------------------
-/// A udp server, templated by size of buffer
+/// A udp server based on boost::asio, templated by size of buffer
 /**
 Callback: upon each reception of data, a callback function is called
 

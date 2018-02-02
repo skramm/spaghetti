@@ -29,14 +29,17 @@ Usage:
  SpagFSM<States,Events,T> fsm;
 
 
- \todo find a way to ease up the usage for no timer (dummy timer struct)
+\todo find a way to ease up the usage for no timer (dummy timer struct)
 
- \todo add some way to provide callback signature
+\todo add some way to provide callback signature
 
- \todo add some way to define "passage states", that is states that have some callback but on which we juste pass to another state without any condition (i.e. right away)
+\todo add some way to define "passage states", that is states that have some callback but on which we juste pass to another state without any condition (i.e. right away)
 
- \todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
+\todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
 
+\todo write tutorial
+
+\todo add serialisation capability
 */
 
 #ifndef HG_SPAGHETTI_FSM_HPP
@@ -54,6 +57,19 @@ Usage:
 
 #ifdef SPAG_PRINT_STATES
 	#include <iostream>
+#endif
+
+#ifdef SPAG_FRIENDLY_CHECKING
+	#define SPAG_CHECK_EQUAL( a, b ) \
+	{ \
+		if( (a) != (b) ) \
+		{ \
+			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
+			<< " - "   << #a << " value=" << a \
+			<< "\n - " << #b << " value=" << b << '\n'; \
+			exit(1); \
+		} \
+	}
 #endif
 
 
@@ -219,19 +235,29 @@ class SpagFSM
 #endif
 		}
 
-		void AssignIgnEvMatrix( const std::vector<std::vector<int>>& mat )
+		void assignIgnEvMatrix( const std::vector<std::vector<int>>& mat )
 		{
 			LOG_FUNC;
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_EQUAL( mat.size(),    EVENT::NB_EVENTS );
+			SPAG_CHECK_EQUAL( mat[0].size(), STATE::NB_STATES );
+#else
 			assert( mat.size()    == EVENT::NB_EVENTS );
 			assert( mat[0].size() == STATE::NB_STATES );
+#endif
 			_ignored_events = mat;
 		}
 
-		void AssignTransitionMat( const std::vector<std::vector<STATE>>& mat )
+		void assignTransitionMat( const std::vector<std::vector<STATE>>& mat )
 		{
 			LOG_FUNC;
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_EQUAL( mat.size(),    EVENT::NB_EVENTS );
+			SPAG_CHECK_EQUAL( mat[0].size(), STATE::NB_STATES );
+#else
 			assert( mat.size()    == EVENT::NB_EVENTS );
 			assert( mat[0].size() == STATE::NB_STATES );
+#endif
 			_transition_mat = mat;
 		}
 
@@ -282,9 +308,11 @@ class SpagFSM
 			for( auto& e: _ignored_events.at( ev ) )
 				e = 1;
 		}
-		void UnblockMsg( STATE st, EVENT ev )
+		void allowEvent( STATE st, EVENT ev )
 		{
 			LOG_FUNC;
+			assert( check_state( st ) );
+			assert( check_event( ev ) );
 			_ignored_events.at( ev ).at( st ) = 1;
 		}
 /// Assign a given callback function to a state, will be called each time we arrive on this state
@@ -494,5 +522,34 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
  - \c camelCaseIsUsed for functions, variables
  - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
  - Types are CamelCase (UpperCase first letter). Example: \c ThisIsAType
+
+\page p_BuildSymbols Build Options
+
+These symbols can change the behaviour of the library, you can define them either by adding them in your makefile (with GCC, its \c -DSPAG_SOME_SYMBOL ), or by hardcoding in your program, like this:
+
+\code
+#define SPAG_SOME_SYMBOL
+#include "spaghetti.hpp"
+\endcode
+
+They all start with these 5 characters: \c SPAG_
+
+
+- Symbol \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
+- Symbol \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+- Symbol: \c SPAG_FRIENDLY_CHECKING: A lot of checking is done to ensure no nasty bug will crash your program.
+However, in case of incorrect usage of the library by your client code (say, invalid size of container), most of the libraries just spit standard error message that can be difficult to understand.
+So if you define this symbol at build time, instead of getting this:
+\code
+myfile: /usr/local/include/spaghetti.hpp:236: void spag::SpagFSM<STATE, EVENT, TIM>::assignTransitionMat(const std::vector<std::vector<T> >&) [with STATE = SERSTAT; EVENT = EN_EVENTS; TIM = AsioWrapper]: Assertion `mat.size() == EVENT::NB_EVENTS' failed.
+Aborted
+\endcode
+you will get this:
+\code
+Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
+ - mat.size() value=7
+ - EVENT::NB_EVENTS value=8
+Exiting...
+\endcode
 
 */
