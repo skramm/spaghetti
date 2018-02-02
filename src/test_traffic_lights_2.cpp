@@ -12,8 +12,8 @@ test_traffic_lights_client.cpp
 #include "udp_server.hpp"
 
 // this symbol is a build-time option
-//#define DFSM_PRINT_STATES
-#define DFSM_ENABLE_LOGGING
+//#define SPAG_PRINT_STATES
+#define SPAG_ENABLE_LOGGING
 #include "spaghetti.hpp"
 
 #include <memory>

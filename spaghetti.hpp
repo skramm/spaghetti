@@ -6,9 +6,12 @@ No event loop here, you must provide it.
 
 Dependencies: ONLY standard headers (no boost here, although it could be required in client code)
 
-Build option: you can define the following symbols \b before including this file:
-- \c DFSM_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
-- \c DFSM_ENABLE_LOGGING : will enable logging see
+\section BuildOption Build options
+
+You can define the following symbols \b before including this file:
+- \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
+- \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+
 Usage:
  -# define the states
 \code
@@ -20,21 +23,21 @@ Usage:
  enum Events { ev_Breakfast, ev_Work, ev_, NB_EVENTS };
 \endcode
 
- -# Provide a Timer class, if needed (see below)
+ -# Provide a Timer class \c T, if needed (see below)
 
  -# instanciate the class
  SpagFSM<States,Events,T> fsm;
 */
 
-#ifndef HG_STATE_MACHINE_HPP
-#define HG_STATE_MACHINE_HPP
+#ifndef HG_SPAGHETTI_FSM_HPP
+#define HG_SPAGHETTI_FSM_HPP
 
 #include <vector>
 #include <algorithm>
 #include <functional>
 #include <cassert>
 
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 	#include <iostream>
 #endif
 
@@ -81,25 +84,25 @@ struct TimerEvent
 	}
 };
 //-----------------------------------------------------------------------------------
-/// holds current data (= current state), and additional logged data (if requested)
+/// holds current state, and additional logged data (if requested, see symbol \c SPAG_ENABLE_LOGGING at \ref BuildOption )
 template<typename STATE>
 struct FsmData
 {
 	STATE _current = static_cast<STATE>(0);
 
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
 	std::vector<size_t>  _stateCounter;    ///< per state counter
 	std::vector<size_t>  _eventCounter;    ///< per event counter
 #endif
 
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
 		_stateCounter.resize( nbStates, 0 );
 		_eventCounter.resize( nbEvents+1, 0 );   // last element is used for timer events
 	}
 
-	/// Printing logged data
+	/// Print dynamic data to \c str
 	void printLoggedData( std::ostream& str ) const
 	{
 		str << "FSM data:\n"; // - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
@@ -117,7 +120,7 @@ struct FsmData
 	void switchState( STATE st )
 	{
 		_current = st;
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
 		_stateCounter[_current]++;
 #endif
 	}
@@ -154,7 +157,7 @@ class SpagFSM
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
 
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
 			_data.alloc( STATE::NB_STATES, EVENT::NB_EVENTS );
 #endif
 		}
@@ -243,12 +246,12 @@ class SpagFSM
 		void processTimerEvent() const
 		{
 			LOG_FUNC;
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 			std::cout << "-processing timeout event, delay was " << _timeout.at( _data._current ).nbSec << " s.\n";
 #endif
 			assert( _timeout.at( _data._current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
 			_data.switchState( _timeout.at( _data._current ).nextState );
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
 			_data._eventCounter.at(EVENT::NB_EVENTS)++;
 #endif
 			runAction();
@@ -258,7 +261,7 @@ class SpagFSM
 		void processExtEvent( EVENT ev ) const
 		{
 			LOG_FUNC;
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 			std::cout << "-processing event " << ev << "\n";
 #endif
 			if( _ignored_events.at( ev ).at( _data._current ) != 0 )
@@ -266,12 +269,12 @@ class SpagFSM
 				if( _timeout.at( _data._current ).enabled )               // 1 - cancel the waiting timer, if any
 					timer->timerCancel();
 				_data.switchState( _transition_mat.at( ev ).at( _data._current ) ); // 2 - switch to next state
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
 				_data._eventCounter.at(ev)++;
 #endif
 				runAction();                                        // 3 - call the callback function
 			}
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 			else
 				std::cout << " (event ignored)\n";
 #endif
@@ -301,7 +304,8 @@ class SpagFSM
 		}
 
 		void printConfig( std::ostream& str ) const;
-#ifdef DFSM_ENABLE_LOGGING
+#ifdef SPAG_ENABLE_LOGGING
+/// Print dynamic data to \c str
 		void printLoggedData( std::ostream& str ) const
 		{
 			_data.printLoggedData( str );
@@ -313,25 +317,25 @@ class SpagFSM
 		{
 			LOG_FUNC;
 
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 			std::cout << "-switching to state " << _data._current << ", starting action\n";
 #endif
 			if( _timeout.at( _data._current ).enabled )
 			{
 				assert( timer );
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 		std::cout << "  -timeout enabled, duration=" << _timeout.at( _data._current ).nbSec << "\n";
 #endif
 				timer->timerStart( this );
 			}
 			if( _callback.at( _data._current ) )
 			{
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 		std::cout << "  -callback function start:\n";
 #endif
 				_callback.at( _data._current )();
 			}
-#ifdef DFSM_PRINT_STATES
+#ifdef SPAG_PRINT_STATES
 			else
 				std::cout << "  -no callback provided\n";
 #endif
@@ -410,4 +414,4 @@ struct NoTimer
 
 } // namespace spag end
 
-#endif // HG_STATE_MACHINE_HPP
+#endif // HG_SPAGHETTI_FSM_HPP

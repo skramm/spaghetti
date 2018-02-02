@@ -11,7 +11,7 @@ Just a POC, no network involved here, only timers
 #include "udp_server.hpp"
 
 // this symbol is a build-time option
-#define DFSM_PRINT_STATES
+#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include <memory>

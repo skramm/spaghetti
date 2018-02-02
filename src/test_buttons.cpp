@@ -5,8 +5,8 @@
 https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
 */
-#define DFSM_ENABLE_LOGGING
-#define DFSM_PRINT_STATES
+#define SPAG_ENABLE_LOGGING
+#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 #include <iostream>
 
@@ -22,7 +22,6 @@ void cb_Unlocked()
 	std::cout << "Unlocked!\n";
 }
 //-----------------------------------------------------------------------------------
-
 void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events>>& fsm )
 {
 	fsm.AssignExtTransition( st_Locked, ev_Coin, st_Unlocked );

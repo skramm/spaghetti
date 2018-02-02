@@ -7,6 +7,9 @@ COLOR_2=-e "\e[1;34m"
 COLOR_3=-e "\e[1;35m"
 COLOR_OFF="\e[0m"
 
+DEST_PATH:=/usr/local/include/
+THE_FILE:=spaghetti.hpp
+
 
 #--------------------------------
 # general compiler flags
@@ -36,15 +39,34 @@ SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%,$(SRC_FILES))
 
+
+help:
+	@echo "This is not a program, but a header-only library. Therefore, it is not supposed to be build"
+	@echo -e "If you want to build the sample programs, try target 'demo'.\n"
+	@echo "* Available targets:"
+	@echo " - demo"
+	@echo " - clean: erases demo object files"
+	@echo " - cleandoc: erases doxygen-produced files"
+	@echo " - cleanall: the two above, and also erases the build demo programs"
+	@echo " - demo"
+	@echo " - doc (assumes doxygen installed)"
+	@echo " - install: copies single file to $(DEST_PATH)"
+
+
 # default target
-all: $(EXEC_FILES)
+demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
 doc: html/index.html
 	@echo "- Done target $@"
 
-html/index.html: $(SRC_FILES) $(HEADER_FILES) doxyfile
+html/index.html: $(THE_FILE) doxyfile
 	doxygen doxyfile
+
+install:
+	cp spaghetti.hpp $(DEST_PATH)
+
+
 
 #dot: $(SVG_FILES)
 #	@echo "- Done target $@"
