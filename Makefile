@@ -21,6 +21,10 @@ SPAG_PRINT_STATES \
 SPAG_ENABLE_LOGGING \
 SPAG_FRIENDLY_CHECKING
 
+LIST:=file1 file2
+OPT:=A B
+
+
 # this is needed for the demo programs
 LDFLAGS += -lboost_system -lboost_thread -pthread
 
@@ -40,10 +44,32 @@ BIN_DIR=bin
 SRC_DIR=src
 OBJ_DIR=obj
 
+
 HEADER_FILES := $(wildcard $(SRC_DIR)/*.h*)
 SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%,$(SRC_FILES))
+
+FILES=$(basename $(SRC_FILES))
+
+OPT_ALL:= \
+	$(foreach a, $(FILES), \
+		$(foreach b, $(OPT), \
+			$(foreach c, $(OPT), \
+				$(foreach d, $(OPT), $(a)_$(b)$(c)$(d).obj ) \
+			) \
+		) \
+	)
+
+
+opt:
+	@for a in 0 1; do \
+		for b in 0 1; do \
+			for c in 0 1; do \
+				echo "$$a$$b$$c"; \
+			done \
+		done \
+	done
 
 help:
 	@echo "This is not a program but a header-only library. Therefore, it is not supposed to be build"
@@ -91,6 +117,7 @@ show:
 	@echo HEADER_FILES=$(HEADER_FILES)
 	@echo SRC_FILES=$(SRC_FILES)
 	@echo OBJ_FILES=$(OBJ_FILES)
+	@echo OPT_ALL=$(OPT_ALL)
 	@echo EXEC_FILES=$(EXEC_FILES)
 	@echo DOT_FILES=$(DOT_FILES)
 	@echo OPTIONS=$(OPTIONS)

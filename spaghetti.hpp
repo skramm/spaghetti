@@ -28,7 +28,17 @@
 		{ \
 			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
 			<< " - "   << #a << " value=" << a \
-			<< "\n - " << #b << " value=" << b << '\n'; \
+			<< "\n - " << #b << " value=" << b << "\nExiting...\n"; \
+			exit(1); \
+		} \
+	}
+	#define SPAG_CHECK_LESS( a, b ) \
+	{ \
+		if( !( (a) < (b) ) )\
+		{ \
+			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
+			<< " - "   << #a << " value=" << a \
+			<< "\n - " << #b << " max value=" << b << "\nExiting...\n"; \
 			exit(1); \
 		} \
 	}
@@ -43,7 +53,10 @@
 
 namespace spag {
 
-typedef std::function<void()> Callback_t;
+#ifndef SPAG_PROVIDE_CALLBACK_TYPE
+	typedef void CallbackArg_t;
+#endif
+typedef std::function<void(CallbackArg_t)> Callback_t;
 
 //-----------------------------------------------------------------------------------
 /// helper template function
@@ -158,6 +171,9 @@ struct FsmData
 	}
 #endif
 };
+struct DummyCbArg_t
+{
+};
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
 /**
@@ -172,7 +188,8 @@ Requirements: the two enums \b MUST have the following requirements:
  - the last element \b must be NB_STATES and NB_EVENTS, respectively
  - the first state must have value 0
 */
-template<typename STATE, typename EVENT,typename TIM>
+//template<typename STATE, typename EVENT,typename TIM>
+template<typename STATE, typename EVENT,typename TIM,typename Callback_arg=DummyCbArg_t>
 class SpagFSM
 {
 	public:
@@ -185,7 +202,10 @@ class SpagFSM
 			resizemat( _transition_mat, EVENT::NB_EVENTS, STATE::NB_STATES );
 			resizemat( _ignored_events, EVENT::NB_EVENTS, STATE::NB_STATES );
 
-			_callback.resize( STATE::NB_STATES );    // no callbacks stored
+			_callback.resize( STATE::NB_STATES );    // no callbacks stored at init
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
+			_callbackArg.resize( STATE::NB_STATES );
+#endif
 			_timeout.resize(  STATE::NB_STATES );    // timeouts info (see class TimerEvent)
 
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
@@ -295,10 +315,17 @@ class SpagFSM
 			_ignored_events[ ev ][ st ] = 1;
 		}
 /// Assign a given callback function to a state, will be called each time we arrive on this state
-		void assignCallback( STATE st, Callback_t func )
+		void assignCallback( STATE st, Callback_t func, Callback_arg cb_arg=Callback_arg() )
 		{
-			LOG_FUNC;
-			_callback.at( st ) = func;
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_LESS( st, nbStates() );
+#else
+			assert( check_state( st ) );
+#endif
+			_callback[ st ] = func;
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
+			_callbackArg[ st ] = cb_arg;
+#endif
 		}
 		void start() const
 		{
@@ -426,12 +453,17 @@ class SpagFSM
 #endif
 				timer->timerStart( this );
 			}
-			if( _callback.at( _data._current ) )
+			if( _callback.at( _data._current ) ) // if there is a callback stored, then call it
 			{
 #ifdef SPAG_PRINT_STATES
 		std::cout << "  -callback function start:\n";
 #endif
-				_callback.at( _data._current )();
+
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
+					_callback.at( _data._current )( _callbackArg.at(_data._current) );
+#else
+					_callback.at( _data._current )();
+#endif
 			}
 #ifdef SPAG_PRINT_STATES
 			else
@@ -457,6 +489,11 @@ class SpagFSM
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore, 1; handle)
 		std::vector<TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
 		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
+
+// if the user code provides a value for the callbacks, then we must store these, per state
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
+		std::vector<CallbackArg_t>         _callbackArg;     ///< holds for each state the callback function to be called
+#endif
 		TIM* timer;
 };
 //-----------------------------------------------------------------------------------
@@ -483,9 +520,9 @@ printMatrix( std::ostream& str, const std::vector<std::vector<T>>& mat, bool ch 
 }
 //-----------------------------------------------------------------------------------
 /// Printing function
-template<typename ST, typename EV,typename T>
+template<typename ST, typename EV,typename T,typename CBAR>
 void
-SpagFSM<ST,EV,T>::printConfig( std::ostream& str ) const
+SpagFSM<ST,EV,T,CBAR>::printConfig( std::ostream& str ) const
 {
 	str << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
 
@@ -506,10 +543,10 @@ SpagFSM<ST,EV,T>::printConfig( std::ostream& str ) const
 }
 //-----------------------------------------------------------------------------------
 /// dummy struct, useful in case there is no need for a timer
-template<typename ST, typename EV>
+template<typename ST, typename EV,typename CBAR>
 struct NoTimer
 {
-	void timerStart( const SpagFSM<ST,EV,NoTimer>* ) {}
+	void timerStart( const SpagFSM<ST,EV,NoTimer,CBAR>* ) {}
 	void timerCancel() {}
 };
 //-----------------------------------------------------------------------------------
@@ -568,8 +605,8 @@ Usage:
  \subsection ss_tools Additional tools
 
 
- sample programs:
-<a href="../src/html/files.html" target="_blank">sample programs</a>
+Sample programs: see the list of
+<a href="../src/html/files.html" target="_blank">sample programs</a>.
 
 
 
@@ -591,7 +628,7 @@ The available options/symbols are:
 - \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
 - \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
 - \c SPAG_FRIENDLY_CHECKING: A lot of checking is done to ensure no nasty bug will crash your program.
-However, in case of incorrect usage of the library by your client code (say, invalid size of container),
+However, in case of incorrect usage of the library by your client code (say, invalid index value),
 the default behavior is to spit a standard error message that can be difficult to understand.
 So if you define this symbol at build time, instead of getting this:
 \code
@@ -605,7 +642,27 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
  - EVENT::NB_EVENTS value=8
 Exiting...
 \endcode
-If this symbol is not defined, regular checking is done with the classical \c assert(). As usual, this checking can be removed by defining the symbol \c NDEBUG.
+If this symbol is not defined, regular checking is done with the classical \c assert().
+As usual, this checking can be removed by defining the symbol \c NDEBUG.
+<br>
+- \c SPAG_PROVIDE_CALLBACK_TYPE : the default callback function signature is <code> void f()</code>.
+With this symbol defined, user code can use callbacks having an argument.
+The type of the argument has to be defined before including the library.
+For example, to have an \c int argument, use this:
+\code
+#define SPAG_PROVIDE_CALLBACK_TYPE
+typedef int CallbackArg_t;
+#include "spaghetti.hpp"
+\endcode
+The value to be used when the callback function is called is stored (copied by value) inside the FSM,
+and is given during configuration time:
+\code
+fsm.assignCallback( st_State1, cb_myCallback, 42 );
+\endcode
+See also example file \c test_buttons.cpp
+<br>
+If several arguments are needed, then the user code needs to pack them into a \c struct,
+or use \c std::pair or \c std::tuple
 
 \section sec_misc Misc.
 
@@ -629,12 +686,8 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
  - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
  - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
 
-*/
 
-/**
 \todo find a way to ease up the usage for no timer (dummy timer struct)
-
-\todo add some way to provide callback signature
 
 \todo add some way to define "passage states", that is states that have some callback but on which we just pass to another state without any condition (i.e. right away)
 

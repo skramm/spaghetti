@@ -101,20 +101,7 @@ int main( int argc, char* argv[] )
 
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
-#if 0
-///	table1: describes if messages are considered or ignored, for each message and each state
-	std::vector<std::vector<int>> table_ignored_events = {
-//                  ST_INIT  ST_RED ST_ORANGE, ST_GREEN, ST_WARNING
-/* EV_RESET       */ {  1,      1,       1,        1,         1 },
-/* EV_TIME_5S     */ {  1,      1,       0,        1,         0 },
-/* EV_TIMER_2S    */ {  0,      0,       1,        0,         0 },
-/* EV_TIMER_1S    */ {  0,      0,       0,        0,         1 },
-/* EV_WARNING_ON  */ {  0,      1,       1,        1,         0 },
-/* EV_WARNING_OFF */ {  0,      1,       1,        1,         0 }
-	};
-#endif // 0
-
-//	std::cout << "fsm: nb states=" << fsm.nb_states() << " nb_events=" << fsm.nb_events() << "\n";
+	std::cout << "fsm: nb states=" << fsm.nbStates() << " nb_events=" << fsm.nbEvents() << "\n";
 	fsm.assignTimeOut( ST_INIT,   5, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
 	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
 	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );
