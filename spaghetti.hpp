@@ -198,7 +198,6 @@ class SpagFSM
 
 		void assignIgnEvMatrix( const std::vector<std::vector<int>>& mat )
 		{
-			LOG_FUNC;
 #ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_EQUAL( mat.size(),    EVENT::NB_EVENTS );
 			SPAG_CHECK_EQUAL( mat[0].size(), STATE::NB_STATES );
@@ -211,7 +210,6 @@ class SpagFSM
 
 		void assignTransitionMat( const std::vector<std::vector<STATE>>& mat )
 		{
-			LOG_FUNC;
 #ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_EQUAL( mat.size(),    EVENT::NB_EVENTS );
 			SPAG_CHECK_EQUAL( mat[0].size(), STATE::NB_STATES );
@@ -243,10 +241,15 @@ class SpagFSM
 /// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
 		void assignExtTransition( STATE st1, EVENT ev, STATE st2 )
 		{
-			LOG_FUNC;
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_LESS( st1, nbStates() );
+			SPAG_CHECK_LESS( st2, nbStates() );
+			SPAG_CHECK_LESS( ev,  nbEvents() );
+#else
 			assert( check_state( st1 ) );
 			assert( check_state( st2 ) );
 			assert( check_event( ev ) );
+#endif
 			_transition_mat.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = st2;
 			_ignored_events.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = 1;
 		}
@@ -254,27 +257,42 @@ class SpagFSM
 /// Assigns an timeout transition event to switch from event \c st1 to event \c st2
 		void assignTimeOut( STATE st1, int nb_sec, STATE st2 )
 		{
-			LOG_FUNC;
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_LESS( st1, nbStates() );
+			SPAG_CHECK_LESS( st2, nbStates() );
+#else
 			assert( check_state( st1 ) );
 			assert( check_state( st2 ) );
-			_timeout.at( static_cast<int>( st1 ) ) = TimerEvent<STATE>( st2, nb_sec );
+#endif
+			_timeout[ static_cast<int>( st1 ) ] = TimerEvent<STATE>( st2, nb_sec );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
 		void assignTransitionAlways( EVENT ev, STATE st )
 		{
-			LOG_FUNC;
-			for( auto& e: _transition_mat.at( ev ) )
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_LESS( st, nbStates() );
+			SPAG_CHECK_LESS( ev, nbEvents() );
+#else
+			assert( check_state( st ) );
+			assert( check_event( ev ) );
+#endif
+			for( auto& e: _transition_mat[ ev ] )
 				e = st;
-			for( auto& e: _ignored_events.at( ev ) )
+			for( auto& e: _ignored_events[ ev ] )
 				e = 1;
 		}
 		void allowEvent( STATE st, EVENT ev )
 		{
 			LOG_FUNC;
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_LESS( st, nbStates() );
+			SPAG_CHECK_LESS( ev, nbEvents() );
+#else
 			assert( check_state( st ) );
 			assert( check_event( ev ) );
-			_ignored_events.at( ev ).at( st ) = 1;
+#endif
+			_ignored_events[ ev ][ st ] = 1;
 		}
 /// Assign a given callback function to a state, will be called each time we arrive on this state
 		void assignCallback( STATE st, Callback_t func )
@@ -363,6 +381,34 @@ class SpagFSM
 			_data.printLoggedData( str );
 		}
 #endif
+
+/// Returns the build options
+		std::string buildOptions() const
+		{
+			std::string out( "Spaghetti: build options:");
+			out += "\n - SPAG_ENABLE_LOGGING: ";
+#ifdef SPAG_ENABLE_LOGGING
+			out += "yes";
+#else
+			out += "no";
+#endif
+
+			out += "\n - SPAG_PRINT_STATES: ";
+#ifdef SPAG_PRINT_STATES
+			out += "yes";
+#else
+			out += "no";
+#endif
+
+			out += "\n - SPAG_FRIENDLY_CHECKING: ";
+#ifdef SPAG_FRIENDLY_CHECKING
+			out += "yes";
+#else
+			out += "no";
+#endif
+			out += "\n";
+			return out;
+		}
 
 	private:
 		void runAction() const

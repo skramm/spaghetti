@@ -12,7 +12,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
  - single file header-only library
  - C++11, no other dependencies other than standard library
  - ease of use, no unreadable templaple BS in user code
- - "you pay for what you need" code (which means that there are some build-time options)
+ - "you pay for what you use" code
  - user code has to provide the event loop (waiting loop)
  - logging capability
  - provided with some sample programs, see src/html/index.html

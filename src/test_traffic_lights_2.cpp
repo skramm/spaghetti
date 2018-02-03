@@ -159,7 +159,7 @@ configureFSM( spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>>& fsm )
 //	fsm.handleEvent( EV_RESET,)
 }
 //-----------------------------------------------------------------------------------
-int main()
+int main( int argc, char* argv[] )
 {
 	try
 	{
@@ -167,6 +167,8 @@ int main()
 		std::cout << "io_service created\n";
 
 		my_server server( asio, 12345 );
+
+		std::cout << argv[0] << ": " << server.fsm.buildOptions() << '\n';
 		std::cout << "server created\n";
 
 		server.fsm.assignTimer( &asio );

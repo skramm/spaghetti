@@ -34,8 +34,8 @@ void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events>>& fs
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-
 	spag::SpagFSM<States,Events,spag::NoTimer<States,Events>> fsm;
+	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
 	configureFSM( fsm )	;
 	fsm.printConfig( std::cout );

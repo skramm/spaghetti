@@ -95,9 +95,11 @@ void TL_green()
 }
 
 //-----------------------------------------------------------------------------------
-int main()
+int main( int argc, char* argv[] )
 {
 	spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm;
+
+	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
 #if 0
 ///	table1: describes if messages are considered or ignored, for each message and each state

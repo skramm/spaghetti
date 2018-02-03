@@ -10,13 +10,19 @@ COLOR_OFF="\e[0m"
 DEST_PATH:=/usr/local/include/
 THE_FILE:=spaghetti.hpp
 
-
 #--------------------------------
 # general compiler flags
 CFLAGS = -std=c++11 -Wall -O2 -I.
 
-#LDFLAGS += -L/usr/lib/x86_64-linux-gnu/ -lboost_system -lboost_thread -pthread -lboost_iostreams -lboost_serialization
-LDFLAGS += -L/usr/lib/x86_64-linux-gnu/ -lboost_system -lboost_thread -pthread -lboost_serialization
+# build options
+
+OPTIONS:= \
+SPAG_PRINT_STATES \
+SPAG_ENABLE_LOGGING \
+SPAG_FRIENDLY_CHECKING
+
+# this is needed for the demo programs
+LDFLAGS += -lboost_system -lboost_thread -pthread
 
 # needed, so object files that are inner part of successive pattern rules don't get erased at the end of build
 #.PRECIOUS: obj/demo/%.o obj/lib/release/%.o obj/lib/debug/%.o
@@ -39,9 +45,8 @@ SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%,$(SRC_FILES))
 
-
 help:
-	@echo "This is not a program, but a header-only library. Therefore, it is not supposed to be build"
+	@echo "This is not a program but a header-only library. Therefore, it is not supposed to be build"
 	@echo -e "If you want to build the sample programs, try target 'demo'.\n"
 	@echo "* Available targets:"
 	@echo " - demo"
@@ -88,7 +93,7 @@ show:
 	@echo OBJ_FILES=$(OBJ_FILES)
 	@echo EXEC_FILES=$(EXEC_FILES)
 	@echo DOT_FILES=$(DOT_FILES)
-	@echo SVG_FILES=$(SVG_FILES)
+	@echo OPTIONS=$(OPTIONS)
 
 
 clean:
@@ -98,8 +103,12 @@ cleandoc:
 	-rm -r html/*
 	-rm -r src/html/*
 
-cleanall: clean cleandoc
+cleanbin:
 	-rm $(BIN_DIR)/*
+
+cleanall: clean cleandoc cleanbin
+	@echo "done"
+
 
 
 # generic compile rule
