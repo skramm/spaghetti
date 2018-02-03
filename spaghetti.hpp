@@ -1,7 +1,7 @@
 /**
 \file spaghetti.hpp
-\brief Provides storage of what to do when an event, internal (timeout) or external, occurs.
-
+\brief single header file of Spaghetti, see home page for full details:
+https://github.com/skramm/spaghetti
 */
 
 #ifndef HG_SPAGHETTI_FSM_HPP
@@ -51,6 +51,7 @@
 	#define LOG_FUNC
 #endif
 
+/// Main library namespace
 namespace spag {
 
 #ifndef SPAG_PROVIDE_CALLBACK_TYPE
@@ -58,16 +59,6 @@ namespace spag {
 #endif
 typedef std::function<void(CallbackArg_t)> Callback_t;
 
-//-----------------------------------------------------------------------------------
-/// helper template function
-template<typename T>
-void
-resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t nb_cols )
-{
-	mat.resize( nb_lines );
-	for( auto& e: mat )
-		e.resize( nb_cols );
-}
 //-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
 template<typename STATE>
@@ -171,9 +162,25 @@ struct FsmData
 	}
 #endif
 };
+//-----------------------------------------------------------------------------------
+/// This namespace is just a security, so user code won't hit into this
+namespace priv {
+
+/// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
 struct DummyCbArg_t
 {
 };
+//-----------------------------------------------------------------------------------
+/// helper template function
+template<typename T>
+void
+resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t nb_cols )
+{
+	mat.resize( nb_lines );
+	for( auto& e: mat )
+		e.resize( nb_cols );
+}
+} // local namespace end
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
 /**
@@ -188,8 +195,7 @@ Requirements: the two enums \b MUST have the following requirements:
  - the last element \b must be NB_STATES and NB_EVENTS, respectively
  - the first state must have value 0
 */
-//template<typename STATE, typename EVENT,typename TIM>
-template<typename STATE, typename EVENT,typename TIM,typename Callback_arg=DummyCbArg_t>
+template<typename STATE, typename EVENT,typename TIM,typename Callback_arg=priv::DummyCbArg_t>
 class SpagFSM
 {
 	public:
@@ -199,8 +205,8 @@ class SpagFSM
 			LOG_FUNC;
 			static_assert( EVENT::NB_EVENTS > 0, "Error, you need to provide at least one event" );
 			static_assert( STATE::NB_STATES > 1, "Error, you need to provide at least two states" );
-			resizemat( _transition_mat, EVENT::NB_EVENTS, STATE::NB_STATES );
-			resizemat( _ignored_events, EVENT::NB_EVENTS, STATE::NB_STATES );
+			priv::resizemat( _transition_mat, EVENT::NB_EVENTS, STATE::NB_STATES );
+			priv::resizemat( _ignored_events, EVENT::NB_EVENTS, STATE::NB_STATES );
 
 			_callback.resize( STATE::NB_STATES );    // no callbacks stored at init
 #ifdef SPAG_PROVIDE_CALLBACK_TYPE
@@ -497,25 +503,28 @@ class SpagFSM
 		TIM* timer;
 };
 //-----------------------------------------------------------------------------------
-/// helper function template for printConfig()
-template<typename T>
-void
-printMatrix( std::ostream& str, const std::vector<std::vector<T>>& mat, bool ch )
+namespace priv
 {
-	assert( mat.size() );
-	str << "       STATES:\n   ";
-	for( size_t i=0; i<mat[0].size(); i++ )
-		str << i << "  ";
-	str << "\n--|";
-	for( size_t i=0; i<mat[0].size(); i++ )
-		str << "---";
-	str << '\n';
-	for( size_t i=0; i<mat.size(); i++ )
+	/// helper function template for printConfig()
+	template<typename T>
+	void
+	printMatrix( std::ostream& str, const std::vector<std::vector<T>>& mat, bool ch )
 	{
-		str << i << " | ";
-		for( auto e: mat[i] )
-			str << (ch?e:(e?'X':'.')) << "  ";
+		assert( mat.size() );
+		str << "       STATES:\n   ";
+		for( size_t i=0; i<mat[0].size(); i++ )
+			str << i << "  ";
+		str << "\n--|";
+		for( size_t i=0; i<mat[0].size(); i++ )
+			str << "---";
 		str << '\n';
+		for( size_t i=0; i<mat.size(); i++ )
+		{
+			str << i << " | ";
+			for( auto e: mat[i] )
+				str << (ch?e:(e?'X':'.')) << "  ";
+			str << '\n';
+		}
 	}
 }
 //-----------------------------------------------------------------------------------
@@ -527,10 +536,10 @@ SpagFSM<ST,EV,T,CBAR>::printConfig( std::ostream& str ) const
 	str << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
 
 	str << "\n - Transition matrix:\n";
-	printMatrix( str, _transition_mat, true );
+	priv::printMatrix( str, _transition_mat, true );
 
 	str << "\n - Ignored events:\n";
-	printMatrix( str, _ignored_events, false );
+	priv::printMatrix( str, _ignored_events, false );
 
 	str << "\n - States with timeout\n";
 	str << "       STATES:\n   ";
@@ -542,6 +551,7 @@ SpagFSM<ST,EV,T,CBAR>::printConfig( std::ostream& str ) const
 	str << '\n';
 }
 //-----------------------------------------------------------------------------------
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
 /// dummy struct, useful in case there is no need for a timer
 template<typename ST, typename EV,typename CBAR>
 struct NoTimer
@@ -549,6 +559,16 @@ struct NoTimer
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBAR>* ) {}
 	void timerCancel() {}
 };
+#else
+template<typename ST, typename EV> //,typename CBAR>
+struct NoTimer
+{
+	void timerStart( const SpagFSM<ST,EV,NoTimer>* ) {}
+	void timerCancel() {}
+};
+
+#endif // SPAG_PROVIDE_CALLBACK_TYPE
+
 //-----------------------------------------------------------------------------------
 
 } // namespace spag end
@@ -662,7 +682,8 @@ fsm.assignCallback( st_State1, cb_myCallback, 42 );
 See also example file \c test_buttons.cpp
 <br>
 If several arguments are needed, then the user code needs to pack them into a \c struct,
-or use \c std::pair or \c std::tuple
+or use \c std::pair or \c std::tuple.
+And of course it needs to be copyable.
 
 \section sec_misc Misc.
 

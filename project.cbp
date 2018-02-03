@@ -28,7 +28,8 @@
 		<Unit filename="spaghetti.hpp" />
 		<Unit filename="src/doxyfile" />
 		<Unit filename="src/spaghetti.css" />
-		<Unit filename="src/test_buttons.cpp" />
+		<Unit filename="src/test_buttons_1.cpp" />
+		<Unit filename="src/test_buttons_2.cpp" />
 		<Unit filename="src/test_traffic_lights_1.cpp" />
 		<Unit filename="src/test_traffic_lights_1b.cpp" />
 		<Unit filename="src/test_traffic_lights_2.cpp" />

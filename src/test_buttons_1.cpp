@@ -1,6 +1,6 @@
 /**
-\file test_buttons.cpp
-\brief Simple example of an SpagFSM without timer
+\file test_buttons_1.cpp
+\brief Simple example of an SpagFSM without timer and with a custom callback type
 
 https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
