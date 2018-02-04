@@ -50,6 +50,9 @@ SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%,$(SRC_FILES))
 
+DOT_FILES := $(wildcard *.dot)
+SVG_FILES := $(DOT_FILES:.dot=.svg)
+
 FILES=$(basename $(SRC_FILES))
 
 OPT_ALL:= \
@@ -102,15 +105,15 @@ install:
 
 
 
-#dot: $(SVG_FILES)
-#	@echo "- Done target $@"
+dot: $(SVG_FILES)
+	@echo "- Done target $@"
 
 # dot, circo, ...
-#GRAPHIZ_APP = dot
+GRAPHIZ_APP = dot
 
-#%.svg: %.dot
+%.svg: %.dot
 #	$(GRAPHIZ_APP) -Tsvg -Grankdir=LR -Nfontsize=24 $< >$@
-#	$(GRAPHIZ_APP) -Tsvg $< >$@
+	$(GRAPHIZ_APP) -Tsvg $< >$@
 
 
 show:
@@ -121,10 +124,12 @@ show:
 	@echo EXEC_FILES=$(EXEC_FILES)
 	@echo DOT_FILES=$(DOT_FILES)
 	@echo OPTIONS=$(OPTIONS)
+	@echo SVG_FILES=$(SVG_FILES)
 
 
 clean:
 	-rm $(OBJ_DIR)/*
+	-rm *.dot *.svg
 
 cleandoc:
 	-rm -r html/*

@@ -13,6 +13,11 @@ https://github.com/skramm/spaghetti
 #include <cassert>
 #include <fstream>
 
+#ifdef SPAG_GENERATE_DOT
+	#include <boost/graph/adjacency_list.hpp>
+	#include <boost/graph/graphviz.hpp>
+#endif
+
 #ifdef SPAG_ENABLE_LOGGING
 	#include <chrono>
 #endif
@@ -417,6 +422,10 @@ class SpagFSM
 			return out;
 		}
 
+#ifdef SPAG_GENERATE_DOT
+		void writeDotFile( std::string fn ) const;
+#endif
+
 	private:
 		void runAction() const
 		{
@@ -511,6 +520,45 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& str ) const
 	str << '\n';
 }
 //-----------------------------------------------------------------------------------
+#ifdef SPAG_GENERATE_DOT
+/// WIP, still experimental
+template<typename ST, typename EV,typename T,typename CBA>
+void
+SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
+{
+// 1 - build graph
+	typedef boost::adjacency_list<
+		boost::vecS,
+		boost::vecS,
+		boost::directedS
+		> graph_t;
+
+	typedef boost::graph_traits<graph_t>::vertex_descriptor vertex_t;
+//	typedef boost::graph_traits<graph_t>::edge_descriptor   edge_t;
+
+	graph_t g;
+
+	for( size_t i=0; i<ST::NB_STATES; i++ )
+		boost::add_vertex(g);
+
+	for( size_t i=0; i<nbEvents(); i++ )
+		for( size_t j=0; j<nbStates(); j++ )
+			if( _ignored_events[i][j] )
+			{
+				vertex_t v1 = j;
+				vertex_t v2 = _transition_mat[i][j];
+				boost::add_edge( v1, v2, g );
+			}
+
+// 2 - print
+	std::ofstream f ( fname );
+	if( !f.is_open() )
+		throw std::string( "unable to open file: " + fname );
+	boost::write_graphviz( f, g );
+}
+#endif // SPAG_GENERATE_DOT
+
+//-----------------------------------------------------------------------------------
 /// dummy struct, useful in case there is no need for a timer
 template<typename ST, typename EV,typename CBA=DummyCbArg_t>
 struct NoTimer
@@ -523,12 +571,11 @@ struct NoTimer
 
 } // namespace spag end
 
-/// A macro simplifying the FSM instanciation
-#define SPAG_DECLARE_FSM( fsm, st, ev ) spag::SpagFSM<st,ev,spag::NoTimer<st,ev>> fsm
+// A macro simplifying the FSM instanciation
+//#define SPAG_DECLARE_FSM( fsm, st, ev ) spag::SpagFSM<st,ev,spag::NoTimer<st,ev>> fsm
 
-/// A macro simplifying the FSM instanciation (version 2, if a timer is needed)
-#define SPAG_DECLARE_FSM_T( fsm, st, ev, tim ) spag::SpagFSM<st,ev,tim<st,ev>> fsm
-
+// A macro simplifying the FSM instanciation (version 2, if a timer is needed)
+//#define SPAG_DECLARE_FSM_T( fsm, st, ev, tim ) spag::SpagFSM<st,ev,tim<st,ev>> fsm
 
 #endif // HG_SPAGHETTI_FSM_HPP
 
@@ -681,6 +728,5 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 
 \todo add serialisation capability
 
-\todo add graphviz dot output
 
 */

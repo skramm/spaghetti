@@ -10,7 +10,7 @@ Just a POC, no network involved here, only timers
 
 #include "udp_server.hpp"
 
-// this symbol is a build-time option
+#define SPAG_GENERATE_DOT
 #define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
@@ -119,6 +119,8 @@ int main( int argc, char* argv[] )
 	fsm.assignCallback( ST_GREEN,  TL_green );
 
 	fsm.printConfig( std::cout );
+	fsm.writeDotFile( "test1.dot" );
+
 	try
 	{
 		AsioWrapper<STATE,EVENT> asio;
