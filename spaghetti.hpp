@@ -1,6 +1,6 @@
 /**
 \file spaghetti.hpp
-\brief single header file of Spaghetti, see home page for full details:
+\brief single header file of Spaghetti FSM library, see home page for full details:
 https://github.com/skramm/spaghetti
 */
 
@@ -34,17 +34,6 @@ https://github.com/skramm/spaghetti
 	}
 #else
 	#define SPAG_CHECK_EQUAL( a, b ) assert( a == b )
-
-/*	#define SPAG_CHECK_LESS( a, b ) \
-	{ \
-		if( !( (a) < (b) ) )\
-		{ \
-			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
-			<< " - "   << #a << " value=" << a \
-			<< "\n - " << #b << " max value=" << b << "\nExiting...\n"; \
-			exit(1); \
-		} \
-	}*/
 #endif
 
 #ifdef SPAG_FRIENDLY_CHECKING
@@ -259,7 +248,7 @@ class SpagFSM
 /// To enable timeout for all the states, see UseGlobalTimeOut()
 		void UseTimeOut( STATE st, bool b )
 		{
-			assert( check_state( st ) );
+//			assert( check_state( st ) );
 			_timeout_active.at( st ) = static_cast<char>(b);
 		}
 #endif
@@ -348,7 +337,7 @@ class SpagFSM
 /// Your callback should call this function when an external event occurs
 		void processExtEvent( EVENT ev ) const
 		{
-			assert( check_event(ev) );
+			SPAG_CHECK_LESS( ev, nbEvents() );
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing event " << ev << "\n";
 #endif
@@ -469,14 +458,6 @@ class SpagFSM
 			else
 				std::cout << "  -no callback provided\n";
 #endif
-		}
-		bool check_state( STATE st ) const
-		{
-			return( static_cast<size_t>(st) < nbStates() );
-		}
-		bool check_event( EVENT ev ) const
-		{
-			return( static_cast<size_t>(ev) < nbEvents() );
 		}
 
 	private:
