@@ -22,10 +22,6 @@ Just a POC, no network involved here, only timers
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
 enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
 
-/*template<typename ST, typename EV, typename TIM>
-using fsm_t = spag::SpagFSM<ST,EV,TIM<typename STATE,typename EVENT>>;
-*/
-
 //-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff
 /**
@@ -48,7 +44,6 @@ struct AsioWrapper
 	}
 
 	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA>* fsm  )
-//	void timerCallback( const boost::system::error_code& , const fsm_t* fsm  )
 	{
 		fsm->processTimerEvent();
 	}

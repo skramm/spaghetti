@@ -4,7 +4,7 @@
 
 status: WIP
 
-Similar to version 1, with an added server part, that can receive data from
+Similar to version 1, with an added udp server part, that can receive data from
 test_traffic_lights_client.cpp
 */
 
@@ -133,11 +133,12 @@ void TL_green(spag::DummyCbArg_t)
 	std::cout << "GREEN\n";
 }
 
+typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm_t;
+
 //-----------------------------------------------------------------------------------
 void
-configureFSM( spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>>& fsm )
+configureFSM( fsm_t& fsm )
 {
-//	auto& fsm = server.fsm;
 	fsm.assignTimeOut( ST_INIT,   5, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
 	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
 	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );

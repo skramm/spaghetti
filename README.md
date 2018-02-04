@@ -26,9 +26,6 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
 
-- Q: Why does the optional callback value need a specific build option (SPAG_PROVIDE_CALLBACK_TYPE) ? Why not provide it as a template parameter ?
-- A: because having callback with some value to pass to them requires to store them, obviously. So if that option is enabled, then the storage is generated.
-
 # Reference
 
 https://en.wikipedia.org/wiki/Finite-state_machine

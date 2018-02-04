@@ -40,9 +40,6 @@ spag::DummyCbArg_t a;
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-//	SPAG_DECLARE_FSM( fsm, States, Events );
-//	spag::SpagFSM<States,Events,spag::NoTimer<States,Events>> fsm;
-
 	fsm_t fsm;
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
