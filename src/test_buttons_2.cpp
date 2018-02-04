@@ -1,6 +1,6 @@
 /**
 \file test_buttons_2.cpp
-\brief Same as test_buttons_1.cpp but with default types
+\brief Simple example of an SpagFSM without timer and with the default callback function type (different callback function for each state).
 
 https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
@@ -28,7 +28,7 @@ void cb_Unlock()
 //-----------------------------------------------------------------------------------
 void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events>>& fsm )
 {
-	fsm.assignExtTransition( st_Locked, ev_Coin, st_Unlocked );
+	fsm.assignExtTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
 
 	fsm.assignCallback( st_Locked,   cb_Lock   );
@@ -52,12 +52,12 @@ int main( int argc, char* argv[] )
 		switch( key )
 		{
 			case 'A':
-				std::cout << " push!\n";
+				std::cout << "Event: push\n";
 				fsm.processExtEvent( ev_Push );
 			break;
 
 			case 'B':
-				std::cout << " coin!\n";
+				std::cout << "Event: coin\n";
 				fsm.processExtEvent( ev_Coin );
 			break;
 

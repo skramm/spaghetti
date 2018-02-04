@@ -190,12 +190,13 @@ types:
  - TIM: a type handling the timer, must provide the following methods:
    - timerStart( const SpagFSM* );
    - timerCancel();
+ - CBA: the callback function type (single) argument
 
 Requirements: the two enums \b MUST have the following requirements:
  - the last element \b must be NB_STATES and NB_EVENTS, respectively
  - the first state must have value 0
 */
-template<typename STATE, typename EVENT,typename TIM,typename Callback_arg=priv::DummyCbArg_t>
+template<typename STATE, typename EVENT,typename TIM,typename CBA=priv::DummyCbArg_t>
 class SpagFSM
 {
 	public:
@@ -320,8 +321,8 @@ class SpagFSM
 #endif
 			_ignored_events[ ev ][ st ] = 1;
 		}
-/// Assign a given callback function to a state, will be called each time we arrive on this state
-		void assignCallback( STATE st, Callback_t func, Callback_arg cb_arg=Callback_arg() )
+/// Assigns a callback function to a state, will be called each time we arrive on this state
+		void assignCallback( STATE st, Callback_t func, CBA cb_arg=CBA() )
 		{
 #ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st, nbStates() );
@@ -333,6 +334,27 @@ class SpagFSM
 			_callbackArg[ st ] = cb_arg;
 #endif
 		}
+
+/// Assigns a callback function to all the states, will be called each time the state is activated
+		void assignCallbackOnAll( Callback_t func )
+		{
+			for( size_t i=0; i<STATE::NB_STATES; i++ )
+//			for( auto& st : STATE )
+				_callback[ i ] = func;
+		}
+
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
+		void assignCallbackValue( STATE st, CBA cb_arg )
+		{
+#ifdef SPAG_FRIENDLY_CHECKING
+			SPAG_CHECK_LESS( st, nbStates() );
+#else
+			assert( check_state( st ) );
+#endif
+			_callbackArg[ st ] = cb_arg;
+		}
+#endif
+
 		void start() const
 		{
 			runAction();
@@ -439,6 +461,14 @@ class SpagFSM
 #else
 			out += "no";
 #endif
+
+			out += "\n - SPAG_PROVIDE_CALLBACK_TYPE: ";
+#ifdef SPAG_PROVIDE_CALLBACK_TYPE
+			out += "yes";
+#else
+			out += "no";
+#endif
+
 			out += "\n";
 			return out;
 		}

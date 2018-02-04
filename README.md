@@ -9,13 +9,14 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 # Main features
 
- - single file header-only library
+ - single file header-only library, just fetch the file spaghetti.hpp and store it on your machine
  - C++11, no dependencies other than standard library
  - ease of use, no unreadable templaple BS in user code
  - "you pay for what you use" code
  - user code has to provide the event loop (waiting loop)
  - logging capability
  - provided with some sample programs, see src/html/index.html
+
 
 # FAQ
 

@@ -1,6 +1,6 @@
 /**
 \file test_buttons_1.cpp
-\brief Simple example of an SpagFSM without timer and with a custom callback function type
+\brief Simple example of an SpagFSM without timer and with a custom callback type
 
 https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
@@ -22,9 +22,9 @@ enum Events { ev_Push, ev_Coin, NB_EVENTS };
 void cb_Lock( bool b )
 {
 	if( b )
-		std::cout << "State: Locked\n";
+		std::cout << "Locked!\n";
 	else
-		std::cout << "State: Unlocked\n";
+		std::cout << "Unlocked!\n";
 }
 
 //-----------------------------------------------------------------------------------
@@ -33,8 +33,9 @@ void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events,Callb
 	fsm.assignExtTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
 
-	fsm.assignCallback( st_Locked,   cb_Lock, true );
-	fsm.assignCallback( st_Unlocked, cb_Lock, false );
+	fsm.assignCallbackOnAll( cb_Lock );
+	fsm.assignCallbackValue( st_Locked,   "State: LOCK\n" );
+	fsm.assignCallbackValue( st_Unlocked, "State: UNLOCKED\n" );
 }
 
 //-----------------------------------------------------------------------------------
