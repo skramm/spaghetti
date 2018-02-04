@@ -437,7 +437,7 @@ class SpagFSM
 			std::cout << "  -callback function start:\n";
 #endif
 				if( std::is_same<CBA,DummyCbArg_t>::value )
-					_callback.at( _data._current )( DummyCbArg_t() );
+					_callback.at( _data._current )( CBA() );
 				else
 					_callback.at( _data._current )( _callbackArg.at(_data._current) );
 			}

@@ -88,15 +88,15 @@ struct my_server : public udp_server<2048>
 };
 
 //-----------------------------------------------------------------------------------
-void TL_red()
+void TL_red(spag::DummyCbArg_t)
 {
 	std::cout << "RED\n";
 }
-void TL_orange()
+void TL_orange(spag::DummyCbArg_t)
 {
 	std::cout << "ORANGE\n";
 }
-void TL_green()
+void TL_green(spag::DummyCbArg_t)
 {
 	std::cout << "GREEN\n";
 }

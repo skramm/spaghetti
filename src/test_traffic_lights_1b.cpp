@@ -94,14 +94,7 @@ void callback( std::string v )
 {
 	std::cout << "cb, value=" << v << '\n';
 }
-/*void TL_orange()
-{
-	std::cout << "ORANGE\n";
-}
-void TL_green()
-{
-	std::cout << "GREEN\n";
-}*/
+
 
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
