@@ -32,7 +32,10 @@ https://github.com/skramm/spaghetti
 			exit(1); \
 		} \
 	}
-	#define SPAG_CHECK_LESS( a, b ) \
+#else
+	#define SPAG_CHECK_EQUAL( a, b ) assert( a == b )
+
+/*	#define SPAG_CHECK_LESS( a, b ) \
 	{ \
 		if( !( (a) < (b) ) )\
 		{ \
@@ -41,15 +44,22 @@ https://github.com/skramm/spaghetti
 			<< "\n - " << #b << " max value=" << b << "\nExiting...\n"; \
 			exit(1); \
 		} \
-	}
+	}*/
 #endif
 
-
-#if 0
-	#define LOG_FUNC std::cout << "* start " << __FUNCTION__ << "()\n"
+#ifdef SPAG_FRIENDLY_CHECKING
+	#define SPAG_CHECK_LESS( a, b ) \
+		if( !( (a) < (b) ) )\
+		{ \
+			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
+			<< " - "   << #a << " value=" << a \
+			<< "\n - " << #b << " max value=" << b << "\nExiting...\n"; \
+			exit(1); \
+		}
 #else
-	#define LOG_FUNC
+	#define SPAG_CHECK_LESS( a, b ) assert( a < b )
 #endif
+
 
 /// Main library namespace
 namespace spag {
@@ -203,7 +213,6 @@ class SpagFSM
 /// Constructor
 		SpagFSM() // : _current( static_cast<STATE>(0) )
 		{
-			LOG_FUNC;
 			static_assert( EVENT::NB_EVENTS > 0, "Error, you need to provide at least one event" );
 			static_assert( STATE::NB_STATES > 1, "Error, you need to provide at least two states" );
 			priv::resizemat( _transition_mat, EVENT::NB_EVENTS, STATE::NB_STATES );
@@ -225,25 +234,15 @@ class SpagFSM
 
 		void assignIgnEvMatrix( const std::vector<std::vector<int>>& mat )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_EQUAL( mat.size(),    EVENT::NB_EVENTS );
 			SPAG_CHECK_EQUAL( mat[0].size(), STATE::NB_STATES );
-#else
-			assert( mat.size()    == EVENT::NB_EVENTS );
-			assert( mat[0].size() == STATE::NB_STATES );
-#endif
 			_ignored_events = mat;
 		}
 
 		void assignTransitionMat( const std::vector<std::vector<STATE>>& mat )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_EQUAL( mat.size(),    EVENT::NB_EVENTS );
 			SPAG_CHECK_EQUAL( mat[0].size(), STATE::NB_STATES );
-#else
-			assert( mat.size()    == EVENT::NB_EVENTS );
-			assert( mat[0].size() == STATE::NB_STATES );
-#endif
 			_transition_mat = mat;
 		}
 
@@ -268,15 +267,9 @@ class SpagFSM
 /// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
 		void assignExtTransition( STATE st1, EVENT ev, STATE st2 )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st1, nbStates() );
 			SPAG_CHECK_LESS( st2, nbStates() );
 			SPAG_CHECK_LESS( ev,  nbEvents() );
-#else
-			assert( check_state( st1 ) );
-			assert( check_state( st2 ) );
-			assert( check_event( ev ) );
-#endif
 			_transition_mat.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = st2;
 			_ignored_events.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = 1;
 		}
@@ -284,26 +277,16 @@ class SpagFSM
 /// Assigns an timeout transition event to switch from event \c st1 to event \c st2
 		void assignTimeOut( STATE st1, int nb_sec, STATE st2 )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st1, nbStates() );
 			SPAG_CHECK_LESS( st2, nbStates() );
-#else
-			assert( check_state( st1 ) );
-			assert( check_state( st2 ) );
-#endif
 			_timeout[ static_cast<int>( st1 ) ] = TimerEvent<STATE>( st2, nb_sec );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
 		void assignTransitionAlways( EVENT ev, STATE st )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st, nbStates() );
 			SPAG_CHECK_LESS( ev, nbEvents() );
-#else
-			assert( check_state( st ) );
-			assert( check_event( ev ) );
-#endif
 			for( auto& e: _transition_mat[ ev ] )
 				e = st;
 			for( auto& e: _ignored_events[ ev ] )
@@ -311,24 +294,14 @@ class SpagFSM
 		}
 		void allowEvent( STATE st, EVENT ev )
 		{
-			LOG_FUNC;
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st, nbStates() );
 			SPAG_CHECK_LESS( ev, nbEvents() );
-#else
-			assert( check_state( st ) );
-			assert( check_event( ev ) );
-#endif
 			_ignored_events[ ev ][ st ] = 1;
 		}
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( STATE st, Callback_t func, CBA cb_arg=CBA() )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st, nbStates() );
-#else
-			assert( check_state( st ) );
-#endif
 			_callback[ st ] = func;
 #ifdef SPAG_PROVIDE_CALLBACK_TYPE
 			_callbackArg[ st ] = cb_arg;
@@ -339,18 +312,13 @@ class SpagFSM
 		void assignCallbackOnAll( Callback_t func )
 		{
 			for( size_t i=0; i<STATE::NB_STATES; i++ )
-//			for( auto& st : STATE )
 				_callback[ i ] = func;
 		}
 
 #ifdef SPAG_PROVIDE_CALLBACK_TYPE
 		void assignCallbackValue( STATE st, CBA cb_arg )
 		{
-#ifdef SPAG_FRIENDLY_CHECKING
 			SPAG_CHECK_LESS( st, nbStates() );
-#else
-			assert( check_state( st ) );
-#endif
 			_callbackArg[ st ] = cb_arg;
 		}
 #endif
@@ -363,7 +331,6 @@ class SpagFSM
 /// Your timer end function/callback should call this when the timer expires
 		void processTimerEvent() const
 		{
-			LOG_FUNC;
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing timeout event, delay was " << _timeout.at( _data._current ).nbSec << " s.\n";
 #endif
@@ -381,7 +348,6 @@ class SpagFSM
 /// Your callback should call this function when an external event occurs
 		void processExtEvent( EVENT ev ) const
 		{
-			LOG_FUNC;
 			assert( check_event(ev) );
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing event " << ev << "\n";
@@ -476,8 +442,6 @@ class SpagFSM
 	private:
 		void runAction() const
 		{
-			LOG_FUNC;
-
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-switching to state " << _data._current << ", starting action\n";
 #endif
