@@ -94,10 +94,14 @@ void TL_green()
 	std::cout << "GREEN\n";
 }
 
+typedef spag::SpagFSM<States,Events,AsioWrapper<States,Events>> fsm_t;
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-	spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm;
+//	SPAG_DECLARE_FSM_T( fsm, STATE, EVENT, AsioWrapper );
+
+	fsm_t fsm;
+//	spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm;
 
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 

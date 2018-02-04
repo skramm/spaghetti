@@ -14,7 +14,7 @@ Just a POC, no network involved here, only timers
 
 //#define SPAG_PRINT_STATES
 
-#define SPAG_PROVIDE_CALLBACK_TYPE
+//#define SPAG_PROVIDE_CALLBACK_TYPE
 typedef std::string CallbackArg_t;
 
 #include "spaghetti.hpp"

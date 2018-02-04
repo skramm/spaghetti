@@ -25,20 +25,25 @@ void cb_Unlock()
 	std::cout << "Unlocked!\n";
 }
 
+typedef spag::SpagFSM<States,Events,spag::NoTimer<States,Events>> fsm_t;
+
 //-----------------------------------------------------------------------------------
-void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events>>& fsm )
+void configureFSM( fsm_t& fsm )
 {
 	fsm.assignExtTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
-
-	fsm.assignCallback( st_Locked,   cb_Lock   );
-	fsm.assignCallback( st_Unlocked, cb_Unlock );
+spag::DummyCbArg_t a;
+	fsm.assignCallback( st_Locked,   cb_Lock, a  );
+	fsm.assignCallback( st_Unlocked, cb_Unlock, a );
 }
 
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-	spag::SpagFSM<States,Events,spag::NoTimer<States,Events>> fsm;
+//	SPAG_DECLARE_FSM( fsm, States, Events );
+//	spag::SpagFSM<States,Events,spag::NoTimer<States,Events>> fsm;
+
+	fsm_t fsm;
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
 	configureFSM( fsm )	;

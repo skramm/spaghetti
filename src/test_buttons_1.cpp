@@ -10,8 +10,8 @@ https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnst
 //#define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 
-#define SPAG_PROVIDE_CALLBACK_TYPE
-typedef bool CallbackArg_t;
+//#define SPAG_PROVIDE_CALLBACK_TYPE
+//typedef bool CallbackArg_t;
 
 #include "spaghetti.hpp"
 
@@ -26,9 +26,10 @@ void cb_Lock( bool b )
 	else
 		std::cout << "State: Unlocked\n";
 }
+typedef spag::SpagFSM<States,Events,spag::NoTimer<States,Events,bool>,bool> fsm_t;
 
 //-----------------------------------------------------------------------------------
-void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events,CallbackArg_t>,CallbackArg_t>& fsm )
+void configureFSM( fsm_t& fsm )
 {
 	fsm.assignExtTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
@@ -40,7 +41,8 @@ void configureFSM( spag::SpagFSM<States,Events,spag::NoTimer<States,Events,Callb
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-	spag::SpagFSM<States,Events,spag::NoTimer<States,Events,CallbackArg_t>,CallbackArg_t> fsm;
+//	spag::SpagFSM<States,Events,spag::NoTimer<States,Events,CallbackArg_t>,CallbackArg_t> fsm;
+	fsm_t fsm;
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
 	configureFSM( fsm )	;
