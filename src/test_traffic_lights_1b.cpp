@@ -14,9 +14,6 @@ Just a POC, no network involved here, only timers
 
 //#define SPAG_PRINT_STATES
 
-//#define SPAG_PROVIDE_CALLBACK_TYPE
-typedef std::string CallbackArg_t;
-
 #include "spaghetti.hpp"
 
 #include <memory>
@@ -25,13 +22,17 @@ typedef std::string CallbackArg_t;
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
 enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
 
+/*template<typename ST, typename EV, typename TIM>
+using fsm_t = spag::SpagFSM<ST,EV,TIM<typename STATE,typename EVENT>>;
+*/
+
 //-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff
 /**
 Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
 That last point isn't that obvious, has it also must have a lifespan not limited to some callback function.
 */
-template<typename ST, typename EV,typename CallbackArg_t>
+template<typename ST, typename EV,typename CBA>
 struct AsioWrapper
 {
 	boost::asio::io_service io_service;
@@ -46,19 +47,20 @@ struct AsioWrapper
 		io_service.run();
 	}
 
-	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper,CallbackArg_t>* fsm  )
+	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA>* fsm  )
+//	void timerCallback( const boost::system::error_code& , const fsm_t* fsm  )
 	{
 		fsm->processTimerEvent();
 	}
 
-	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CallbackArg_t>* fsm )
+	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA>* fsm )
 	{
 		int nb_sec = fsm->timeOutData( fsm->currentState() ).nbSec;
 		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
 
 		ptimer->async_wait(
 			boost::bind(
-				&AsioWrapper<ST,EV,CallbackArg_t>::timerCallback,
+				&AsioWrapper<ST,EV,CBA>::timerCallback,
 				this,
 				boost::asio::placeholders::error,
 				fsm
@@ -67,11 +69,13 @@ struct AsioWrapper
 	}
 };
 
+typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT,std::string>,std::string> fsm_t;
+
 //-----------------------------------------------------------------------------------
 /// concrete class, implements udp_server
 struct my_server : public udp_server<2048>
 {
-	my_server( AsioWrapper<STATE,EVENT,CallbackArg_t>& asio_wrapper, int port_no )
+	my_server( AsioWrapper<STATE,EVENT,std::string>& asio_wrapper, int port_no )
 		: udp_server( asio_wrapper.io_service, port_no )
 	{}
 
@@ -102,7 +106,7 @@ void TL_green()
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-	spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT,CallbackArg_t>,CallbackArg_t> fsm;
+	fsm_t fsm;
 
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 
@@ -125,7 +129,7 @@ int main( int argc, char* argv[] )
 	fsm.printConfig( std::cout );
 	try
 	{
-		AsioWrapper<STATE,EVENT,CallbackArg_t> asio;
+		AsioWrapper<STATE,EVENT,std::string> asio;
 		std::cout << "io_service created\n";
 		fsm.assignTimer( &asio );
 

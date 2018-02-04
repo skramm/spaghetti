@@ -20,6 +20,12 @@ Just a POC, no network involved here, only timers
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
 enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
 
+/*template<typename ST, typename EV, typename TIM, typename CBA>
+class spag::
+using fsm_t = spag::SpagFSM<ST,EV,TIM<typename STATE,typename EVENT>>;
+*/
+//typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm_t;
+
 //-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff
 /**
@@ -61,6 +67,7 @@ struct AsioWrapper
 		);
 	}
 };
+typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm_t;
 
 //-----------------------------------------------------------------------------------
 /// concrete class, implements udp_server
@@ -94,14 +101,10 @@ void TL_green()
 	std::cout << "GREEN\n";
 }
 
-typedef spag::SpagFSM<States,Events,AsioWrapper<States,Events>> fsm_t;
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-//	SPAG_DECLARE_FSM_T( fsm, STATE, EVENT, AsioWrapper );
-
 	fsm_t fsm;
-//	spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm;
 
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 

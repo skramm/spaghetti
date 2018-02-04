@@ -16,11 +16,11 @@ enum States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 
 /// callback function
-void cb_Lock()
+void cb_Lock( spag::DummyCbArg_t )
 {
 	std::cout << "Locked!\n";
 }
-void cb_Unlock()
+void cb_Unlock( spag::DummyCbArg_t )
 {
 	std::cout << "Unlocked!\n";
 }
@@ -33,7 +33,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignExtTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
 spag::DummyCbArg_t a;
-	fsm.assignCallback( st_Locked,   cb_Lock, a  );
+	fsm.assignCallback( st_Locked,   cb_Lock );
 	fsm.assignCallback( st_Unlocked, cb_Unlock, a );
 }
 

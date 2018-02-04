@@ -10,8 +10,6 @@ https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnst
 //#define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 
-//#define SPAG_PROVIDE_CALLBACK_TYPE
-//typedef bool CallbackArg_t;
 
 #include "spaghetti.hpp"
 
@@ -41,7 +39,6 @@ void configureFSM( fsm_t& fsm )
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
-//	spag::SpagFSM<States,Events,spag::NoTimer<States,Events,CallbackArg_t>,CallbackArg_t> fsm;
 	fsm_t fsm;
 	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
 

@@ -60,13 +60,6 @@ struct DummyCbArg_t {};
 
 //}
 
-//#ifndef SPAG_PROVIDE_CALLBACK_TYPE
-//	typedef void CallbackArg_t;
-//	typedef DummyCbArg_t CallbackArg_t;
-
-//#endif
-//typedef std::function<void(CallbackArg_t)> Callback_t;
-
 //-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
 template<typename STATE>
@@ -200,10 +193,11 @@ Requirements: the two enums \b MUST have the following requirements:
  - the last element \b must be NB_STATES and NB_EVENTS, respectively
  - the first state must have value 0
 */
-//template<typename STATE, typename EVENT,typename TIM,typename CBA=priv::DummyCbArg_t>
 template<typename STATE, typename EVENT,typename TIM,typename CBA=DummyCbArg_t>
 class SpagFSM
 {
+	typedef std::function<void(CBA)> Callback_t;
+
 	public:
 /// Constructor
 		SpagFSM() // : _current( static_cast<STATE>(0) )
@@ -214,10 +208,9 @@ class SpagFSM
 			priv::resizemat( _ignored_events, EVENT::NB_EVENTS, STATE::NB_STATES );
 
 			_callback.resize( STATE::NB_STATES );    // no callbacks stored at init
-//#ifdef SPAG_PROVIDE_CALLBACK_TYPE
 			if( !std::is_same<DummyCbArg_t, CBA>::value )
 				_callbackArg.resize( STATE::NB_STATES );
-//#endif
+
 			_timeout.resize(  STATE::NB_STATES );    // timeouts info (see class TimerEvent)
 
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
@@ -295,32 +288,26 @@ class SpagFSM
 			_ignored_events[ ev ][ st ] = 1;
 		}
 /// Assigns a callback function to a state, will be called each time we arrive on this state
-//		void assignCallback( STATE st, Callback_t func, CBA cb_arg=CBA() )
-		void assignCallback( STATE st, std::function<void(CBA)> func, CBA cb_arg=CBA() )
+		void assignCallback( STATE st, Callback_t func, CBA cb_arg=CBA() )
 		{
 			SPAG_CHECK_LESS( st, nbStates() );
 			_callback[ st ] = func;
-//#ifdef SPAG_PROVIDE_CALLBACK_TYPE
 			if( !std::is_same<CBA,DummyCbArg_t>::value )
 				_callbackArg[ st ] = cb_arg;
-//#endif
 		}
 
 /// Assigns a callback function to all the states, will be called each time the state is activated
-		void assignCallbackOnAll( std::function<void(CBA)> func )
-//		void assignCallbackOnAll( Callback_t func )
+		void assignCallbackOnAll( Callback_t func )
 		{
 			for( size_t i=0; i<STATE::NB_STATES; i++ )
 				_callback[ i ] = func;
 		}
 
-//#ifdef SPAG_PROVIDE_CALLBACK_TYPE
 		void assignCallbackValue( STATE st, CBA cb_arg )
 		{
 			SPAG_CHECK_LESS( st, nbStates() );
 			_callbackArg[ st ] = cb_arg;
 		}
-//#endif
 
 		void start() const
 		{
@@ -426,14 +413,6 @@ class SpagFSM
 #else
 			out += "no";
 #endif
-/*
-			out += "\n - SPAG_PROVIDE_CALLBACK_TYPE: ";
-#ifdef SPAG_PROVIDE_CALLBACK_TYPE
-			out += "yes";
-#else
-			out += "no";
-#endif
-*/
 			out += "\n";
 			return out;
 		}
@@ -457,16 +436,10 @@ class SpagFSM
 #ifdef SPAG_PRINT_STATES
 			std::cout << "  -callback function start:\n";
 #endif
-
-//#ifdef SPAG_PROVIDE_CALLBACK_TYPE
 				if( std::is_same<CBA,DummyCbArg_t>::value )
 					_callback.at( _data._current )( DummyCbArg_t() );
 				else
 					_callback.at( _data._current )( _callbackArg.at(_data._current) );
-//#else
-
-//#endif
-
 			}
 #ifdef SPAG_PRINT_STATES
 			else
@@ -483,13 +456,10 @@ class SpagFSM
 		std::vector<std::vector<STATE>>    _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore, 1; handle)
 		std::vector<TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
-		std::vector<std::function<void(CBA)>>            _callback;        ///< holds for each state the callback function to be called
-//		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
+		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
 
-// if the user code provides a value for the callbacks, then we must store these, per state
-//#ifdef SPAG_PROVIDE_CALLBACK_TYPE
-		std::vector<CBA>         _callbackArg;     ///< holds for each state the value to be passed to the callback function
-//#endif
+/// If the user code provides a value for the callbacks, then we must store these, per state. If not, then this will remain an empty vector
+		std::vector<CBA>                   _callbackArg;
 		TIM* timer;
 };
 //-----------------------------------------------------------------------------------
@@ -541,7 +511,6 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& str ) const
 	str << '\n';
 }
 //-----------------------------------------------------------------------------------
-//#ifdef SPAG_PROVIDE_CALLBACK_TYPE
 /// dummy struct, useful in case there is no need for a timer
 template<typename ST, typename EV,typename CBA=DummyCbArg_t>
 struct NoTimer
@@ -549,16 +518,6 @@ struct NoTimer
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
 	void timerCancel() {}
 };
-//#else
-/*
-template<typename ST, typename EV> //,typename CBAR>
-struct NoTimer
-{
-	void timerStart( const SpagFSM<ST,EV,NoTimer>* ) {}
-	void timerCancel() {}
-};
-*/
-//#endif // SPAG_PROVIDE_CALLBACK_TYPE
 
 //-----------------------------------------------------------------------------------
 
@@ -566,22 +525,6 @@ struct NoTimer
 
 /// A macro simplifying the FSM instanciation
 #define SPAG_DECLARE_FSM( fsm, st, ev ) spag::SpagFSM<st,ev,spag::NoTimer<st,ev>> fsm
-
-/*
-#ifdef SPAG_PROVIDE_CALLBACK_TYPE
-	template<typename ST, typename EV, typename CBAR>
-	using fsm_t1 = spag::SpagFSM<ST,EV,spag::NoTimer<ST,EV,CBAR>,CBAR>;
-
-	template<typename ST, typename EV,  typename TIM<typename ST, typename EV,typename CBAR>, typename CBAR>
-	using fsm_t2 = spag::SpagFSM<ST,EV,TIM<ST,EV,CBAR>,CBAR>;
-#else
-	template<typename ST, typename EV>
-	using fsm_t1 = spag::SpagFSM<ST,EV,spag::NoTimer<ST,EV>>;
-
-	template<typename ST, typename EV, typename TIM<typename ST, typename EV>>
-	using fsm_t2 = spag::SpagFSM<ST,EV,TIM<ST,EV>>;
-#endif
-*/
 
 /// A macro simplifying the FSM instanciation (version 2, if a timer is needed)
 #define SPAG_DECLARE_FSM_T( fsm, st, ev, tim ) spag::SpagFSM<st,ev,tim<st,ev>> fsm
@@ -679,7 +622,13 @@ Exiting...
 If this symbol is not defined, regular checking is done with the classical \c assert().
 As usual, this checking can be removed by defining the symbol \c NDEBUG.
 <br>
-- \c SPAG_PROVIDE_CALLBACK_TYPE : the default callback function signature is <code> void f()</code>.
+- \c SPAG_PROVIDE_CALLBACK_TYPE :
+
+<br>
+DEPRECATED!!!
+<br>
+
+the default callback function signature is <code> void f()</code>.
 With this symbol defined, user code can use callbacks having an argument.
 The type of the argument has to be defined before including the library.
 For example, to have an \c int argument, use this:

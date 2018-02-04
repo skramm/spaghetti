@@ -10,8 +10,6 @@ https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnst
 //#define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 
-//#define SPAG_PROVIDE_CALLBACK_TYPE
-typedef bool CallbackArg_t;
 
 #include "spaghetti.hpp"
 
