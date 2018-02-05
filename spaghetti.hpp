@@ -61,9 +61,6 @@ namespace spag {
 //namespace priv {
 /// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
 struct DummyCbArg_t {};
-//typedef void DummyCbArg_t;
-
-//}
 
 //-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
@@ -385,6 +382,21 @@ class SpagFSM
 			timer = t;
 		}
 
+#ifdef SPAG_ENUM_STRINGS
+		void AssignString( EVENT ev, std::string str )
+		{
+			SPAG_CHECK_LESS( ev, nbEvents() );
+			_str_events[ev] = str;
+		}
+		void AssignStrings2Events( const std::vector<std::pair<EVENT,std::string>>& v_str )
+		{
+			SPAG_CHECK_EQUAL( v_str.size(), NB_EVENTS );
+			for( const auto& p: v_str )
+				AssignString( p.first, p.second );
+		}
+#endif
+
+
 		void printConfig( std::ostream& str ) const;
 #ifdef SPAG_ENABLE_LOGGING
 /// Print dynamic data to \c str
@@ -466,7 +478,9 @@ class SpagFSM
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 		std::vector<TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
 		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
-
+#ifdef SPAG_ENUM_STRINGS
+		std::vector<std::string>           _str_events;     ///< holds events strings
+#endif
 /// If the user code provides a value for the callbacks, then we must store these, per state. If not, then this will remain an empty vector
 		std::vector<CBA>                   _callbackArg;
 		TIM* timer;
@@ -480,8 +494,12 @@ void
 printMatrix( std::ostream& str, const std::vector<std::vector<ST>>& mat, const std::vector<std::vector<char>>& ignored )
 {
 	assert( mat.size() );
+#ifdef SPAG_ENUM_STRINGS
+	size_t maxlength = std::
+#endif
+
 	std::string capt( "EVENTS" );
-	str << "       STATES:\n     ";
+	str << "       STATES:\n      ";
 	for( size_t i=0; i<mat[0].size(); i++ )
 		str << i << "  ";
 	str << "\n----|";
