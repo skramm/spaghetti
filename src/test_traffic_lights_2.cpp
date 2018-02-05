@@ -17,6 +17,19 @@ test_traffic_lights_client.cpp
 #include "spaghetti.hpp"
 
 #include <memory>
+#include <thread>
+#include <mutex>
+
+/// global pointer on mutex, will get initialised in getSingletonMutex()
+std::mutex* g_mutex;
+
+//-----------------------------------------------------------------------------------
+/// initialization of mutex pointer (classical static init pattern)
+static std::mutex* getSingletonMutex()
+{
+    static std::mutex instance;
+    return &instance;
+}
 
 //-----------------------------------------------------------------------------------
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
@@ -28,7 +41,7 @@ enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
 Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
 That last point isn't that obvious, has it also must have a lifespan not limited to some callback function.
 */
-template<typename ST, typename EV>
+template<typename ST, typename EV, typename CBA>
 struct AsioWrapper
 {
 	boost::asio::io_service io_service;
@@ -44,7 +57,7 @@ struct AsioWrapper
 	}
 
 /// timer callback function, called when timer expires
-	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper>* fsm  )
+	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
 		switch( err_code.value() ) // check if called because of timeout, or because of canceling operation
 		{
@@ -65,14 +78,14 @@ struct AsioWrapper
 		ptimer->cancel_one();
 	}
 
-	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper>* fsm )
+	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		int nb_sec = fsm->timeOutData( fsm->currentState() ).nbSec;
 		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
 
 		ptimer->async_wait(
 			boost::bind(
-				&AsioWrapper<ST,EV>::timerCallback,
+				&AsioWrapper<ST,EV,CBA>::timerCallback,
 				this,
 				boost::asio::placeholders::error,
 				fsm
@@ -83,10 +96,10 @@ struct AsioWrapper
 
 //-----------------------------------------------------------------------------------
 /// concrete class, implements udp_server and SpagFSM
-
+template<typename ST, typename EV, typename CBA>
 struct my_server : public udp_server<2048>
 {
-	my_server( AsioWrapper<STATE,EVENT>& asio_wrapper, int port_no )
+	my_server( AsioWrapper<STATE,EVENT,CBA>& asio_wrapper, int port_no )
 		: udp_server( asio_wrapper.io_service, port_no )
 	{}
 
@@ -112,36 +125,31 @@ struct my_server : public udp_server<2048>
 		return std::vector<BYTE>(); // return empty vector at present...
 	}
 
-	spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm;
+	spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA> fsm;
 };
 
 //-----------------------------------------------------------------------------------
-void TL_red(spag::DummyCbArg_t)
+/// callback function
+
+void cb_func( std::string s)
 {
-	std::cout << "RED\n";
-}
-void TL_orange(spag::DummyCbArg_t)
-{
-	std::cout << "ORANGE ON\n";
-}
-void TL_orange_off(spag::DummyCbArg_t)
-{
-	std::cout << "ORANGE OFF\n";
-}
-void TL_green(spag::DummyCbArg_t)
-{
-	std::cout << "GREEN\n";
+	std::cout << s << '\n';
 }
 
-typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm_t;
+typedef spag::SpagFSM<
+	STATE,
+	EVENT,
+	AsioWrapper<STATE,EVENT,std::string>,
+	std::string
+	> fsm_t;
 
 //-----------------------------------------------------------------------------------
 void
 configureFSM( fsm_t& fsm )
 {
-	fsm.assignTimeOut( ST_INIT,   5, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );
+	fsm.assignTimeOut( ST_INIT,   3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
+	fsm.assignTimeOut( ST_RED,    4, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,  4, ST_ORANGE );
 	fsm.assignTimeOut( ST_ORANGE, 2, ST_RED    );
 
 	fsm.assignTransitionAlways( EV_RESET,      ST_INIT ); // if reception of message EV_RESET, then switch to state ST_RED, whatever the current state is
@@ -150,24 +158,58 @@ configureFSM( fsm_t& fsm )
 	fsm.assignTimeOut( ST_WARNING_ON,  1, ST_WARNING_OFF );
 	fsm.assignTimeOut( ST_WARNING_OFF, 1, ST_WARNING_ON );
 
-	fsm.assignCallback( ST_RED,    TL_red );
-	fsm.assignCallback( ST_ORANGE, TL_orange );
-	fsm.assignCallback( ST_GREEN,  TL_green );
+	fsm.assignGlobalCallback( cb_func );
+	fsm.assignCallbackValue( ST_RED,         "RED" );
+	fsm.assignCallbackValue( ST_GREEN,       "GREEN" );
+	fsm.assignCallbackValue( ST_ORANGE,      "ORANGE" );
+	fsm.assignCallbackValue( ST_ORANGE,      "ORANGE" );
+	fsm.assignCallbackValue( ST_WARNING_ON,  "ORANGE-ON" );
+	fsm.assignCallbackValue( ST_WARNING_OFF, "ORANGE-OFF" );
+	fsm.assignCallbackValue( ST_INIT,        "Init" );
+}
+//-----------------------------------------------------------------------------------
+void
+UI_thread( const fsm_t* fsm )
+{
+	{
+		std::lock_guard<std::mutex> lock(*g_mutex);
+		std::cout << "Thread start, enter key anytime\n";
+	}
+    do
+    {
+		char key;
+		std::cin >> key;
+		{
+			std::lock_guard<std::mutex> lock(*g_mutex);
+			std::cout << "**********************KEY FETCH: " << key;
 
-	fsm.assignCallback( ST_WARNING_ON, TL_orange );
-	fsm.assignCallback( ST_WARNING_OFF, TL_orange_off );
-
-//	fsm.handleEvent( EV_RESET,)
+			switch( key )
+			{
+				case 'a':
+					std::cout << ": switch to warning mode\n";
+					fsm->processExtEvent( EV_WARNING_ON );
+				break;
+				case 'b':
+					std::cout << ": reset\n";
+					fsm->processExtEvent( EV_RESET );
+				break;
+				default:
+					std::cout << ": invalid key" << std::endl;
+			}
+		}
+    }
+    while(1);
 }
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
+	g_mutex = getSingletonMutex();
 	try
 	{
-		AsioWrapper<STATE,EVENT> asio;
+		AsioWrapper<STATE,EVENT,std::string> asio;
 		std::cout << "io_service created\n";
 
-		my_server server( asio, 12345 );
+		my_server<STATE,EVENT,std::string> server( asio, 12345 );
 
 		std::cout << argv[0] << ": " << server.fsm.buildOptions() << '\n';
 		std::cout << "server created\n";
@@ -180,9 +222,11 @@ int main( int argc, char* argv[] )
 		server.start_receive();
 		std::cout << "server waiting\n";
 
+
 		server.fsm.start();
 
 		std::cout << " -start event loop\n";
+		std::thread thread_ui( UI_thread, &server.fsm );
 		asio.run();
 	}
 	catch( std::exception& e )
