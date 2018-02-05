@@ -30,8 +30,8 @@ typedef spag::SpagFSM<States,Events,spag::NoTimer<States,Events>> fsm_t;
 //-----------------------------------------------------------------------------------
 void configureFSM( fsm_t& fsm )
 {
-	fsm.assignExtTransition( st_Locked,   ev_Coin, st_Unlocked );
-	fsm.assignExtTransition( st_Unlocked, ev_Push, st_Locked );
+	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
+	fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
 spag::DummyCbArg_t a;
 	fsm.assignCallback( st_Locked,   cb_Lock );
 	fsm.assignCallback( st_Unlocked, cb_Unlock, a );
@@ -55,12 +55,12 @@ int main( int argc, char* argv[] )
 		{
 			case 'A':
 				std::cout << "Event: push\n";
-				fsm.processExtEvent( ev_Push );
+				fsm.processEvent( ev_Push );
 			break;
 
 			case 'B':
 				std::cout << "Event: coin\n";
-				fsm.processExtEvent( ev_Coin );
+				fsm.processEvent( ev_Coin );
 			break;
 
 			default: std:: cout << "invalid key\n";

@@ -43,7 +43,7 @@ struct AsioWrapper
 
 	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper>* fsm  )
 	{
-		fsm->processTimerEvent();
+		fsm->processTimeOut();
 	}
 
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper>* fsm )

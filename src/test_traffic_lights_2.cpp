@@ -8,10 +8,8 @@ Similar to version 1, with an added udp server part, that can receive data from
 test_traffic_lights_client.cpp
 */
 
-
 #include "udp_server.hpp"
 
-// this symbol is a build-time option
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #include "spaghetti.hpp"
@@ -24,7 +22,7 @@ test_traffic_lights_client.cpp
 std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------
-/// initialization of mutex pointer (classical static init pattern)
+/// initialization of mutex pointer (classical static initialization pattern)
 static std::mutex* getSingletonMutex()
 {
     static std::mutex instance;
@@ -32,8 +30,13 @@ static std::mutex* getSingletonMutex()
 }
 
 //-----------------------------------------------------------------------------------
-enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
-enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
+enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_BLINK_ON, ST_BLINK_OFF, NB_STATES };
+enum EVENT {
+	EV_RESET=0,     ///< reset button
+	EV_WARNING_ON,  ///< blinking mode on
+	EV_WARNING_OFF, ///< blinking mode off
+	NB_EVENTS
+};
 
 //-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff
@@ -56,7 +59,7 @@ struct AsioWrapper
 		io_service.run();
 	}
 
-/// timer callback function, called when timer expires
+/// Timer callback function, called when timer expires. Mandatory function for SpagFSM
 	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
 		switch( err_code.value() ) // check if called because of timeout, or because of canceling operation
@@ -64,7 +67,7 @@ struct AsioWrapper
 			case boost::system::errc::operation_canceled:    // do nothing
 			break;
 			case 0:
-				fsm->processTimerEvent();                    // normal operation: timer has expired
+				fsm->processTimeOut();                    // normal operation: timer has expired
 			break;
 			default:                                         // all other values
 				std::cout << "unexpected error code, message=" << err_code.message() << "\n";
@@ -78,6 +81,7 @@ struct AsioWrapper
 		ptimer->cancel_one();
 	}
 
+/// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		int nb_sec = fsm->timeOutData( fsm->currentState() ).nbSec;
@@ -95,7 +99,7 @@ struct AsioWrapper
 };
 
 //-----------------------------------------------------------------------------------
-/// concrete class, implements udp_server and SpagFSM
+/// concrete class, implements udp_server and SpagFSM, and triggers event on the FSM
 template<typename ST, typename EV, typename CBA>
 struct my_server : public udp_server<2048>
 {
@@ -112,11 +116,14 @@ struct my_server : public udp_server<2048>
 		std::cout << "received " << nb_bytes << " bytes\n";
 		switch( buffer.at(0) )
 		{
-			case 'A':
-				fsm.processExtEvent( EV_WARNING_ON );
+			case 'a':
+				fsm.processEvent( EV_WARNING_ON );
 			break;
-			case 'B':
-				fsm.processExtEvent( EV_RESET );
+			case 'b':
+				fsm.processEvent( EV_WARNING_OFF );
+			break;
+			case 'c':
+				fsm.processEvent( EV_RESET );
 			break;
 			default:
 				std::cout << "Error: invalid message received !\n";
@@ -147,27 +154,28 @@ typedef spag::SpagFSM<
 void
 configureFSM( fsm_t& fsm )
 {
-	fsm.assignTimeOut( ST_INIT,   3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,    4, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,  4, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE, 2, ST_RED    );
+	fsm.assignTimeOut( ST_INIT,      3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
+	fsm.assignTimeOut( ST_RED,       4, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,     4, ST_ORANGE );
+	fsm.assignTimeOut( ST_ORANGE,    2, ST_RED    );
+	fsm.assignTimeOut( ST_BLINK_ON,  1, ST_BLINK_OFF );
+	fsm.assignTimeOut( ST_BLINK_OFF, 1, ST_BLINK_ON );
 
-	fsm.assignTransitionAlways( EV_RESET,      ST_INIT ); // if reception of message EV_RESET, then switch to state ST_RED, whatever the current state is
-	fsm.assignTransitionAlways( EV_WARNING_ON, ST_WARNING_ON );
-
-	fsm.assignTimeOut( ST_WARNING_ON,  1, ST_WARNING_OFF );
-	fsm.assignTimeOut( ST_WARNING_OFF, 1, ST_WARNING_ON );
+	fsm.assignTransitionAlways( EV_RESET,       ST_INIT ); // if reception of message EV_RESET, then switch to state ST_INIT, whatever the current state is
+	fsm.assignTransitionAlways( EV_WARNING_ON,  ST_BLINK_ON );
+	fsm.assignTransition(       ST_BLINK_OFF, EV_WARNING_OFF, ST_RED );
+	fsm.assignTransition(       ST_BLINK_ON,  EV_WARNING_OFF, ST_RED );
 
 	fsm.assignGlobalCallback( cb_func );
-	fsm.assignCallbackValue( ST_RED,         "RED" );
-	fsm.assignCallbackValue( ST_GREEN,       "GREEN" );
-	fsm.assignCallbackValue( ST_ORANGE,      "ORANGE" );
-	fsm.assignCallbackValue( ST_ORANGE,      "ORANGE" );
-	fsm.assignCallbackValue( ST_WARNING_ON,  "ORANGE-ON" );
-	fsm.assignCallbackValue( ST_WARNING_OFF, "ORANGE-OFF" );
-	fsm.assignCallbackValue( ST_INIT,        "Init" );
+	fsm.assignCallbackValue( ST_RED,       "RED" );
+	fsm.assignCallbackValue( ST_GREEN,     "GREEN" );
+	fsm.assignCallbackValue( ST_ORANGE,    "ORANGE" );
+	fsm.assignCallbackValue( ST_BLINK_ON,  "BLINK-ON" );
+	fsm.assignCallbackValue( ST_BLINK_OFF, "BLINK-OFF" );
+	fsm.assignCallbackValue( ST_INIT,      "Init" );
 }
 //-----------------------------------------------------------------------------------
+/// Console User Interface, enables action on FSM from user input
 void
 UI_thread( const fsm_t* fsm )
 {
@@ -187,11 +195,15 @@ UI_thread( const fsm_t* fsm )
 			{
 				case 'a':
 					std::cout << ": switch to warning mode\n";
-					fsm->processExtEvent( EV_WARNING_ON );
+					fsm->processEvent( EV_WARNING_ON );
 				break;
 				case 'b':
+					std::cout << ": switch to normal mode\n";
+					fsm->processEvent( EV_WARNING_OFF );
+				break;
+				case 'c':
 					std::cout << ": reset\n";
-					fsm->processExtEvent( EV_RESET );
+					fsm->processEvent( EV_RESET );
 				break;
 				default:
 					std::cout << ": invalid key" << std::endl;
@@ -222,11 +234,11 @@ int main( int argc, char* argv[] )
 		server.start_receive();
 		std::cout << "server waiting\n";
 
-
 		server.fsm.start();
 
-		std::cout << " -start event loop\n";
+		std::cout << " -start UI thread\n";
 		std::thread thread_ui( UI_thread, &server.fsm );
+		std::cout << " -start event loop\n";
 		asio.run();
 	}
 	catch( std::exception& e )

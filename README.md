@@ -3,7 +3,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 # General information
 - Author: S. Kramm, LITIS, Rouen, France - 2018
-- Status: alpha (WIP !)
+- Status: alpha (WIP !), API is not stabilized yet
 - Licence: GPL v3
 - hosting: https://github.com/skramm/spaghetti
 
@@ -17,6 +17,33 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
  - logging capability
  - provided with some sample programs, see src/html/index.html
 
+ ## Why should I use this ?
+  - pros: it is pretty simple to get running (sample programs provided)
+  - cons: it is inherently not type safe, as states and events are provided as enum values.
+  If you can live with that, then you may go ahead.
+
+# Usage:
+
+## Instanciate the FSM
+
+
+## configure the FSM
+
+## run the FSM
+
+As explained above, two parts are to be considered:
+
+ 1. Initializing the FSM into the first state.
+```C++
+	fsm.start();
+```
+
+2. calling the trigger member functions when the event is detected
+
+```C++
+	fsm.start();
+```
+
 
 # FAQ
 
@@ -26,7 +53,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
 
-# Reference
+# References
 
 https://en.wikipedia.org/wiki/Finite-state_machine
 

@@ -103,8 +103,6 @@ src/html/index.html: $(SRC_FILES)
 install:
 	cp spaghetti.hpp $(DEST_PATH)
 
-
-
 dot: $(SVG_FILES)
 	@echo "- Done target $@"
 
@@ -112,9 +110,7 @@ dot: $(SVG_FILES)
 GRAPHIZ_APP = dot
 
 %.svg: %.dot
-#	$(GRAPHIZ_APP) -Tsvg -Grankdir=LR -Nfontsize=24 $< >$@
 	$(GRAPHIZ_APP) -Tsvg $< >$@
-
 
 show:
 	@echo HEADER_FILES=$(HEADER_FILES)
@@ -140,7 +136,6 @@ cleanbin:
 
 cleanall: clean cleandoc cleanbin
 	@echo "done"
-
 
 
 # generic compile rule

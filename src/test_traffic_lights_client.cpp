@@ -32,12 +32,12 @@ int main( int argc, char* argv[] )
 		udp::socket socket( io_service );
 		socket.open( udp::v4() );
 
-		int iter(0);
+//		int iter(0);
 		do
 		{
 			io_service.reset();
 			std::string str;
-			std::cout << "Enter A or B (A:warning B:reset): ";
+			std::cout << "Enter key: (a:warning on, b:warning off, c:reset): ";
 			std::cin >> str;
 //			std::string str_frame( "frame " + std::to_string(iter++) + ": message=" + str );
 

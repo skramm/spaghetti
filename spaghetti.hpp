@@ -136,7 +136,7 @@ struct FsmData
 	/// Print dynamic data to \c str
 	void printLoggedData( std::ostream& str ) const
 	{
-		str << "FSM data:\n"; // - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
+//		str << "FSM data:\n"; // - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
 		str << " - State counters:\n";
 		for( size_t i=0; i<_stateCounter.size(); i++ )
 			str << i << ": " << _stateCounter[i] << '\n';
@@ -259,7 +259,7 @@ class SpagFSM
 #endif
 
 /// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
-		void assignExtTransition( STATE st1, EVENT ev, STATE st2 )
+		void assignTransition( STATE st1, EVENT ev, STATE st2 )
 		{
 			SPAG_CHECK_LESS( st1, nbStates() );
 			SPAG_CHECK_LESS( st2, nbStates() );
@@ -302,7 +302,7 @@ class SpagFSM
 		}
 
 /// Assigns a callback function to all the states, will be called each time the state is activated
-		void assignCallbackOnAll( Callback_t func )
+		void assignGlobalCallback( Callback_t func )
 		{
 			for( size_t i=0; i<STATE::NB_STATES; i++ )
 				_callback[ i ] = func;
@@ -320,7 +320,7 @@ class SpagFSM
 		}
 
 /// Your timer end function/callback should call this when the timer expires
-		void processTimerEvent() const
+		void processTimeOut() const
 		{
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing timeout event, delay was " << _timeout.at( _data._current ).nbSec << " s.\n";
@@ -337,7 +337,7 @@ class SpagFSM
 		}
 
 /// Your callback should call this function when an external event occurs
-		void processExtEvent( EVENT ev ) const
+		void processEvent( EVENT ev ) const
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
 #ifdef SPAG_PRINT_STATES
@@ -463,7 +463,7 @@ class SpagFSM
 		mutable FsmData<STATE>             _data;
 #endif
 		std::vector<std::vector<STATE>>    _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
-		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore, 1; handle)
+		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 		std::vector<TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
 		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
 
@@ -474,49 +474,61 @@ class SpagFSM
 //-----------------------------------------------------------------------------------
 namespace priv
 {
-	/// helper function template for printConfig()
-	template<typename T>
-	void
-	printMatrix( std::ostream& str, const std::vector<std::vector<T>>& mat, bool ch )
+/// helper function template for printConfig()
+template<typename ST>
+void
+printMatrix( std::ostream& str, const std::vector<std::vector<ST>>& mat, const std::vector<std::vector<char>>& ignored )
+{
+	assert( mat.size() );
+	std::string capt( "EVENTS" );
+	str << "       STATES:\n     ";
+	for( size_t i=0; i<mat[0].size(); i++ )
+		str << i << "  ";
+	str << "\n----|";
+	for( size_t i=0; i<mat[0].size(); i++ )
+		str << "---";
+	str << '\n';
+	for( size_t i=0; i<std::max(capt.size(),mat.size()); i++ )
 	{
-		assert( mat.size() );
-		str << "       STATES:\n   ";
-		for( size_t i=0; i<mat[0].size(); i++ )
-			str << i << "  ";
-		str << "\n--|";
-		for( size_t i=0; i<mat[0].size(); i++ )
-			str << "---";
-		str << '\n';
-		for( size_t i=0; i<mat.size(); i++ )
+		if( i<capt.size() )
+			str << capt[i];
+		else
+			str << ' ';
+		if( i<mat.size() )
 		{
-			str << i << " | ";
-			for( auto e: mat[i] )
-				str << (ch?e:(e?'X':'.')) << "  ";
-			str << '\n';
+			str << ' ' << i << " | ";
+			for( size_t j=0; j<mat[i].size(); j++ )
+			{
+				if( ignored[i][j] )
+					str << mat[i][j];
+				else
+					str << 'X';
+				str << "  ";
+			}
 		}
+		str << '\n';
 	}
 }
+
+} // namespace priv end
 //-----------------------------------------------------------------------------------
 /// Printing function
 template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& str ) const
 {
-	str << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
+	str << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb external events=" << nbEvents();
 
-	str << "\n - Transition matrix:\n";
-	priv::printMatrix( str, _transition_mat, true );
+	str << "\n - Transition matrix: (X:ignored event)\n";
+	priv::printMatrix( str, _transition_mat, _ignored_events );
 
-	str << "\n - Ignored events:\n";
-	priv::printMatrix( str, _ignored_events, false );
-
-	str << "\n - States with timeout\n";
+	str << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
 	str << "       STATES:\n   ";
 	for( size_t i=0; i<_timeout.size(); i++ )
 		str << i << "  ";
-	str << "\n--|";
+	str << "\n   ";
 	for( size_t i=0; i<_timeout.size(); i++ )
-		str <<  (_timeout[i].enabled?'X':'.') << "  ";
+		str <<  (_timeout[i].enabled?'o':'.') << "  ";
 	str << '\n';
 }
 //-----------------------------------------------------------------------------------
