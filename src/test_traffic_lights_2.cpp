@@ -12,6 +12,7 @@ test_traffic_lights_client.cpp
 
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
+#define SPAG_ENUM_STRINGS
 #include "spaghetti.hpp"
 
 #include <memory>
@@ -173,6 +174,13 @@ configureFSM( fsm_t& fsm )
 	fsm.assignCallbackValue( ST_BLINK_ON,  "BLINK-ON" );
 	fsm.assignCallbackValue( ST_BLINK_OFF, "BLINK-OFF" );
 	fsm.assignCallbackValue( ST_INIT,      "Init" );
+
+	std::vector<std::pair<EVENT,std::string>> v_str = {
+		{ EV_RESET, "Reset" },
+		{ EV_WARNING_ON, "Warning On" },
+		{ EV_WARNING_OFF, "Warning off" }
+	};
+	fsm.assignStrings2Events( v_str );
 }
 //-----------------------------------------------------------------------------------
 /// Console User Interface, enables action on FSM from user input

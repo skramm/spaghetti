@@ -221,6 +221,9 @@ class SpagFSM
 #ifdef SPAG_ENABLE_LOGGING
 			_data.alloc( STATE::NB_STATES, EVENT::NB_EVENTS );
 #endif
+#ifdef SPAG_ENUM_STRINGS
+			_str_events.resize( EVENT::NB_EVENTS );
+#endif
 		}
 
 		void assignIgnEvMatrix( const std::vector<std::vector<int>>& mat )
@@ -383,16 +386,16 @@ class SpagFSM
 		}
 
 #ifdef SPAG_ENUM_STRINGS
-		void AssignString( EVENT ev, std::string str )
+		void assignString2Event( EVENT ev, std::string str )
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
 			_str_events[ev] = str;
 		}
-		void AssignStrings2Events( const std::vector<std::pair<EVENT,std::string>>& v_str )
+		void assignStrings2Events( const std::vector<std::pair<EVENT,std::string>>& v_str )
 		{
-			SPAG_CHECK_EQUAL( v_str.size(), NB_EVENTS );
+			SPAG_CHECK_EQUAL( v_str.size(), EVENT::NB_EVENTS );
 			for( const auto& p: v_str )
-				AssignString( p.first, p.second );
+				assignString2Event( p.first, p.second );
 		}
 #endif
 
@@ -467,6 +470,7 @@ class SpagFSM
 				std::cout << "  -no callback provided\n";
 #endif
 		}
+		void printMatrix( std::ostream& str ) const;
 
 	private:
 #ifdef SPAG_ENABLE_LOGGING
@@ -488,66 +492,98 @@ class SpagFSM
 //-----------------------------------------------------------------------------------
 namespace priv
 {
-/// helper function template for printConfig()
-template<typename ST>
 void
-printMatrix( std::ostream& str, const std::vector<std::vector<ST>>& mat, const std::vector<std::vector<char>>& ignored )
+PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 {
-	assert( mat.size() );
+	assert( str.size() <= maxlength );
+	out << str;
+	for( size_t i=0; i<maxlength-str.size(); i++ )
+		out << ' ';
+}
+}
+/// helper function template for printConfig()
+template<typename ST, typename EV,typename T,typename CBA>
+void
+SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
+{
+	assert( _transition_mat.size() );
+	size_t maxlength(0);
 #ifdef SPAG_ENUM_STRINGS
-	size_t maxlength = std::
+	if( _str_events.size() > 1 )
+	{
+		auto itmax = std::max_element(
+			_str_events.begin(),
+			_str_events.end(),
+			[]( const std::string& s1, const std::string& s2 ){ return s1.size()<s2.size(); } // lambda
+		);
+		maxlength = itmax->size();
+	}
 #endif
 
 	std::string capt( "EVENTS" );
-	str << "       STATES:\n      ";
-	for( size_t i=0; i<mat[0].size(); i++ )
-		str << i << "  ";
-	str << "\n----|";
-	for( size_t i=0; i<mat[0].size(); i++ )
-		str << "---";
-	str << '\n';
-	for( size_t i=0; i<std::max(capt.size(),mat.size()); i++ )
+	out << "       STATES:\n      ";
+	for( size_t i=0; i<maxlength; i++ )
+		out << ' ';
+	for( size_t i=0; i<_transition_mat[0].size(); i++ )
+		out << i << "  ";
+	out << "\n----";
+	for( size_t i=0; i<maxlength; i++ )
+		out << '-';
+	out << '|';
+	for( size_t i=0; i<_transition_mat[0].size(); i++ )
+		out << "---";
+	out << '\n';
+
+#ifdef SPAG_ENUM_STRINGS
+	for( size_t i=0; i<_transition_mat.size(); i++ )
+	{
+		if( maxlength )
+			priv::PrintEnumString( out, _str_events[i], maxlength );
+#else
+	for( size_t i=0; i<std::max(capt.size(),_transition_mat.size()); i++ )
 	{
 		if( i<capt.size() )
-			str << capt[i];
+			out << capt[i];
 		else
-			str << ' ';
-		if( i<mat.size() )
+#endif
+			out << ' ';
+
+		if( i<_transition_mat.size() )
 		{
-			str << ' ' << i << " | ";
-			for( size_t j=0; j<mat[i].size(); j++ )
+			out << ' ' << i << " | ";
+			for( size_t j=0; j<_transition_mat[i].size(); j++ )
 			{
-				if( ignored[i][j] )
-					str << mat[i][j];
+				if( _ignored_events[i][j] )
+					out << _transition_mat[i][j];
 				else
-					str << 'X';
-				str << "  ";
+					out << 'X';
+				out << "  ";
 			}
 		}
-		str << '\n';
+		out << '\n';
 	}
 }
 
-} // namespace priv end
+//} // namespace priv end
 //-----------------------------------------------------------------------------------
 /// Printing function
 template<typename ST, typename EV,typename T,typename CBA>
 void
-SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& str ) const
+SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out ) const
 {
-	str << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb external events=" << nbEvents();
+	out << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb external events=" << nbEvents();
 
-	str << "\n - Transition matrix: (X:ignored event)\n";
-	priv::printMatrix( str, _transition_mat, _ignored_events );
+	out << "\n - Transition matrix: (X:ignored event)\n";
+	printMatrix( out ); //, _transition_mat, _ignored_events );
 
-	str << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
-	str << "       STATES:\n   ";
+	out << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
+	out << "       STATES:\n   ";
 	for( size_t i=0; i<_timeout.size(); i++ )
-		str << i << "  ";
-	str << "\n   ";
+		out << i << "  ";
+	out << "\n   ";
 	for( size_t i=0; i<_timeout.size(); i++ )
-		str <<  (_timeout[i].enabled?'o':'.') << "  ";
-	str << '\n';
+		out <<  (_timeout[i].enabled?'o':'.') << "  ";
+	out << '\n';
 }
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_GENERATE_DOT
