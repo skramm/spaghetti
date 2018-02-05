@@ -24,26 +24,55 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 # Usage:
 
+--- TO BE CONTINUED ---
+
 ## Instanciate the FSM
 
+First, create enums for states and events:
+```C++
+enum States { st_init, st_state_1, st_state_2, st_state_3, NB_STATES };
+enum Events { ev_button_1, ev_button_2, ev_button_3, NB_EVENTS };
+```
+Then, if you you don't need any timer:
+```C++
+spag::SpagFSM<States,Events> fsm;
+```
 
-## configure the FSM
+## Configure the FSM
 
-## run the FSM
+Now, you need to build your FSM, that is:
+- define what event in what state will trigger switching to what state.
+For example, say that if the active state is `st_state_1` and we have an event `ev_button_1`, then we want to switch to state `st_state_1`.
+This will be done as below:
+```C++
+	fsm.assignTransition( st_state_1, ev_button_1, st_state_2 );
+```
+
+- define what states will have a time out, and to what state we want to switch when the time out is expired.
+```C++
+	fsm.assignTimeOut( st_state_1, 5, st_state_2 );
+```
+
+## Run the FSM
 
 As explained above, two parts are to be considered:
 
- 1. Initializing the FSM into the first state.
+ 1. Initializing the FSM into the first state, before entering your event loop:
 ```C++
 	fsm.start();
 ```
+This will run the callback that is assigne to initial state (state "0") and start the timer, if a time out has been assigned to this state.
 
 2. calling the trigger member functions when the event is detected
 
+If its an "external" event:
 ```C++
-	fsm.start();
+	fsm.processEvent( Event );
 ```
-
+If it's a "TimeOut" event:
+```C++
+	fsm.processTimeOut();
+```
 
 # FAQ
 
