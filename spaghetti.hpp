@@ -118,7 +118,7 @@ struct RunTimeData
 	struct StateChangeEvent
 	{
 		ST state;
-		EV event;
+		size_t event;
 		std::chrono::duration<double> elapsed;
 
 		friend std::ostream& operator << ( std::ostream& s, const StateChangeEvent& sce )
@@ -141,7 +141,7 @@ struct RunTimeData
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
 		_stateCounter.resize( nbStates,   0 );
-		_eventCounter.resize( nbEvents+1, 0 );   // last element is used for timeout events
+		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass states")
 	}
 	void clear()
 	{
@@ -169,13 +169,13 @@ struct RunTimeData
 		for( size_t i=0; i<_history.size(); i++ )
 			str << _history[i];
 	}
-	void switchState( ST st, EV ev )
+	void switchState( ST st, size_t ev )
 	{
 		_current = st;
-		assert( ev < EV::NB_EVENTS+1 );
+		assert( ev < EV::NB_EVENTS+2 );
 		assert( st < ST::NB_STATES );
-		_eventCounter.at( ev )++;
-		_stateCounter[st]++;
+		_eventCounter[ ev ]++;
+		_stateCounter[ st ]++;
 		_history.push_back( StateChangeEvent{ st, ev, std::chrono::high_resolution_clock::now() - _startTime } );
 	}
 #else
@@ -230,6 +230,7 @@ class SpagFSM
 				_callbackArg.resize( ST::NB_STATES );
 
 			_timeout.resize( ST::NB_STATES );    // timeouts info (see class TimerEvent)
+			_isPassState.resize( ST::NB_STATES );
 
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
@@ -265,8 +266,20 @@ class SpagFSM
 			SPAG_CHECK_LESS( st1, nbStates() );
 			SPAG_CHECK_LESS( st2, nbStates() );
 			SPAG_CHECK_LESS( ev,  nbEvents() );
-			_transition_mat.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = st2;
-			_ignored_events.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = 1;
+			_transition_mat[ static_cast<int>( ev ) ][ static_cast<int>( st1 ) ] = st2;
+			_ignored_events[ static_cast<int>( ev ) ][ static_cast<int>( st1 ) ] = 1;
+		}
+
+/// Assigns a transition to a "pass state": once on state \c st1, the FSM will swith right away to \c st2
+		void assignTransition( ST st1, ST st2 )
+		{
+			SPAG_CHECK_LESS( st1, nbStates() );
+			SPAG_CHECK_LESS( st2, nbStates() );
+			for( auto& line: _transition_mat )
+				line[static_cast<int>( st1 )] = st2;
+			for( auto& line: _ignored_events )
+				line[static_cast<int>( st1 )] = 1;
+			_isPassState[st1] = 1;
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final:
@@ -373,7 +386,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #else
 			_rtdata.switchState( _timeout.at( _rtdata._current ).nextState );
 #endif
-
 			runAction();
 		}
 
@@ -394,7 +406,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #else
 				_rtdata.switchState( _transition_mat[ev].at( _rtdata._current ) );
 #endif
-
 				runAction();                                        // 3 - call the callback function
 			}
 #ifdef SPAG_PRINT_STATES
@@ -406,7 +417,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /** \name Misc. helper functions */
 ///@{
-
 		size_t nbStates() const
 		{
 			assert( _transition_mat.size() );
@@ -420,7 +430,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			return _rtdata._current;
 		}
-
 		Duration timeOutDuration( ST st ) const
 		{
 			return _timeout.at(st).duration;
@@ -483,10 +492,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void writeDotFile( std::string fn ) const;
 #endif
 ///@}
+
 ///////////////////////////////////
 // private member function section
 ///////////////////////////////////
-
 	private:
 		void runAction() const
 		{
@@ -515,6 +524,15 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			else
 				std::cout << "  -no callback provided\n";
 #endif
+			if( _isPassState[currentState()] )
+			{
+#ifdef SPAG_ENABLE_LOGGING
+				_rtdata.switchState( _timeout.at( _rtdata._current ).nextState, EV::NB_EVENTS+1 );
+#else
+				_rtdata.switchState( _timeout.at( _rtdata._current ).nextState );
+#endif
+				runAction();
+			}
 		}
 		void printMatrix( std::ostream& str ) const;
 
@@ -528,10 +546,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #else
 		mutable priv::RunTimeData<ST>             _rtdata;
 #endif
-		std::vector<std::vector<ST>>    _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
-		std::vector<priv::TimerEvent<ST>>     _timeout;         ///< Holds for each state the information on timeout
+		std::vector<priv::TimerEvent<ST>>  _timeout;         ///< Holds for each state the information on timeout
 		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
+		std::vector<char>                  _isPassState;     ///< holds 1 if this is a "pass state", that is a state with only one transition and no timeout
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _str_events;     ///< holds events strings
 #endif

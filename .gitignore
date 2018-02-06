@@ -1,6 +1,5 @@
 # Ignore codeblocks layout files
 *.layout
-*.dot
 *.svg
 
 

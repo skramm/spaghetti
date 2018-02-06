@@ -1,10 +1,7 @@
 /**
 \file test_traffic_lights_client.cpp
 \brief client-side for test_traffic_lights_1.cpp .
-sends udp frames to the server
-
-status: WIP
-
+sends udp frames to the server, using port 12345
 */
 
 #include <string>

@@ -1,8 +1,7 @@
 /**
 \file test_buttons_2.cpp
-\brief Simple example of an SpagFSM without timer and with the default callback function type (different callback function for each state).
-
-https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
+\brief Turnstyle example: FSM without timer and with the default callback function type (different callback function for each state).
+See https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
 */
 #include <iostream>

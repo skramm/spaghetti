@@ -51,6 +51,7 @@ OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%,$(SRC_FILES))
 
 DOT_FILES := $(wildcard *.dot)
+DOT_FILES += $(wildcard src/*.dot)
 SVG_FILES := $(DOT_FILES:.dot=.svg)
 
 FILES=$(basename $(SRC_FILES))

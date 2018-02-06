@@ -1,0 +1,18 @@
+digraph G {
+size="8,10";
+{ rank = same; 0; }
+
+{ rank = same; 1; 2; 3; }
+
+{ rank = same; 4; }
+
+0->1[headport=n];
+1->2;
+2->3;
+3->1[headport=ne];
+1->4;
+2->4;
+3->4;
+4->0;
+}
+

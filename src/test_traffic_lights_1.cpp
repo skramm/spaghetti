@@ -1,10 +1,6 @@
 /**
 \file test_traffic_lights_1.cpp
-\brief a simple traffic light example, build using boost::asio
-
-status: seems ok
-
-Just a POC, no network involved here, only timers
+\brief a simple traffic light example, build using boost::asio as timer backend
 */
 
 
