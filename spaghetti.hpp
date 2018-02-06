@@ -82,19 +82,23 @@ struct TimerEvent
 		enabled = true;
 	}
 };
+
 //-----------------------------------------------------------------------------------
+/// This namespace is just a security, so user code won't hit into this
+namespace priv {
+
 /// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref BuildOption )
 #ifdef SPAG_ENABLE_LOGGING
-template<typename STATE,typename EVENT>
+template<typename ST,typename EV>
 #else
-template<typename STATE>
+template<typename ST>
 #endif
-struct FsmData
+struct RunTimeData
 {
-	STATE _current = static_cast<STATE>(0);
+	ST _current = static_cast<ST>(0);
 
 #ifdef SPAG_ENABLE_LOGGING
-	FsmData()
+	RunTimeData() // SpagFSM<ST,EV,TIM<ST,EV,CBA>,CBA>* parent )
 	{
 		_startTime = std::chrono::high_resolution_clock::now();
 	}
@@ -103,13 +107,18 @@ struct FsmData
 /// a state-change event, used for logging, see _history
 	struct StateChangeEvent
 	{
-		STATE state;
-		EVENT event;
+		ST state;
+		EV event;
 		std::chrono::duration<double> elapsed;
 
 		friend std::ostream& operator << ( std::ostream& s, const StateChangeEvent& sce )
 		{
-			s << sce.elapsed.count() << ": event: " << sce.event << ": switch to state " << sce.state << '\n';
+			char sep(';');
+			s << sce.elapsed.count() << sep << sce.event << sep;
+//#ifdef SPAG_ENUM_STRINGS
+//			s << ?
+//#endif
+			s << sce.state << '\n';
 			return s;
 		}
 	};
@@ -131,9 +140,8 @@ struct FsmData
 		_eventCounter.clear();
 	}
 	/// Print dynamic data to \c str
-	void printLoggedData( std::ostream& str ) const
+	void printData( std::ostream& str ) const
 	{
-//		str << "FSM data:\n"; // - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
 		str << " - State counters:\n";
 		for( size_t i=0; i<_stateCounter.size(); i++ )
 			str << i << ": " << _stateCounter[i] << '\n';
@@ -142,33 +150,31 @@ struct FsmData
 		for( size_t i=0; i<_eventCounter.size(); i++ )
 			str << i << ": " << _eventCounter[i] << '\n';
 		str << '\n';
-		str << " - Run history:\n";
+		str << " - Run history:\n#time;event;";
+/// \todo find a way to print the enum string in history (require a pointer on parent struct. But lots of templating involved...)
+//#ifdef SPAG_ENUM_STRINGS
+//		str << "event string;";
+//#endif
+		str << "state\n";
 		for( size_t i=0; i<_history.size(); i++ )
 			str << _history[i];
 	}
-#endif
-
-#ifdef SPAG_ENABLE_LOGGING
-	void switchState( STATE st, EVENT ev )
+	void switchState( ST st, EV ev )
 	{
 		_current = st;
-		assert( ev < EVENT::NB_EVENTS+1 );
-		assert( st < STATE::NB_STATES );
+		assert( ev < EV::NB_EVENTS+1 );
+		assert( st < ST::NB_STATES );
 		_eventCounter.at( ev )++;
 		_stateCounter[st]++;
 		_history.push_back( StateChangeEvent{ st, ev, std::chrono::high_resolution_clock::now() - _startTime } );
 	}
 #else
-	void switchState( STATE st )
+	void switchState( ST st )
 	{
 		_current = st;
 	}
 #endif
 };
-//-----------------------------------------------------------------------------------
-/// This namespace is just a security, so user code won't hit into this
-namespace priv {
-
 //-----------------------------------------------------------------------------------
 /// helper template function
 template<typename T>
@@ -202,7 +208,7 @@ class SpagFSM
 
 	public:
 /// Constructor
-		SpagFSM() // : _current( static_cast<STATE>(0) )
+		SpagFSM()
 		{
 			static_assert( EVENT::NB_EVENTS > 0, "Error, you need to provide at least one event" );
 			static_assert( STATE::NB_STATES > 1, "Error, you need to provide at least two states" );
@@ -219,7 +225,7 @@ class SpagFSM
 				std::fill( e.begin(), e.end(), 0 );
 
 #ifdef SPAG_ENABLE_LOGGING
-			_data.alloc( STATE::NB_STATES, EVENT::NB_EVENTS );
+			_rtdata.alloc( STATE::NB_STATES, EVENT::NB_EVENTS );
 #endif
 #ifdef SPAG_ENUM_STRINGS
 			_str_events.resize( EVENT::NB_EVENTS );
@@ -323,14 +329,14 @@ class SpagFSM
 		void processTimeOut() const
 		{
 #ifdef SPAG_PRINT_STATES
-			std::cout << "-processing timeout event, delay was " << _timeout.at( _data._current ).nbSec << " s.\n";
+			std::cout << "-processing timeout event, delay was " << _timeout.at( _rtdata._current ).nbSec << " s.\n";
 #endif
-			assert( _timeout.at( _data._current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
+			assert( _timeout.at( _rtdata._current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
 
 #ifdef SPAG_ENABLE_LOGGING
-			_data.switchState( _timeout.at( _data._current ).nextState, EVENT::NB_EVENTS );
+			_rtdata.switchState( _timeout.at( _rtdata._current ).nextState, EVENT::NB_EVENTS );
 #else
-			_data.switchState( _timeout.at( _data._current ).nextState );
+			_rtdata.switchState( _timeout.at( _rtdata._current ).nextState );
 #endif
 
 			runAction();
@@ -343,15 +349,15 @@ class SpagFSM
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing event " << ev << "\n";
 #endif
-			if( _ignored_events.at( ev ).at( _data._current ) != 0 )
+			if( _ignored_events.at( ev ).at( _rtdata._current ) != 0 )
 			{
-				if( _timeout.at( _data._current ).enabled )               // 1 - cancel the waiting timer, if any
+				if( _timeout.at( _rtdata._current ).enabled )               // 1 - cancel the waiting timer, if any
 					timer->timerCancel();
 
 #ifdef SPAG_ENABLE_LOGGING
-				_data.switchState( _transition_mat[ev].at( _data._current ), ev ); // 2 - switch to next state
+				_rtdata.switchState( _transition_mat[ev].at( _rtdata._current ), ev ); // 2 - switch to next state
 #else
-				_data.switchState( _transition_mat[ev].at( _data._current ) );
+				_rtdata.switchState( _transition_mat[ev].at( _rtdata._current ) );
 #endif
 
 				runAction();                                        // 3 - call the callback function
@@ -372,7 +378,7 @@ class SpagFSM
 		}
 		STATE currentState() const
 		{
-			return _data._current;
+			return _rtdata._current;
 		}
 
 		TimerEvent<STATE> timeOutData( STATE st ) const
@@ -397,15 +403,22 @@ class SpagFSM
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
 		}
+#else
+		void assignString2Event( EVENT, std::string ) {}
+		void assignStrings2Events( const std::vector<std::pair<EVENT,std::string>>& ) {}
 #endif
-
 
 		void printConfig( std::ostream& str ) const;
 #ifdef SPAG_ENABLE_LOGGING
 /// Print dynamic data to \c str
 		void printLoggedData( std::ostream& str ) const
 		{
-			_data.printLoggedData( str );
+			_rtdata.printData( str );
+		}
+#else
+		void printLoggedData( std::ostream& ) const
+		{
+			#warning "printLoggedData(): disabled function (SPAG_ENABLE_LOGGING undefined)"
 		}
 #endif
 
@@ -413,6 +426,7 @@ class SpagFSM
 		std::string buildOptions() const
 		{
 			std::string out( "Spaghetti: build options:");
+
 			out += "\n - SPAG_ENABLE_LOGGING: ";
 #ifdef SPAG_ENABLE_LOGGING
 			out += "yes";
@@ -433,6 +447,13 @@ class SpagFSM
 #else
 			out += "no";
 #endif
+
+			out += "\n - SPAG_ENUM_STRINGS: ";
+#ifdef SPAG_ENUM_STRINGS
+			out += "yes";
+#else
+			out += "no";
+#endif
 			out += "\n";
 			return out;
 		}
@@ -445,25 +466,25 @@ class SpagFSM
 		void runAction() const
 		{
 #ifdef SPAG_PRINT_STATES
-			std::cout << "-switching to state " << _data._current << ", starting action\n";
+			std::cout << "-switching to state " << _rtdata._current << ", starting action\n";
 #endif
-			if( _timeout.at( _data._current ).enabled )
+			if( _timeout.at( _rtdata._current ).enabled )
 			{
 				assert( timer );
 #ifdef SPAG_PRINT_STATES
-		std::cout << "  -timeout enabled, duration=" << _timeout.at( _data._current ).nbSec << "\n";
+		std::cout << "  -timeout enabled, duration=" << _timeout.at( _rtdata._current ).nbSec << "\n";
 #endif
 				timer->timerStart( this );
 			}
-			if( _callback.at( _data._current ) ) // if there is a callback stored, then call it
+			if( _callback.at( _rtdata._current ) ) // if there is a callback stored, then call it
 			{
 #ifdef SPAG_PRINT_STATES
 			std::cout << "  -callback function start:\n";
 #endif
 				if( std::is_same<CBA,DummyCbArg_t>::value )
-					_callback.at( _data._current )( CBA() );
+					_callback.at( _rtdata._current )( CBA() );
 				else
-					_callback.at( _data._current )( _callbackArg.at(_data._current) );
+					_callback.at( _rtdata._current )( _callbackArg.at(_rtdata._current) );
 			}
 #ifdef SPAG_PRINT_STATES
 			else
@@ -474,9 +495,9 @@ class SpagFSM
 
 	private:
 #ifdef SPAG_ENABLE_LOGGING
-		mutable FsmData<STATE,EVENT>       _data;
+		mutable priv::RunTimeData<STATE,EVENT>       _rtdata;
 #else
-		mutable FsmData<STATE>             _data;
+		mutable priv::RunTimeData<STATE>             _rtdata;
 #endif
 		std::vector<std::vector<STATE>>    _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
@@ -735,6 +756,21 @@ Exiting...
 If this symbol is not defined, regular checking is done with the classical \c assert().
 As usual, this checking can be removed by defining the symbol \c NDEBUG.
 <br>
+- \c SPAG_SPAG_ENUM_STRINGS : this enables the usage of enum-string mapping, for events only.
+You can provide a string either individually with
+\code
+	fsm.assignString2Event( std::make_pair(EV_MyEvent, "something happened" );
+\endcode
+or globally, by providing a vector of pairs(enum values, string). For example:
+\code
+	std::vector<std::pair<EVENT,std::string>> v_str = {
+		{ EV_RESET,       "Reset" },
+		{ EV_WARNING_ON,  "Warning On" },
+		{ EV_WARNING_OFF, "Warning Off" }
+	};
+	fsm.assignStrings2Events( v_str );
+\endcode
+These strings will then be printed out when calling the printConfig() member function.
 - \c SPAG_PROVIDE_CALLBACK_TYPE :
 
 <br>
@@ -763,7 +799,7 @@ And of course it needs to be copyable.
 
 \section sec_misc Misc.
 
-\subsection sec_related Related software
+\subsection sec_related Possibly related software
 
  - Boost MSM: http://www.boost.org/doc/libs/release/libs/msm/
  - Boost Statechart: http://www.boost.org/doc/libs/release/libs/statechart/
@@ -782,7 +818,7 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
  - \c camelCaseIsUsed for functions, variables
  - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
  - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
-
+ - To avoid name collisions, all the symbols defined here start with "SPAG_"
 
 \todo find a way to ease up the usage for no timer (dummy timer struct)
 
@@ -794,5 +830,7 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 
 \todo add serialisation capability
 
+\todo for enum to string automatic conversion, maybe use this ? :
+https://github.com/aantron/better-enums
 
 */

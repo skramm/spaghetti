@@ -176,9 +176,9 @@ configureFSM( fsm_t& fsm )
 	fsm.assignCallbackValue( ST_INIT,      "Init" );
 
 	std::vector<std::pair<EVENT,std::string>> v_str = {
-		{ EV_RESET, "Reset" },
-		{ EV_WARNING_ON, "Warning On" },
-		{ EV_WARNING_OFF, "Warning off" }
+		{ EV_RESET,       "Reset" },
+		{ EV_WARNING_ON,  "Warning On" },
+		{ EV_WARNING_OFF, "Warning Off" }
 	};
 	fsm.assignStrings2Events( v_str );
 }
@@ -213,6 +213,13 @@ UI_thread( const fsm_t* fsm )
 					std::cout << ": reset\n";
 					fsm->processEvent( EV_RESET );
 				break;
+
+				case 'x':
+					std::cout << ": x: QUIT\n";
+					fsm->printLoggedData( std::cout );
+					exit(0);
+				break;
+
 				default:
 					std::cout << ": invalid key" << std::endl;
 			}
