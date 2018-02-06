@@ -49,7 +49,7 @@ LOOKUP_CACHE_SIZE      = 0
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = NO
 EXTRACT_PRIVATE        = NO
 EXTRACT_PACKAGE        = NO
 EXTRACT_STATIC         = NO
@@ -69,7 +69,7 @@ FORCE_LOCAL_INCLUDES   = NO
 INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = YES
 SORT_BRIEF_DOCS        = NO
-SORT_MEMBERS_CTORS_1ST = NO
+SORT_MEMBERS_CTORS_1ST = YES
 SORT_GROUP_NAMES       = NO
 SORT_BY_SCOPE_NAME     = NO
 STRICT_PROTO_MATCHING  = NO
@@ -114,7 +114,7 @@ INPUT_FILTER           =
 FILTER_PATTERNS        =
 FILTER_SOURCE_FILES    = NO
 FILTER_SOURCE_PATTERNS =
-USE_MDFILE_AS_MAINPAGE = README.md
+USE_MDFILE_AS_MAINPAGE =
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
 #---------------------------------------------------------------------------
@@ -252,8 +252,8 @@ PERLMOD_MAKEVAR_PREFIX =
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor
 #---------------------------------------------------------------------------
-ENABLE_PREPROCESSING   = NO
-MACRO_EXPANSION        = NO
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           =

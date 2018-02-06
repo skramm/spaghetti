@@ -1,23 +1,28 @@
 # spaghetti
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
-# General information
+## Key points
 - Author: S. Kramm, LITIS, Rouen, France - 2018
 - Status: alpha (WIP !), API is not stabilized yet
 - Licence: GPL v3
-- hosting: https://github.com/skramm/spaghetti
+- Audience: C++ developper having to implement a FSM
+- Webpage: https://github.com/skramm/spaghetti
+- Language: C++11
 
-# What is this ?
+## General information
+
+### What is this ?
  This library doesn't provide any highend algorithm, you can consider it as a container holding all that is required to implement
  a FSM.
  However, it **does not** provide the main event loop. This is up to the user code.
  The rationale behind this is that this loop may vary greatly depending on the requirements
- (need for timeout or not, need to acquire hardware externa events,...)
- This library provides an easy way to specify states and events, and how and when it switches from one state to another.
+ (need for timeout or not, need to acquire hardware external events,...).
+
+ This library provides an easy way to specify states and events, and how and when it will switch from one state to another.
  It also has some additional facilities, such as logging and easy timeout handling.
 
 
-# Main features
+### Main features
 
  - single file header-only library, just fetch the file spaghetti.hpp and store it on your machine somewhere accessible by your compiler
  - C++11, no dependencies other than standard library
@@ -27,28 +32,31 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
  - logging capability
  - provided with some sample programs, see src/html/index.html
 
- ## Why should I use this ?
+ ### Why/when should I use / not use this ?
   - pros: it is pretty simple to get running (sample programs provided)
   - cons: it is inherently not type safe, as states and events are provided as enum values.
   If you can live with that, then you may go ahead.
 
-# Usage:
+## Usage:
 
 --- TO BE CONTINUED ---
 
-## Instanciate the FSM
+### Instanciate the FSM
 
 First, create enums for states and events:
+
 ```C++
 enum States { st_init, st_state_1, st_state_2, st_state_3, NB_STATES };
 enum Events { ev_button_1, ev_button_2, ev_button_3, NB_EVENTS };
 ```
+
 Then, if you you don't need any timer:
+
 ```C++
 spag::SpagFSM<States,Events> fsm;
 ```
 
-## Configure the FSM
+### Configure the FSM
 
 Now, you need to build your FSM, that is:
 - define what event in what state will trigger switching to what state.
@@ -63,7 +71,7 @@ This will be done as below:
 	fsm.assignTimeOut( st_state_1, 5, st_state_2 );
 ```
 
-## Run the FSM
+### Run the FSM
 
 As explained above, two parts are to be considered:
 
@@ -84,7 +92,7 @@ If it's a "TimeOut" event:
 	fsm.processTimeOut();
 ```
 
-# FAQ
+## FAQ
 
 - Q: Why that name ?
 - A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
@@ -92,7 +100,7 @@ If it's a "TimeOut" event:
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
 
-# References
+## References
 
 https://en.wikipedia.org/wiki/Finite-state_machine
 
