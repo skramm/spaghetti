@@ -1,6 +1,7 @@
 /**
 \file sample_1.cpp
-\brief
+\brief Demo program of a simple FSM with 2 events, 5 states, and 1 pass state
+\image html sample1.svg
 
 
 */

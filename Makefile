@@ -96,9 +96,11 @@ doc: html/index.html src/html/index.html
 	@echo "- Done target $@"
 
 html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css
+	@echo "* Processing Doxygen on main file"
 	doxygen doxyfile
 
-src/html/index.html: $(SRC_FILES)
+src/html/index.html: $(SRC_FILES) src/doxyfile
+	@echo "* Processing Doxygen on sample programs"
 	cd src; doxygen doxyfile
 
 install:

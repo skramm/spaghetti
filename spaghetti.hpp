@@ -97,7 +97,7 @@ struct TimerEvent
 /// This namespace is just a security, so user code won't hit into this
 namespace priv {
 
-/// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref BuildOption )
+/// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref ssec_BuildSymbols )
 #ifdef SPAG_ENABLE_LOGGING
 template<typename ST,typename EV>
 #else
