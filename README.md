@@ -7,9 +7,19 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 - Licence: GPL v3
 - hosting: https://github.com/skramm/spaghetti
 
+# What is this ?
+ This library doesn't provide any highend algorithm, you can consider it as a container holding all that is required to implement
+ a FSM.
+ However, it **does not** provide the main event loop. This is up to the user code.
+ The rationale behind this is that this loop may vary greatly depending on the requirements
+ (need for timeout or not, need to acquire hardware externa events,...)
+ This library provides an easy way to specify states and events, and how and when it switches from one state to another.
+ It also has some additional facilities, such as logging and easy timeout handling.
+
+
 # Main features
 
- - single file header-only library, just fetch the file spaghetti.hpp and store it on your machine
+ - single file header-only library, just fetch the file spaghetti.hpp and store it on your machine somewhere accessible by your compiler
  - C++11, no dependencies other than standard library
  - ease of use, no unreadable templaple BS in user code
  - "you pay for what you use" code

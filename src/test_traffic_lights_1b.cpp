@@ -50,7 +50,7 @@ struct AsioWrapper
 
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA>* fsm )
 	{
-		int nb_sec = fsm->timeOutData( fsm->currentState() ).nbSec;
+		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
 		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
 
 		ptimer->async_wait(

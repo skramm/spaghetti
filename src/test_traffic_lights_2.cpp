@@ -85,7 +85,7 @@ struct AsioWrapper
 /// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-		int nb_sec = fsm->timeOutData( fsm->currentState() ).nbSec;
+		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
 		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
 
 		ptimer->async_wait(

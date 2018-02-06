@@ -7,6 +7,8 @@ https://github.com/skramm/spaghetti
 #ifndef HG_SPAGHETTI_FSM_HPP
 #define HG_SPAGHETTI_FSM_HPP
 
+#define SPAG_VERSION 0.1
+
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -54,34 +56,42 @@ https://github.com/skramm/spaghetti
 	#define SPAG_CHECK_LESS( a, b ) assert( a < b )
 #endif
 
+#define SPAG_STRINGIZE2( a ) #a
+#define SPAG_STRINGIZE( a ) SPAG_STRINGIZE2( a )
+
+// TEMP
+typedef int Duration;
 
 /// Main library namespace
 namespace spag {
 
-//namespace priv {
+
 /// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
 struct DummyCbArg_t {};
 
 //-----------------------------------------------------------------------------------
+namespace priv {
+
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
 template<typename STATE>
 struct TimerEvent
 {
-	STATE nextState = static_cast<STATE>(0); ///< state to switch to
-	int   nbSec   = 1;                       ///< duration
-	bool  enabled = 0;                       ///< this state uses or not a timeout (default is no)
+	STATE     nextState = static_cast<STATE>(0); ///< state to switch to
+	Duration  duration  = 1;                     ///< duration
+	bool      enabled   = 0;                     ///< this state uses or not a timeout (default is no)
 
 	TimerEvent()
 		: nextState(static_cast<STATE>(0))
-		, nbSec(0)
+		, duration(0)
 		, enabled(false)
 	{
 	}
-	TimerEvent( STATE st, int nbs ): nextState(st), nbSec(nbs)
+	TimerEvent( STATE st, Duration dur ): nextState(st), duration(dur)
 	{
 		enabled = true;
 	}
 };
+} // local namespace end
 
 //-----------------------------------------------------------------------------------
 /// This namespace is just a security, so user code won't hit into this
@@ -219,7 +229,7 @@ class SpagFSM
 			if( !std::is_same<DummyCbArg_t, CBA>::value )
 				_callbackArg.resize( STATE::NB_STATES );
 
-			_timeout.resize(  STATE::NB_STATES );    // timeouts info (see class TimerEvent)
+			_timeout.resize( STATE::NB_STATES );    // timeouts info (see class TimerEvent)
 
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
@@ -246,24 +256,6 @@ class SpagFSM
 			_transition_mat = mat;
 		}
 
-#if 0
-/// Use this to define for all states if timeout is to be considered or not.
-/// For individual states, see UseTimeOut()
-		void UseGlobalTimeOut( bool b )
-		{
-			for( auto& e: _timeout_active )
-				e = static_cast<char>(b);
-		}
-
-/// Use this to define for a given state if timeout is to be considered or not.
-/// To enable timeout for all the states, see UseGlobalTimeOut()
-		void UseTimeOut( STATE st, bool b )
-		{
-//			assert( check_state( st ) );
-			_timeout_active.at( st ) = static_cast<char>(b);
-		}
-#endif
-
 /// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
 		void assignTransition( STATE st1, EVENT ev, STATE st2 )
 		{
@@ -274,12 +266,25 @@ class SpagFSM
 			_ignored_events.at( static_cast<int>( ev ) ).at( static_cast<int>( st1 ) ) = 1;
 		}
 
-/// Assigns an timeout transition event to switch from event \c st1 to event \c st2
-		void assignTimeOut( STATE st1, int nb_sec, STATE st2 )
+/// Assigns an timeout event on \b all states except \c st_final:
+/**
+After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
+(where there may or may not be a timeout assigned)
+*/
+		void assignGlobalTimeOut( STATE st_final, Duration dur )
 		{
-			SPAG_CHECK_LESS( st1, nbStates() );
-			SPAG_CHECK_LESS( st2, nbStates() );
-			_timeout[ static_cast<int>( st1 ) ] = TimerEvent<STATE>( st2, nb_sec );
+			SPAG_CHECK_LESS( st_final, nbStates() );
+			for( size_t i=0; i<nbStates(); i++ )
+				if( i != static_cast<size_t>(st_final) )
+					_timeout[ static_cast<size_t>( st_final ) ] = priv::TimerEvent<STATE>( st_final, dur );
+		}
+
+/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
+		void assignTimeOut( STATE st_curr, Duration dur, STATE st_next )
+		{
+			SPAG_CHECK_LESS( st_curr, nbStates() );
+			SPAG_CHECK_LESS( st_next, nbStates() );
+			_timeout[ static_cast<int>( st_curr ) ] = priv::TimerEvent<STATE>( st_next, dur );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
@@ -329,7 +334,7 @@ class SpagFSM
 		void processTimeOut() const
 		{
 #ifdef SPAG_PRINT_STATES
-			std::cout << "-processing timeout event, delay was " << _timeout.at( _rtdata._current ).nbSec << " s.\n";
+			std::cout << "-processing timeout event, delay was " << _timeout.at( _rtdata._current ).duration << "\n";
 #endif
 			assert( _timeout.at( _rtdata._current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
 
@@ -381,9 +386,9 @@ class SpagFSM
 			return _rtdata._current;
 		}
 
-		TimerEvent<STATE> timeOutData( STATE st ) const
+		Duration timeOutDuration( STATE st ) const
 		{
-			return _timeout.at(st);
+			return _timeout.at(st).duration;
 		}
 
 		void assignTimer( TIM* t )
@@ -418,14 +423,16 @@ class SpagFSM
 #else
 		void printLoggedData( std::ostream& ) const
 		{
-			#warning "printLoggedData(): disabled function (SPAG_ENABLE_LOGGING undefined)"
+//			#warning "printLoggedData(): disabled function (SPAG_ENABLE_LOGGING undefined)"
 		}
 #endif
 
 /// Returns the build options
 		std::string buildOptions() const
 		{
-			std::string out( "Spaghetti: build options:");
+			std::string out( "Spaghetti: version " );
+			out += SPAG_STRINGIZE( SPAG_VERSION );
+			out += "\nBuild options:";
 
 			out += "\n - SPAG_ENABLE_LOGGING: ";
 #ifdef SPAG_ENABLE_LOGGING
@@ -476,7 +483,7 @@ class SpagFSM
 			{
 				assert( timer );
 #ifdef SPAG_PRINT_STATES
-		std::cout << "  -timeout enabled, duration=" << _timeout.at( _rtdata._current ).nbSec << "\n";
+		std::cout << "  -timeout enabled, duration=" << _timeout.at( _rtdata._current ).duration << "\n";
 #endif
 				timer->timerStart( this );
 			}
@@ -509,7 +516,7 @@ class SpagFSM
 #endif
 		std::vector<std::vector<STATE>>    _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
-		std::vector<TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
+		std::vector<priv::TimerEvent<STATE>>     _timeout;         ///< Holds for each state the information on timeout
 		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _str_events;     ///< holds events strings
@@ -521,6 +528,7 @@ class SpagFSM
 //-----------------------------------------------------------------------------------
 namespace priv
 {
+//-----------------------------------------------------------------------------------
 void
 PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 {
@@ -529,13 +537,16 @@ PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 	for( size_t i=0; i<maxlength-str.size(); i++ )
 		out << ' ';
 }
-} // namespace priv end
-
+//-----------------------------------------------------------------------------------
 void printChars( std::ostream& out, size_t n, char c )
 {
 	for( size_t i=0; i<n; i++ )
 		out << c;
 }
+//-----------------------------------------------------------------------------------
+} // namespace priv end
+
+//-----------------------------------------------------------------------------------
 /// helper function template for printConfig()
 template<typename ST, typename EV,typename T,typename CBA>
 void
@@ -556,13 +567,13 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 #endif
 
 	std::string capt( "EVENTS" );
-	printChars( out, maxlength, ' ' );
+	priv::printChars( out, maxlength, ' ' );
 	out << "       STATES:\n      ";
-	printChars( out, maxlength, ' ' );
+	priv::printChars( out, maxlength, ' ' );
 	for( size_t i=0; i<_transition_mat[0].size(); i++ )
 		out << i << "  ";
 	out << "\n----";
-	printChars( out, maxlength, '-' );
+	priv::printChars( out, maxlength, '-' );
 	out << '|';
 	for( size_t i=0; i<_transition_mat[0].size(); i++ )
 		out << "---";
@@ -597,7 +608,6 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		out << '\n';
 	}
 }
-
 //-----------------------------------------------------------------------------------
 /// Printing function
 template<typename ST, typename EV,typename T,typename CBA>
