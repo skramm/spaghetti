@@ -408,7 +408,7 @@ class SpagFSM
 		void assignStrings2Events( const std::vector<std::pair<EVENT,std::string>>& ) {}
 #endif
 
-		void printConfig( std::ostream& str ) const;
+		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
 #ifdef SPAG_ENABLE_LOGGING
 /// Print dynamic data to \c str
 		void printLoggedData( std::ostream& str ) const
@@ -462,6 +462,10 @@ class SpagFSM
 		void writeDotFile( std::string fn ) const;
 #endif
 
+///////////////////////////////////
+// private member function section
+///////////////////////////////////
+
 	private:
 		void runAction() const
 		{
@@ -493,6 +497,10 @@ class SpagFSM
 		}
 		void printMatrix( std::ostream& str ) const;
 
+/////////////////////////////
+// private data section
+/////////////////////////////
+
 	private:
 #ifdef SPAG_ENABLE_LOGGING
 		mutable priv::RunTimeData<STATE,EVENT>       _rtdata;
@@ -521,6 +529,12 @@ PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 	for( size_t i=0; i<maxlength-str.size(); i++ )
 		out << ' ';
 }
+} // namespace priv end
+
+void printChars( std::ostream& out, size_t n, char c )
+{
+	for( size_t i=0; i<n; i++ )
+		out << c;
 }
 /// helper function template for printConfig()
 template<typename ST, typename EV,typename T,typename CBA>
@@ -542,14 +556,13 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 #endif
 
 	std::string capt( "EVENTS" );
+	printChars( out, maxlength, ' ' );
 	out << "       STATES:\n      ";
-	for( size_t i=0; i<maxlength; i++ )
-		out << ' ';
+	printChars( out, maxlength, ' ' );
 	for( size_t i=0; i<_transition_mat[0].size(); i++ )
 		out << i << "  ";
 	out << "\n----";
-	for( size_t i=0; i<maxlength; i++ )
-		out << '-';
+	printChars( out, maxlength, '-' );
 	out << '|';
 	for( size_t i=0; i<_transition_mat[0].size(); i++ )
 		out << "---";
@@ -585,17 +598,19 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	}
 }
 
-//} // namespace priv end
 //-----------------------------------------------------------------------------------
 /// Printing function
 template<typename ST, typename EV,typename T,typename CBA>
 void
-SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out ) const
+SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 {
-	out << "FSM config:\n - Nb States=" << nbStates() << "\n - Nb external events=" << nbEvents();
+	out << "FSM config:";
+	if( msg )
+		out << "msg=" << msg;
+	out << "\n - Nb States=" << nbStates() << "\n - Nb external events=" << nbEvents();
 
 	out << "\n - Transition matrix: (X:ignored event)\n";
-	printMatrix( out ); //, _transition_mat, _ignored_events );
+	printMatrix( out );
 
 	out << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
 	out << "       STATES:\n   ";
