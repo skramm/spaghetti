@@ -70,8 +70,10 @@ namespace spag {
 struct DummyCbArg_t {};
 
 //-----------------------------------------------------------------------------------
+/// private namespace, so user code won't hit into this
 namespace priv {
 
+//-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
 template<typename ST>
 struct TimerEvent
@@ -91,28 +93,47 @@ struct TimerEvent
 		enabled = true;
 	}
 };
-} // local namespace end
-
 //-----------------------------------------------------------------------------------
-/// This namespace is just a security, so user code won't hit into this
-namespace priv {
-
+void
+PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
+{
+	assert( str.size() <= maxlength );
+	out << str;
+	for( size_t i=0; i<maxlength-str.size(); i++ )
+		out << ' ';
+}
+//-----------------------------------------------------------------------------------
+/// Helper function, returns max length of string in vector
+size_t
+getMaxLength( const std::vector<std::string>& v_str )
+{
+	size_t maxlength(0);
+	if( v_str.size() > 1 )
+	{
+		auto itmax = std::max_element(
+			v_str.begin(),
+			v_str.end(),
+			[]( const std::string& s1, const std::string& s2 ){ return s1.size()<s2.size(); } // lambda
+		);
+		maxlength = itmax->size();
+	}
+	return maxlength;
+}
+//-----------------------------------------------------------------------------------
 /// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref ssec_BuildSymbols )
 #ifdef SPAG_ENABLE_LOGGING
 template<typename ST,typename EV>
-#else
-template<typename ST>
-#endif
 struct RunTimeData
 {
-	ST _current = static_cast<ST>(0);
-
-#ifdef SPAG_ENABLE_LOGGING
-	RunTimeData()
-	{
-		_startTime = std::chrono::high_resolution_clock::now();
-	}
-	std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
+	public:
+#ifdef SPAG_ENUM_STRINGS
+		RunTimeData( const std::vector<std::string>& str_events ): _str_events(str_events)
+#else
+		RunTimeData()
+#endif
+		{
+			_startTime = std::chrono::high_resolution_clock::now();
+		}
 
 /// a state-change event, used for logging, see _history
 	struct StateChangeEvent
@@ -133,11 +154,6 @@ struct RunTimeData
 		}
 	};
 
-	std::vector<size_t>  _stateCounter;    ///< per state counter
-	std::vector<size_t>  _eventCounter;    ///< per event counter
-/// Dynamic history of a given run: holds a state and the event that led to it. For the latter, the value EV_NB_EVENTS is used to store a "timeout" event.
-	std::vector<StateChangeEvent> _history;
-
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
 		_stateCounter.resize( nbStates,   0 );
@@ -149,42 +165,56 @@ struct RunTimeData
 		_stateCounter.clear();
 		_eventCounter.clear();
 	}
-	/// Print dynamic data to \c str
-	void printData( std::ostream& str ) const
+	/// Print dynamic data to \c out
+	void printData( std::ostream& out ) const
 	{
-		str << " - State counters:\n";
+#ifdef SPAG_ENUM_STRINGS
+		size_t maxlength = priv::getMaxLength( _str_events );
+#endif
+		out << " - State counters:\n";
 		for( size_t i=0; i<_stateCounter.size(); i++ )
-			str << i << ": " << _stateCounter[i] << '\n';
-		str << '\n';
-		str << " - Event counters:\n";
+			out << i << ": " << _stateCounter[i] << '\n';
+		out << '\n';
+		out << " - Event counters:\n";
 		for( size_t i=0; i<_eventCounter.size(); i++ )
-			str << i << ": " << _eventCounter[i] << '\n';
-		str << '\n';
-		str << " - Run history:\n#time;event;";
+		{
+			out << i << ": ";
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _str_events[i], maxlength );
+#endif
+			out << _eventCounter[i] << '\n';
+		}
+		out << '\n';
+		out << " - Run history:\n#time;event;";
 /// \todo find a way to print the enum string in history (require a pointer on parent struct. But lots of templating involved...)
 //#ifdef SPAG_ENUM_STRINGS
-//		str << "event string;";
+//		out << "event string;";
 //#endif
-		str << "state\n";
+		out << "state\n";
 		for( size_t i=0; i<_history.size(); i++ )
-			str << _history[i];
+			out << _history[i];
 	}
-	void switchState( ST st, size_t ev )
+	void logTransition( ST st, size_t ev )
 	{
-		_current = st;
 		assert( ev < EV::NB_EVENTS+2 );
 		assert( st < ST::NB_STATES );
 		_eventCounter[ ev ]++;
 		_stateCounter[ st ]++;
 		_history.push_back( StateChangeEvent{ st, ev, std::chrono::high_resolution_clock::now() - _startTime } );
 	}
-#else
-	void switchState( ST st )
-	{
-		_current = st;
-	}
+
+	private:
+		std::vector<size_t>  _stateCounter;    ///< per state counter
+		std::vector<size_t>  _eventCounter;    ///< per event counter
+/// Dynamic history of a given run: holds a state and the event that led to it. For the latter, the value EV_NB_EVENTS is used to store a "timeout" event.
+		std::vector<StateChangeEvent> _history;
+		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
+
+#ifdef SPAG_ENUM_STRINGS
+		const std::vector<std::string>& _str_events; ///< reference on strings of events
 #endif
 };
+#endif
 //-----------------------------------------------------------------------------------
 /// helper template function
 template<typename T>
@@ -195,7 +225,8 @@ resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t n
 	for( auto& e: mat )
 		e.resize( nb_cols );
 }
-} // local namespace end
+
+} // priv namespace end
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
 /**
@@ -218,7 +249,12 @@ class SpagFSM
 
 	public:
 /// Constructor
+
+#if (defined SPAG_ENABLE_LOGGING) && (defined SPAG_ENUM_STRINGS)
+		SpagFSM() : _rtdata(_str_events)
+#else
 		SpagFSM()
+#endif
 		{
 			static_assert( EV::NB_EVENTS > 0, "Error, you need to provide at least one event" );
 			static_assert( ST::NB_STATES > 1, "Error, you need to provide at least two states" );
@@ -239,7 +275,7 @@ class SpagFSM
 			_rtdata.alloc( ST::NB_STATES, EV::NB_EVENTS );
 #endif
 #ifdef SPAG_ENUM_STRINGS
-			_str_events.resize( EV::NB_EVENTS );
+			_str_events.resize( EV::NB_EVENTS+2 );
 #endif
 		}
 
@@ -377,14 +413,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processTimeOut() const
 		{
 #ifdef SPAG_PRINT_STATES
-			std::cout << "-processing timeout event, delay was " << _timeout.at( _rtdata._current ).duration << "\n";
+			std::cout << "-processing timeout event, delay was " << _timeout.at( _current ).duration << "\n";
 #endif
-			assert( _timeout.at( _rtdata._current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
+			assert( _timeout.at( _current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
+
+			_current = _timeout[ _current ].nextState;
 
 #ifdef SPAG_ENABLE_LOGGING
-			_rtdata.switchState( _timeout.at( _rtdata._current ).nextState, EV::NB_EVENTS );
-#else
-			_rtdata.switchState( _timeout.at( _rtdata._current ).nextState );
+			_rtdata.logTransition( _current, EV::NB_EVENTS );
 #endif
 			runAction();
 		}
@@ -396,15 +432,15 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_PRINT_STATES
 			std::cout << "-processing event " << ev << "\n";
 #endif
-			if( _ignored_events.at( ev ).at( _rtdata._current ) != 0 )
+			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
-				if( _timeout.at( _rtdata._current ).enabled )               // 1 - cancel the waiting timer, if any
+				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
 					timer->timerCancel();
 
+				_current = _transition_mat[ev].at( _current );  // 2 - switch to next state
+
 #ifdef SPAG_ENABLE_LOGGING
-				_rtdata.switchState( _transition_mat[ev].at( _rtdata._current ), ev ); // 2 - switch to next state
-#else
-				_rtdata.switchState( _transition_mat[ev].at( _rtdata._current ) );
+				_rtdata.logTransition( _current, ev );
 #endif
 				runAction();                                        // 3 - call the callback function
 			}
@@ -428,7 +464,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 		ST currentState() const
 		{
-			return _rtdata._current;
+			return _current;
 		}
 		Duration timeOutDuration( ST st ) const
 		{
@@ -496,42 +532,42 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 ///////////////////////////////////
 // private member function section
 ///////////////////////////////////
+
 	private:
 		void runAction() const
 		{
 #ifdef SPAG_PRINT_STATES
-			std::cout << "-switching to state " << _rtdata._current << ", starting action\n";
+			std::cout << "-switching to state " << _current << ", starting action\n";
 #endif
-			if( _timeout.at( _rtdata._current ).enabled )
+			if( _timeout.at( _current ).enabled )
 			{
 				assert( timer );
 #ifdef SPAG_PRINT_STATES
-		std::cout << "  -timeout enabled, duration=" << _timeout.at( _rtdata._current ).duration << "\n";
+		std::cout << "  -timeout enabled, duration=" << _timeout.at( _current ).duration << "\n";
 #endif
 				timer->timerStart( this );
 			}
-			if( _callback.at( _rtdata._current ) ) // if there is a callback stored, then call it
+			if( _callback.at( _current ) ) // if there is a callback stored, then call it
 			{
 #ifdef SPAG_PRINT_STATES
 			std::cout << "  -callback function start:\n";
 #endif
 				if( std::is_same<CBA,DummyCbArg_t>::value )
-					_callback.at( _rtdata._current )( CBA() );
+					_callback.at( _current )( CBA() );
 				else
-					_callback.at( _rtdata._current )( _callbackArg.at(_rtdata._current) );
+					_callback.at( _current )( _callbackArg.at( _current ) );
 			}
 #ifdef SPAG_PRINT_STATES
 			else
 				std::cout << "  -no callback provided\n";
 #endif
-			if( _isPassState[currentState()] )
+			if( _isPassState[ currentState() ] )
 			{
+				_current =  _timeout.at( _current ).nextState;
 #ifdef SPAG_ENABLE_LOGGING
-				_rtdata.switchState( _timeout.at( _rtdata._current ).nextState, EV::NB_EVENTS+1 );
-#else
-				_rtdata.switchState( _timeout.at( _rtdata._current ).nextState );
+				_rtdata.logTransition( _timeout.at( _current ).nextState, EV::NB_EVENTS+1 );
 #endif
-				runAction();
+				runAction();              // re-entry
 			}
 		}
 		void printMatrix( std::ostream& str ) const;
@@ -542,10 +578,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 	private:
 #ifdef SPAG_ENABLE_LOGGING
-		mutable priv::RunTimeData<ST,EV>       _rtdata;
-#else
-		mutable priv::RunTimeData<ST>             _rtdata;
+		mutable priv::RunTimeData<ST,EV>   _rtdata;
 #endif
+		mutable ST _current = static_cast<ST>(0);  ///< current state
 		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 		std::vector<priv::TimerEvent<ST>>  _timeout;         ///< Holds for each state the information on timeout
@@ -562,21 +597,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 namespace priv
 {
 //-----------------------------------------------------------------------------------
-void
-PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
-{
-	assert( str.size() <= maxlength );
-	out << str;
-	for( size_t i=0; i<maxlength-str.size(); i++ )
-		out << ' ';
-}
-//-----------------------------------------------------------------------------------
 void printChars( std::ostream& out, size_t n, char c )
 {
 	for( size_t i=0; i<n; i++ )
 		out << c;
 }
 //-----------------------------------------------------------------------------------
+
 } // namespace priv end
 
 //-----------------------------------------------------------------------------------
@@ -588,15 +615,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	assert( _transition_mat.size() );
 	size_t maxlength(0);
 #ifdef SPAG_ENUM_STRINGS
-	if( _str_events.size() > 1 )
-	{
-		auto itmax = std::max_element(
-			_str_events.begin(),
-			_str_events.end(),
-			[]( const std::string& s1, const std::string& s2 ){ return s1.size()<s2.size(); } // lambda
-		);
-		maxlength = itmax->size();
-	}
+	maxlength = priv::getMaxLength( _str_events );
 #endif
 
 	std::string capt( "EVENTS" );
@@ -721,6 +740,9 @@ struct NoTimer
 
 // A macro simplifying the FSM instanciation (version 2, if a timer is needed)
 //#define SPAG_DECLARE_FSM_T( fsm, st, ev, tim ) spag::SpagFSM<st,ev,tim<st,ev>> fsm
+
+#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
+	typedef spag::SpagFSM<st,ev,spag::NoTimer<st,ev,cbarg>,cbarg> type;
 
 #endif // HG_SPAGHETTI_FSM_HPP
 
