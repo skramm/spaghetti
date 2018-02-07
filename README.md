@@ -52,7 +52,7 @@ Then, create the FSM data type:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-
+This means you declare the type ```fsm_t```, using ```States``` and ```Events```, with callback functions having a bool as an argument.
 (Alternatively, you could also use a ```typedef```, but lets say this is easier at present.)
 
 Now, you can instanciate the fsm:
@@ -68,7 +68,7 @@ With this simple example, you just do:
 ```C++
 fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
 fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
-
+```
 Ok, and also tell the FSM what is to be done when a state gets triggered. This is done by providing a callback function:
 
 ```C++
@@ -137,7 +137,7 @@ Now you need to provide a timer class, that will handle this.
 This class has only on e requirements: it must provide two functions:
 ```timerStart()``` and ```timerCancel()```.
 
-If you have no specila requirementts on the timer, the easiest will be to do:
+If you have no special requirementts on the timer, the easiest will be to do:
 
 ```C++
 SPAG_DECLARE_TIMER( myTimer, bool );
@@ -183,7 +183,7 @@ MyTimer<States, Events>::timerCancel()
 ```
 
 The latter function is needed because your fsm handles both "hardware" events (keypress) and timeouts.
-In another sample file (```src/traffic_lights_1.cpp```), there is only timeout events handled, to there is no need for
+In another sample program (```src/traffic_lights_1.cpp```), there is only timeout events handled, to there is no need for
 ```timerCancel()```.
 
 
@@ -226,15 +226,15 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
 Exiting...
 ```
 If this symbol is not defined, regular checking is done with the classical ```assert()```.
-As usual, this checking can be removed by defining the symbol \c NDEBUG.
+As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 
 - ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for events only.
 You can provide a string either individually with
-```
+```C++
 	fsm.assignString2Event( std::make_pair(EV_MyEvent, "something happened" );
 ```
 or globally, by providing a vector of pairs(enum values, string). For example:
-```
+```C++
 	std::vector<std::pair<EVENT,std::string>> v_str = {
 		{ EV_RESET,       "Reset" },
 		{ EV_WARNING_ON,  "Warning On" },
@@ -252,6 +252,9 @@ These strings will then be printed out when calling the ```printConfig()``` memb
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
+
+- Q: What if I have more that a single argument to pass to my callback function ?
+- A: then, you'll need to "pack it" in some class, or use a ```std::pair```, or ```std::tuple```.
 
 ## References
 
