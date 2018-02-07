@@ -137,16 +137,38 @@ This class needs to provide these three functions:
 - ```timerCancel()```: cancel the timer
 - ```timerInit()```: initialize the timer
 
-Once you have declared this class, the declaration of the data type of the FSM will become:
+Any timing class can be used, in the provided sample ```src/traffic_lights.cpp``` we demonstrate the use of [boost::asio](http://www.boost.org/doc/libs/release/libs/asio/):
 ```C++
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, MyTimer, bool );
+template<typename ST, typename EV>
+struct AsioWrapper
+{
+	boost::asio::io_service io_service;
+	std::unique_ptr<boost::asio::deadline_timer> ptimer;
+
+	AsioWrapper()
+	{
+		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(io_service) );
+	}
+...
+```
+(see full code for details)
+
+
+
+Once you have declared this class, the declaration of the data type of the FSM will be done with the second form of the macro:
+```C++
+SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
 ```
 
-Then we can add the timeout to the configuration step:
+The configuration step will go as follows (assuming the states are names ST_RED, ST_GREEN, ST_ORANGE):
+
 ```C++
-fsm.assignTimeOut( st_Unlocked, 10, st_Locked );
+	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );
+	fsm.assignTimeOut( ST_ORANGE, 1, ST_RED   );
 ```
 
+TO BE CONTINUED
 
 
 ## Additional facilities
