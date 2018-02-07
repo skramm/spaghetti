@@ -134,28 +134,11 @@ Say your want to add something to your turnstyle: if a coin is given and nobody 
 This means adding a timeout to the "unlocked" state, leading back to the "locked" state.
 
 Now you need to provide a timer class, that will handle this.
-This class has only on e requirements: it must provide two functions:
+This class has only on one requirements: it must provide two functions:
 ```timerStart()``` and ```timerCancel()```.
 
-If you have no special requirementts on the timer, the easiest will be to do:
 
-```C++
-SPAG_DECLARE_TIMER( myTimer, bool );
-```
-
-This will declare a ```struct``` named ```MyTimer``` dedicated to handle
-
-Alternatively, you could do this:
-```C++
-template<typename ST, typename EV>
-struct MyTimer
-{
-	void timerStart( const spag::SpagFSM< ST, EV, myTimer, bool>* );
-	void timerCancel();
-};
-```
-
-And the declaration of the data type of the FSM will be:
+And the declaration of the data type of the FSM will become:
 ```C++
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, MyTimer, bool );
 ```

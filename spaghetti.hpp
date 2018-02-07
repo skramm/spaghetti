@@ -379,7 +379,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 		void assignTimer( TIM* t )
 		{
-			timer = t;
+			p_timer = t;
 		}
 
 #ifdef SPAG_ENUM_STRINGS
@@ -407,6 +407,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void start() const
 		{
 			runAction();
+			if( p_timer )
+				p_timer->timerInit();
 		}
 
 /// Your timer end function/callback should call this when the timer expires
@@ -435,7 +437,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
 				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
-					timer->timerCancel();
+					p_timer->timerCancel();
 
 				_current = _transition_mat[ev].at( _current );  // 2 - switch to next state
 
@@ -541,11 +543,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 			if( _timeout.at( _current ).enabled )
 			{
-				assert( timer );
+				assert( p_timer );
 #ifdef SPAG_PRINT_STATES
 		std::cout << "  -timeout enabled, duration=" << _timeout.at( _current ).duration << "\n";
 #endif
-				timer->timerStart( this );
+				p_timer->timerStart( this );
 			}
 			if( _callback.at( _current ) ) // if there is a callback stored, then call it
 			{
@@ -587,11 +589,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
 		std::vector<char>                  _isPassState;     ///< holds 1 if this is a "pass state", that is a state with only one transition and no timeout
 #ifdef SPAG_ENUM_STRINGS
-		std::vector<std::string>           _str_events;     ///< holds events strings
+		std::vector<std::string>           _str_events;      ///< holds events strings
 #endif
 /// If the user code provides a value for the callbacks, then we must store these, per state. If not, then this will remain an empty vector
 		std::vector<CBA>                   _callbackArg;
-		TIM* timer;
+		TIM* p_timer = 0;                                    ///< pointer on timer
 };
 //-----------------------------------------------------------------------------------
 namespace priv
@@ -729,6 +731,7 @@ struct NoTimer
 {
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
 	void timerCancel() {}
+	void timerInit() {}
 };
 
 //-----------------------------------------------------------------------------------
@@ -747,14 +750,14 @@ struct NoTimer
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev>,cbarg> type;
 
-#define SPAG_DECLARE_TIMER( timer, cba ) \
+/*#define SPAG_DECLARE_TIMER( timer, cba ) \
 	template<typename ST, typename EV> \
 	struct timer \
 	{ \
 		void timerStart( const spag::SpagFSM< ST, EV, timer, cba>* ); \
 		void timerCancel(); \
 	}
-
+*/
 
 #endif // HG_SPAGHETTI_FSM_HPP
 

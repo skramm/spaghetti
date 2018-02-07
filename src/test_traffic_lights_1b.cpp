@@ -38,7 +38,7 @@ struct AsioWrapper
 	{
 		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(io_service) );
 	}
-	void run()
+	void timerInit()
 	{
 		io_service.run();
 	}
@@ -130,7 +130,6 @@ int main( int argc, char* argv[] )
 		fsm.start();
 
 		std::cout << " -start event loop\n";
-		asio.run();
 	}
 	catch( std::exception& e )
 	{
