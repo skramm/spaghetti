@@ -48,6 +48,9 @@ enum States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 ```
 
+As you can see, the requirement here is that they **must** have as last element
+```NB_STATES``` and ```NB_EVENTS```, respectively.
+
 Then, create the FSM data type:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
@@ -66,10 +69,13 @@ int main()
 Now, you need to configure your FSM, that is define what event in what state will trigger switching to what state.
 With this simple example, you just do:
 ```C++
-fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
-fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
+	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
+	fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
 ```
-Ok, and also tell the FSM what is to be done when a state gets triggered. This is done by providing a callback function:
+Ok, and also tell the FSM what is to be done when a state gets triggered.
+This is done by providing a callback function.
+In this case it is the same for all, but you can have a different function for all the states.
+The only constraint is that they must have the same signature.
 
 ```C++
 	fsm.assignCallback( st_Locked,   cb_func, true );
