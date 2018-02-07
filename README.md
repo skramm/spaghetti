@@ -128,17 +128,16 @@ see file ```src/turnstyle_1.cpp``` and/or just clone repo end enter
 ```make demo -j4``` followed by ```bin/turnstyle_1```.
 
 
-## Showcase 2: let's add a timer !
+## Showcase 2: let's use a timer
 
-Say your want to add something to your turnstyle: if a coin is given and nobody pushes within 10 seconds, then you want to lock it back.
-This means adding a timeout to the "unlocked" state, leading back to the "locked" state.
+Lets consider another situation: a traffic light going automatically through the three states: Red, Green, Orange.
+You need to provide a Timer class that can be used by the FSM.
+This class needs to provide these three functions:
+- ```timerStart()```: start a timeout
+- ```timerCancel()```: cancel the timer
+- ```timerInit()```: initialize the timer
 
-Now you need to provide a timer class, that will handle this.
-This class has only on one requirements: it must provide two functions:
-```timerStart()``` and ```timerCancel()```.
-
-
-And the declaration of the data type of the FSM will become:
+Once you have declared this class, the declaration of the data type of the FSM will become:
 ```C++
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, MyTimer, bool );
 ```
@@ -148,26 +147,6 @@ Then we can add the timeout to the configuration step:
 fsm.assignTimeOut( st_Unlocked, 10, st_Locked );
 ```
 
-The time out functions need to be defined, with the following form:
-```C++
-template<>
-void
-MyTimer<States, Events>::timerStart( const fsm_t* p_fsm )
-{
-	... start the timer
-}
-
-template<>
-void
-MyTimer<States, Events>::timerCancel()
-{
-	... cancel the timer
-}
-```
-
-The latter function is needed because your fsm handles both "hardware" events (keypress) and timeouts.
-In another sample program (```src/traffic_lights_1.cpp```), there is only timeout events handled, to there is no need for
-```timerCancel()```.
 
 
 ## Additional facilities
