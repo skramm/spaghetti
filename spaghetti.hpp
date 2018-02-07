@@ -744,6 +744,18 @@ struct NoTimer
 #define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
 	typedef spag::SpagFSM<st,ev,spag::NoTimer<st,ev,cbarg>,cbarg> type;
 
+#define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
+	typedef spag::SpagFSM<st,ev,timer<st,ev>,cbarg> type;
+
+#define SPAG_DECLARE_TIMER( timer, cba ) \
+	template<typename ST, typename EV> \
+	struct timer \
+	{ \
+		void timerStart( const spag::SpagFSM< ST, EV, timer, cba>* ); \
+		void timerCancel(); \
+	}
+
+
 #endif // HG_SPAGHETTI_FSM_HPP
 
 /**

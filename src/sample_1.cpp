@@ -1,6 +1,6 @@
 /**
 \file sample_1.cpp
-\brief Demo program of a simple FSM with 2 events, 5 states, and 1 pass state
+\brief Demo program of a simple FSM with 2 events (key press), 5 states, and 1 pass state. No timer.
 \image html sample1.svg
 
 
@@ -41,8 +41,9 @@ int main()
 	fsm.assignTransition( st2, ev_2, st4 );
 	fsm.assignTransition( st3, ev_2, st4 );
 
-	fsm.assignTransition( st4, st0 );   // st4 is a "pass state"
+	fsm.assignTransition( st4, st0 );   // st4 is a "pass state": no transition
 
+	fsm.printConfig( std::cout );
 	do
 	{
 		char key;
@@ -62,5 +63,4 @@ int main()
 		}
 	}
 	while(1);
-
 }

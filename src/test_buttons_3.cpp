@@ -7,9 +7,8 @@ https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnst
 */
 #include <iostream>
 
-//#define SPAG_ENABLE_LOGGING
+#define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
-
 
 #include "spaghetti.hpp"
 
@@ -32,6 +31,9 @@ void configureFSM( fsm_t& fsm )
 {
 	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
+
+	fsm.assignTransition( st_Locked,   ev_Push, st_Locked );
+	fsm.assignTransition( st_Unlocked, ev_Coin, st_Unlocked );
 
 	fsm.assignGlobalCallback( cb_Lock );
 	fsm.assignCallbackValue( st_Locked,   true );
