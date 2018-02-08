@@ -15,31 +15,12 @@ traffic_lights_client.cpp
 #include "spaghetti.hpp"
 
 #include "asio_wrapper.hpp"
+#include "traffic_lights_common.hpp"
 
-#include <memory>
-#include <thread>
-#include <mutex>
+SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialised in getSingletonMutex()
 std::mutex* g_mutex;
-
-//-----------------------------------------------------------------------------------
-/// initialization of mutex pointer (classical static initialization pattern)
-static std::mutex* getSingletonMutex()
-{
-    static std::mutex instance;
-    return &instance;
-}
-
-//-----------------------------------------------------------------------------------
-enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_BLINK_ON, ST_BLINK_OFF, NB_STATES };
-enum EVENT {
-	EV_RESET=0,     ///< reset button
-	EV_WARNING_ON,  ///< blinking mode on
-	EV_WARNING_OFF, ///< blinking mode off
-	NB_EVENTS
-};
-#include "keyb_ui_thread.hpp"
 
 //-----------------------------------------------------------------------------------
 /// concrete class, implements udp_server and SpagFSM, and triggers event on the FSM
@@ -73,48 +54,6 @@ struct my_server : public udp_server<2048>
 
 	spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA> fsm;
 };
-
-//-----------------------------------------------------------------------------------
-/// callback function
-void cb_func( std::string s)
-{
-	std::cout << s << '\n';
-}
-
-SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
-
-//-----------------------------------------------------------------------------------
-void
-configureFSM( fsm_t& fsm )
-{
-	fsm.assignTimeOut( ST_INIT,      3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,       4, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,     4, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE,    2, ST_RED    );
-
-	fsm.assignTimeOut( ST_BLINK_ON,  1, ST_BLINK_OFF );
-	fsm.assignTimeOut( ST_BLINK_OFF, 1, ST_BLINK_ON );
-
-	fsm.assignTransitionAlways( EV_RESET,       ST_INIT ); // if reception of message EV_RESET, then switch to state ST_INIT, whatever the current state is
-	fsm.assignTransitionAlways( EV_WARNING_ON,  ST_BLINK_ON );
-	fsm.assignTransition(       ST_BLINK_OFF, EV_WARNING_OFF, ST_RED );
-	fsm.assignTransition(       ST_BLINK_ON,  EV_WARNING_OFF, ST_RED );
-
-	fsm.assignGlobalCallback( cb_func );
-	fsm.assignCallbackValue( ST_RED,       "RED" );
-	fsm.assignCallbackValue( ST_GREEN,     "GREEN" );
-	fsm.assignCallbackValue( ST_ORANGE,    "ORANGE" );
-	fsm.assignCallbackValue( ST_BLINK_ON,  "BLINK-ON" );
-	fsm.assignCallbackValue( ST_BLINK_OFF, "BLINK-OFF" );
-	fsm.assignCallbackValue( ST_INIT,      "Init" );
-
-	std::vector<std::pair<EVENT,std::string>> v_str = {
-		{ EV_RESET,       "Reset" },
-		{ EV_WARNING_ON,  "Warning On" },
-		{ EV_WARNING_OFF, "Warning Off" }
-	};
-	fsm.assignStrings2Events( v_str );
-}
 //-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
@@ -131,7 +70,7 @@ int main( int, char* argv[] )
 		std::cout << "server created\n";
 
 		server.fsm.assignTimer( &asio );
-		configureFSM( server.fsm );
+		configureFSM<fsm_t>( server.fsm );
 
 		server.fsm.printConfig( std::cout );
 
@@ -141,13 +80,13 @@ int main( int, char* argv[] )
 		std::cout << " -start UI thread\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &server.fsm );
 
-		server.fsm.start();
+		server.fsm.start();  // blocking !
 		thread_ui.join();
+//		server.cancel();
 	}
 	catch( std::exception& e )
 	{
 		std::cerr << "catch error: " << e.what() << std::endl;
 	}
-
 }
 //-----------------------------------------------------------------------------------

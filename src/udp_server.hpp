@@ -12,6 +12,10 @@ Author: S. Kramm, LITIS, Rouen France - 2018/01
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 
+#ifdef SPAG_DEBUG
+	#include <iostream>
+#endif
+
 typedef unsigned char BYTE;
 //-----------------------------------------------------------------------------------
 /// A udp server based on boost::asio, templated by size of buffer
@@ -20,6 +24,8 @@ Callback: upon each reception of data, a callback function is called
 
 The user of this class needs to provide a function GetResponse()
 that will return the data thats needs to be send back.
+
+The boost::io_service is assumed to be started externally
 */
 template<size_t BUF_SIZE>
 class udp_server
@@ -45,7 +51,17 @@ class udp_server
 				)
 			);
 		}
-
+		~udp_server()
+		{
+			_socket.cancel();
+		}
+/*		void cancel()
+		{
+#ifdef SPAG_DEBUG
+			std::cout << "udp_server: cancel asynchronous receive on socket\n";
+#endif
+			_socket.cancel();
+		}*/
 	private:
 		boost::asio::ip::udp::socket   _socket;
 		boost::asio::ip::udp::endpoint _remote_endpoint;

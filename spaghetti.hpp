@@ -186,8 +186,11 @@ struct RunTimeData
 			out << _eventCounter[i] << '\n';
 		}
 		out << '\n';
-		out << " - Run history:\n#time;event;";
-		out << "state\n";
+		out << " - Run history:\n#time" << sep << "event" << sep
+#ifdef SPAG_ENUM_STRINGS
+			<< "event_string" << sep
+#endif
+			<< "state\n";
 
 		for( size_t i=0; i<_history.size(); i++ )
 		{
