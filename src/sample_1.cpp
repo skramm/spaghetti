@@ -13,7 +13,7 @@
 enum En_States { st0, st1, st2, st3, st4, NB_STATES };
 enum En_Events { ev_1, ev_2, NB_EVENTS };
 
-typedef spag::SpagFSM<En_States,En_Events,spag::NoTimer<En_States,En_Events,std::string>,std::string> fsm_t;
+SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, En_States, En_Events, std::string );
 
 void cbfunc( std::string s )
 {
@@ -44,23 +44,29 @@ int main()
 	fsm.assignTransition( st4, st0 );   // st4 is a "pass state": no transition
 
 	fsm.printConfig( std::cout );
+	std::cout << "Enter event key: 1 or 2 (q:quit)\n";
+	bool quit(false);
 	do
 	{
 		char key;
 		std::cin >> key;
 		switch( key )
 		{
-			case 'a':
+			case '1':
 				fsm.processEvent( ev_1 );
 			break;
 
-			case 'b':
+			case '2':
 				fsm.processEvent( ev_2 );
+			break;
+
+			case 'q':
+				quit = true;
 			break;
 
 			default:
 				std::cout << "invalid key\n";
 		}
 	}
-	while(1);
+	while( !quit );
 }
