@@ -1,10 +1,15 @@
 # spaghetti manual
 
-For reference, please download/ clone whole repo and run ```make doc```.
+For reference manual, please download/clone whole repo and run ```make doc```, then open
+```html/index.html```.
 
 This page demonstrates usage through several showcases
 
-- [Showcase 1](#showcase1): Hello World for FSM
+- [Showcase 1: Hello World for FSM](#showcase1)
+- [Showcase 2: let's use a timer](#showcase2)
+- Showcase 3 (TODO)
+- [Additional stuff](#additional_stuff)
+- [Build options](#build_options)
 
 <a name="showcase1"></a>
 ## Showcase 1: Hello World for FSM
@@ -112,7 +117,7 @@ All of this is given as a sample program,
 see file ```src/turnstyle_1.cpp``` and/or just clone repo and enter
 ```make demo -j4``` followed by ```bin/turnstyle_1```.
 
-
+<a name="showcase2"></a>
 ## Showcase 2: let's use a timer
 
 Lets consider another situation: a traffic light going automatically through the three states: Red, Green, Orange.
@@ -169,6 +174,7 @@ All things can be found in the runnable example in ```src/traffic_lights_1.cpp``
 TO BE CONTINUED
 
 
+<a name="additional_stuff"></a>
 ## Additional facilities
 
 - Printing the configuration:
@@ -180,6 +186,8 @@ TO BE CONTINUED
 
 TO BE CONTINUED
 
+
+<a name="build_options"></a>
 ## Build options
 
 Several symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
