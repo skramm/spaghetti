@@ -19,7 +19,7 @@ traffic_lights_client.cpp
 
 SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 
-/// global pointer on mutex, will get initialised in getSingletonMutex()
+/// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------
@@ -74,15 +74,16 @@ int main( int, char* argv[] )
 
 		server.fsm.printConfig( std::cout );
 
+		std::cout << __FUNCTION__ << "(): server.start_receive()\n";
 		server.start_receive();
-		std::cout << "server waiting\n";
 
-		std::cout << " -start UI thread\n";
+		std::cout << __FUNCTION__ << "(): start UI thread\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &server.fsm );
 
+		std::cout << __FUNCTION__ << "(): start fsm\n";
 		server.fsm.start();  // blocking !
+		std::cout << __FUNCTION__ << "(): fsm is stopped:\n";
 		thread_ui.join();
-//		server.cancel();
 	}
 	catch( std::exception& e )
 	{

@@ -2,6 +2,7 @@
 \file traffic_lights_common.hpp
 \brief holds some common code shared in traffic_lights_2.cpp and traffic_lights_3.cpp
 */
+
 #include <thread>
 #include <mutex>
 
@@ -27,7 +28,7 @@ enum EVENT {
 /// callback function
 void cb_func( std::string s)
 {
-	std::cout << s << '\n';
+	std::cout << "Callback function: " << s << '\n';
 }
 //-----------------------------------------------------------------------------------
 template<typename FSM>

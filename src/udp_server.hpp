@@ -53,7 +53,9 @@ class udp_server
 		}
 		~udp_server()
 		{
+			std::cout << "udp_server: destructor: socket cancel\n";
 			_socket.cancel();
+			std::cout << "udp_server: destructor: socket cancel DONE\n";
 		}
 /*		void cancel()
 		{

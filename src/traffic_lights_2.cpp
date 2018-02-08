@@ -20,7 +20,7 @@ Similar to version 1, with an added keyboard user interface
 
 SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 
-/// global pointer on mutex, will get initialised in getSingletonMutex()
+/// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------

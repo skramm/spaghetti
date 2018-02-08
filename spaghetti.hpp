@@ -165,6 +165,11 @@ struct RunTimeData
 		_stateCounter.resize( nbStates,   0 );
 		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass states")
 	}
+	void incrementInitState()
+	{
+		assert( _stateCounter.size() );
+		_stateCounter[0] = 1;
+	}
 	void clear()
 	{
 		_history.clear();
@@ -424,23 +429,23 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void start() const
 		{
 			runAction();
+#ifdef SPAG_ENABLE_LOGGING
+			_rtdata.incrementInitState();
+#endif
 			if( p_timer )
 				p_timer->timerInit();
 		}
-/// stop FSM : needed only if timer is used, this will cancel the pending timer
+
+/// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer
 		void stop() const
 		{
 			if( p_timer )
 			{
-				SPAG_LOG << __FUNCTION__ << "(): timerCancel()\n";
+				SPAG_LOG << "call timerCancel()\n";
 				p_timer->timerCancel();
-
-				SPAG_LOG << __FUNCTION__ << "(): timerCancel(): DONE\n";
-
-//				p_timer->timerKill();  /// \todo WHE SHOULDN'T HAVE TO USE THIS !!!
-//				SPAG_LOG << __FUNCTION__ << "(): timerKill(): DONE\n";
+				SPAG_LOG << "call timerKill()\n";
+				p_timer->timerKill();  /// \todo WHE SHOULDN'T HAVE TO USE THIS !!!
 			}
-
 		}
 
 /// Your timer end function/callback should call this when the timer expires
@@ -461,7 +466,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processEvent( EV ev ) const
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
-			SPAG_LOG << "-processing event " << ev << "\n";
+			SPAG_LOG << "processing event " << ev << "\n";
 			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
 				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
@@ -475,7 +480,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				runAction();                                        // 3 - call the callback function
 			}
 			else
-				SPAG_LOG << " (event ignored)\n";
+				SPAG_LOG << "event is ignored\n";
 		}
 ///@}
 
@@ -566,7 +571,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 	private:
 		void runAction() const
 		{
-			SPAG_LOG << "-switching to state " << _current << ", starting action\n";
+			SPAG_LOG << "switching to state " << _current << ", starting action\n";
 
 			if( _timeout.at( _current ).enabled )
 			{
@@ -774,52 +779,6 @@ struct NoTimer
 \page p_manual Spaghetti manual
 
 
-No event loop here, you must provide it.
-
-Dependencies: ONLY standard headers (no boost here, although it could be required in client code)
-
-\section sec_steps Main steps
-
-Usage:
- -# define the states
-\code
- enum States { st_Tired, st_WakingUp, st_Perfect, NB_STATES };
-\endcode
-
- -# define the events
-\code
- enum Events { ev_Breakfast, ev_Work, ev_, NB_EVENTS };
-\endcode
-
- -# Provide a Timer class \c T, if needed (see below)
-
- -# instanciate the class:
- \code
- SpagFSM<States,Events,T> fsm;
-\endcode
-
- -# configure the FSM,
-
- -# run the FSM:
- \code
-	fsm.start();
- \endcode
-
- -# enter your waiting loop, that will call appropriate member function.
-
-
- \section sec_usage Usage
-
-
- \subsection ssec_configure Configuring the FSM
-
-
- \subsection ssec_running Running the FSM
-
-
- \subsection ss_tools Additional tools
-
-
 Sample programs: see the list of
 <a href="../src/html/files.html" target="_blank">sample programs</a>.
 
@@ -925,4 +884,8 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 \todo for enum to string automatic conversion, maybe use this ? :
 https://github.com/aantron/better-enums
 
+\todo Problem (demonstrated in traffic_lights_3.cpp): if a network asynchronous receive is pending and timeout occurs before,
+then if a stop() is requested, the io_service will still be pending, waiting for incoming data.
+At present, have added a timerKill() function that will free the io_service, thus cancelling reception and closing socket.
+BUT: it would be better not to havec to do that...
 */

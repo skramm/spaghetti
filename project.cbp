@@ -24,6 +24,7 @@
 		</Compiler>
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
+		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
 		<Unit filename="src/asio_wrapper.hpp" />
@@ -35,6 +36,7 @@
 		<Unit filename="src/traffic_lights_2.cpp" />
 		<Unit filename="src/traffic_lights_3.cpp" />
 		<Unit filename="src/traffic_lights_client.cpp" />
+		<Unit filename="src/traffic_lights_common.hpp" />
 		<Unit filename="src/turnstyle_1.cpp" />
 		<Unit filename="src/turnstyle_2.cpp" />
 		<Unit filename="src/udp_server.hpp" />
