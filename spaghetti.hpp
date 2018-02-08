@@ -743,7 +743,7 @@ struct NoTimer
 	typedef spag::SpagFSM<st,ev,spag::NoTimer<st,ev,cbarg>,cbarg> type;
 
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
-	typedef spag::SpagFSM<st,ev,timer<st,ev>,cbarg> type;
+	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type;
 
 
 #endif // HG_SPAGHETTI_FSM_HPP

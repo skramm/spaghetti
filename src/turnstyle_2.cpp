@@ -10,10 +10,11 @@ See https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_tu
 
 #include "spaghetti.hpp"
 
+#include "asio_wrapper.hpp"
 
 #include <iostream>
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
+//#include <boost/asio.hpp>
+//#include <boost/bind.hpp>
 
 enum States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
@@ -26,44 +27,6 @@ void cb_func( bool b )
 	else
 		std::cout << "State: Unlocked\n";
 }
-
-template<typename ST, typename EV>
-struct AsioWrapper
-{
-	boost::asio::io_service io_service;
-	std::unique_ptr<boost::asio::deadline_timer> ptimer;
-
-	AsioWrapper()
-	{
-		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(io_service) );
-	}
-	void timerInit()
-	{
-		io_service.run();
-	}
-	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper,bool>* fsm  )
-	{
-		fsm->processTimeOut();
-	}
-	void timerCancel()
-	{
-
-	}
-	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,bool>* fsm )
-	{
-		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
-		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
-
-		ptimer->async_wait(
-			boost::bind(
-				&AsioWrapper<ST,EV>::timerCallback,
-				this,
-				boost::asio::placeholders::error,
-				fsm
-			)
-		);
-	}
-};
 
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
 
@@ -92,7 +55,7 @@ int main( int argc, char* argv[] )
 
 	configureFSM( fsm )	;
 
-	AsioWrapper<States,Events> timer;
+	AsioWrapper<States,Events,bool> timer;
 	fsm.assignTimer( &timer );
 
 	fsm.start();

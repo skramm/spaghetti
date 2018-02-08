@@ -10,53 +10,15 @@
 #define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
+#include "asio_wrapper.hpp"
+
+
 #include <memory>
 
 //-----------------------------------------------------------------------------------
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
 enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
 
-//-----------------------------------------------------------------------------------
-/// Wraps the boost::asio stuff
-/**
-Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
-That last point isn't that obvious, has it also must have a lifespan not limited to some callback function.
-*/
-template<typename ST, typename EV>
-struct AsioWrapper
-{
-	boost::asio::io_service io_service;
-	std::unique_ptr<boost::asio::deadline_timer> ptimer;
-
-	AsioWrapper()
-	{
-		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(io_service) );
-	}
-	void timerInit()
-	{
-		io_service.run();
-	}
-
-	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper,std::string>* fsm  )
-	{
-		fsm->processTimeOut();
-	}
-
-	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,std::string>* fsm )
-	{
-		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
-		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
-
-		ptimer->async_wait(
-			boost::bind(
-				&AsioWrapper<ST,EV>::timerCallback,
-				this,
-				boost::asio::placeholders::error,
-				fsm
-			)
-		);
-	}
-};
 
 SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 
@@ -93,7 +55,7 @@ int main( int argc, char* argv[] )
 
 	try
 	{
-		AsioWrapper<STATE,EVENT> asio;
+		AsioWrapper<STATE,EVENT,std::string> asio;
 		fsm.assignTimer( &asio );
 		fsm.start();
 	}
