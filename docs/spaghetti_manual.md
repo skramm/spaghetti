@@ -1,8 +1,11 @@
 # spaghetti manual
 
-For reference, please download/ clone whole repo and run ```make doc```/
+For reference, please download/ clone whole repo and run ```make doc```.
 
 This page demonstrates usage through several showcases
+
+-[#Showcase 1](#Showcase 1): Hello World for FSM
+
 
 ## Showcase 1: Hello World for FSM
 
@@ -106,7 +109,7 @@ while( 1 );
 
 That's it!
 All of this is given as a sample program,
-see file ```src/turnstyle_1.cpp``` and/or just clone repo end enter
+see file ```src/turnstyle_1.cpp``` and/or just clone repo and enter
 ```make demo -j4``` followed by ```bin/turnstyle_1```.
 
 

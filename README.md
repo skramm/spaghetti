@@ -36,7 +36,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
   If you can live with that, then you may go ahead.
 
 
-For manual, see [here](docs/blob/spaghetti_manual.md).
+For manual, see [here](docs/spaghetti_manual.md).
 
 
 ## FAQ
