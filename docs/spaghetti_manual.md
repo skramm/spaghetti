@@ -4,7 +4,7 @@ For reference, please download/ clone whole repo and run ```make doc```.
 
 This page demonstrates usage through several showcases
 
--[#Showcase 1](#Showcase 1): Hello World for FSM
+- [#Showcase 1](#Showcase 1): Hello World for FSM
 
 
 ## Showcase 1: Hello World for FSM
