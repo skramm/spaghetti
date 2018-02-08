@@ -14,6 +14,7 @@ https://github.com/skramm/spaghetti
 #include <functional>
 #include <cassert>
 #include <fstream>
+#include <iostream> // needed for expansion of SPAG_LOG
 
 #ifdef SPAG_GENERATE_DOT
 	#include <boost/graph/adjacency_list.hpp>
@@ -25,7 +26,13 @@ https://github.com/skramm/spaghetti
 #endif
 
 #ifdef SPAG_PRINT_STATES
-	#include <iostream>
+	#define SPAG_LOG \
+		if(1) \
+			std::cout << "Spaghetti: " << __FUNCTION__ << "(): "
+#else
+	#define SPAG_LOG \
+		if(0) \
+			std::cout
 #endif
 
 #ifdef SPAG_FRIENDLY_CHECKING
@@ -424,15 +431,22 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void stop() const
 		{
 			if( p_timer )
+			{
+				SPAG_LOG << __FUNCTION__ << "(): timerCancel()\n";
 				p_timer->timerCancel();
+
+				SPAG_LOG << __FUNCTION__ << "(): timerCancel(): DONE\n";
+
+//				p_timer->timerKill();  /// \todo WHE SHOULDN'T HAVE TO USE THIS !!!
+//				SPAG_LOG << __FUNCTION__ << "(): timerKill(): DONE\n";
+			}
+
 		}
 
 /// Your timer end function/callback should call this when the timer expires
 		void processTimeOut() const
 		{
-#ifdef SPAG_PRINT_STATES
-			std::cout << "-processing timeout event, delay was " << _timeout.at( _current ).duration << "\n";
-#endif
+			SPAG_LOG << "processing timeout event, delay was " << _timeout.at( _current ).duration << "\n";
 			assert( _timeout.at( _current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
 
 			_current = _timeout[ _current ].nextState;
@@ -447,9 +461,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processEvent( EV ev ) const
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
-#ifdef SPAG_PRINT_STATES
-			std::cout << "-processing event " << ev << "\n";
-#endif
+			SPAG_LOG << "-processing event " << ev << "\n";
 			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
 				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
@@ -462,10 +474,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 				runAction();                                        // 3 - call the callback function
 			}
-#ifdef SPAG_PRINT_STATES
 			else
-				std::cout << " (event ignored)\n";
-#endif
+				SPAG_LOG << " (event ignored)\n";
 		}
 ///@}
 
@@ -556,36 +566,28 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 	private:
 		void runAction() const
 		{
-#ifdef SPAG_PRINT_STATES
-			std::cout << "-switching to state " << _current << ", starting action\n";
-#endif
+			SPAG_LOG << "-switching to state " << _current << ", starting action\n";
+
 			if( _timeout.at( _current ).enabled )
 			{
 				assert( p_timer );
-#ifdef SPAG_PRINT_STATES
-		std::cout << "  -timeout enabled, duration=" << _timeout.at( _current ).duration << "\n";
-#endif
+				SPAG_LOG << "timeout enabled, duration=" << _timeout.at( _current ).duration << "\n";
 				p_timer->timerStart( this );
 			}
 			if( _callback.at( _current ) ) // if there is a callback stored, then call it
 			{
-#ifdef SPAG_PRINT_STATES
-			std::cout << "  -callback function start:\n";
-#endif
+				SPAG_LOG << "callback function start:\n";
 				if( std::is_same<CBA,DummyCbArg_t>::value )
 					_callback.at( _current )( CBA() );
 				else
 					_callback.at( _current )( _callbackArg.at( _current ) );
 			}
-#ifdef SPAG_PRINT_STATES
 			else
-				std::cout << "  -no callback provided\n";
-#endif
+				SPAG_LOG << "no callback provided\n";
+
 			if( _isPassState[ currentState() ] )
 			{
-#ifdef SPAG_PRINT_STATES
-				std::cout << "  -is pass-state, switching to state " << _timeout.at( _current ).nextState << '\n';
-#endif
+				SPAG_LOG << "is pass-state, switching to state " << _timeout.at( _current ).nextState << '\n';
 				_current =  _timeout.at( _current ).nextState;
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _timeout.at( _current ).nextState, EV::NB_EVENTS+1 );
