@@ -22,7 +22,7 @@ enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
 Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
 That last point isn't that obvious, has it also must have a lifespan not limited to some callback function.
 */
-template<typename ST, typename EV>
+template<typename ST, typename EV,typename CBA>
 struct AsioWrapper
 {
 	boost::asio::io_service io_service;
@@ -37,19 +37,19 @@ struct AsioWrapper
 		io_service.run();
 	}
 
-	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper>* fsm  )
+	void timerCallback( const boost::system::error_code& , const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
 		fsm->processTimeOut();
 	}
 
-	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper>* fsm )
+	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
 		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
 
 		ptimer->async_wait(
 			boost::bind(
-				&AsioWrapper<ST,EV>::timerCallback,
+				&AsioWrapper<ST,EV,CBA>::timerCallback,
 				this,
 				boost::asio::placeholders::error,
 				fsm
@@ -57,9 +57,13 @@ struct AsioWrapper
 		);
 	}
 };
-typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT>> fsm_t;
+
+//SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
+
+typedef spag::SpagFSM<STATE,EVENT,AsioWrapper<STATE,EVENT,std::string>,std::string> fsm_t;
 
 //-----------------------------------------------------------------------------------
+#if 0
 /// concrete class, implements udp_server
 struct my_server : public udp_server<2048>
 {
@@ -76,8 +80,13 @@ struct my_server : public udp_server<2048>
 		return std::vector<BYTE>(); // return empty vector at present...
 	}
 };
-
+#endif
 //-----------------------------------------------------------------------------------
+void callback( std::string v )
+{
+	std::cout << "cb, value=" << v << '\n';
+}
+/*
 void TL_red(spag::DummyCbArg_t)
 {
 	std::cout << "RED\n";
@@ -90,7 +99,7 @@ void TL_green(spag::DummyCbArg_t)
 {
 	std::cout << "GREEN\n";
 }
-
+*/
 //-----------------------------------------------------------------------------------
 int main( int argc, char* argv[] )
 {
@@ -110,21 +119,25 @@ int main( int argc, char* argv[] )
 	fsm.assignTimeOut( ST_WARNING_ON,  1, ST_WARNING_OFF );
 	fsm.assignTimeOut( ST_WARNING_OFF, 1, ST_WARNING_ON );
 
-	fsm.assignCallback( ST_RED,    TL_red );
+	fsm.assignCallback( ST_RED,    callback, std::string("RED") );
+	fsm.assignCallback( ST_ORANGE, callback, std::string("ORANGE") );
+	fsm.assignCallback( ST_GREEN,  callback, std::string("GREEN") );
+
+/*	fsm.assignCallback( ST_RED,    TL_red );
 	fsm.assignCallback( ST_ORANGE, TL_orange );
 	fsm.assignCallback( ST_GREEN,  TL_green );
-
+*/
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "test1.dot" );
 
 	try
 	{
-		AsioWrapper<STATE,EVENT> asio;
+		AsioWrapper<STATE,EVENT,std::string> asio;
 		std::cout << "io_service created\n";
 		fsm.assignTimer( &asio );
 
-		my_server server( asio, 12345 );
-		std::cout << "server created\n";
+//		my_server server( asio, 12345 );
+//		std::cout << "server created\n";
 
 //		server.start_receive();
 //		std::cout << "server waiting\n";

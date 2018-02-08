@@ -139,9 +139,9 @@ see file ```src/turnstyle_1.cpp``` and/or just clone repo end enter
 Lets consider another situation: a traffic light going automatically through the three states: Red, Green, Orange.
 You need to provide a Timer class that can be used by the FSM.
 This class needs to provide these three functions:
+- ```timerInit()```: initialize the timer
 - ```timerStart()```: start a timeout
 - ```timerCancel()```: cancel the timer
-- ```timerInit()```: initialize the timer
 
 Any timing class can be used, in the provided sample ```src/traffic_lights.cpp``` we demonstrate the use of [boost::asio](http://www.boost.org/doc/libs/release/libs/asio/):
 ```C++
@@ -166,7 +166,8 @@ Once you have declared this class, the declaration of the data type of the FSM w
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
 ```
 
-The configuration step will go as follows (assuming the states are names ST_RED, ST_GREEN, ST_ORANGE):
+The configuration step will go as follows (assuming the states are names ST_RED, ST_GREEN, ST_ORANGE).
+As you can guess, we have here, timeouts of 5, 5, and 1 seconds:
 
 ```C++
 	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );

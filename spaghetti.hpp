@@ -234,6 +234,7 @@ types:
  - ST: an enum defining the different states.
  - EV: an enum defining the different external events.
  - TIM: a type handling the timer, must provide the following methods:
+   - timerInit();
    - timerStart( const SpagFSM* );
    - timerCancel();
  - CBA: the callback function type (single) argument
@@ -738,26 +739,12 @@ struct NoTimer
 
 } // namespace spag end
 
-// A macro simplifying the FSM instanciation
-//#define SPAG_DECLARE_FSM( fsm, st, ev ) spag::SpagFSM<st,ev,spag::NoTimer<st,ev>> fsm
-
-// A macro simplifying the FSM instanciation (version 2, if a timer is needed)
-//#define SPAG_DECLARE_FSM_T( fsm, st, ev, tim ) spag::SpagFSM<st,ev,tim<st,ev>> fsm
-
 #define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
 	typedef spag::SpagFSM<st,ev,spag::NoTimer<st,ev,cbarg>,cbarg> type;
 
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev>,cbarg> type;
 
-/*#define SPAG_DECLARE_TIMER( timer, cba ) \
-	template<typename ST, typename EV> \
-	struct timer \
-	{ \
-		void timerStart( const spag::SpagFSM< ST, EV, timer, cba>* ); \
-		void timerCancel(); \
-	}
-*/
 
 #endif // HG_SPAGHETTI_FSM_HPP
 
