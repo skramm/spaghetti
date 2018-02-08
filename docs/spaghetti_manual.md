@@ -4,9 +4,9 @@ For reference, please download/ clone whole repo and run ```make doc```.
 
 This page demonstrates usage through several showcases
 
-- [#Showcase 1](#Showcase 1): Hello World for FSM
+- [Showcase 1](#showcase1): Hello World for FSM
 
-
+<a name="showcase1"></a>
 ## Showcase 1: Hello World for FSM
 
 Once you have downloaded the file ```spaghetti.hpp```, you are able to make the [turnstyle (WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile) example run, which is the "Hello World" for Finite State Machines.
