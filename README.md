@@ -50,6 +50,7 @@ enum Events { ev_Push, ev_Coin, NB_EVENTS };
 
 As you can see, the requirement here is that they **must** have as last element
 ```NB_STATES``` and ```NB_EVENTS```, respectively.
+For the states, the first one (having value 0) will be the initial state.
 
 Then, create the FSM data type:
 ```C++
@@ -102,11 +103,11 @@ void cb_func( bool b )
 }
 ```
 Done for configuration.
-Now, how to run this. (Here, you don't really need to because there are no timeout, but its recommended to do so, to avoid forgetting it afterwards. Just call ```run()``` ).
+Now, how to run this. (Here, you don't really need to because there are no timeout, but its recommended to do so, to avoid forgetting it afterwards. Just call ```start()``` ).
 
 Here the events will be triggered by the keyboard, so lets do this:
 ```C++
-fsm.run();
+fsm.start();
 do
 {
 	char key;
@@ -145,7 +146,7 @@ This class needs to provide these three functions:
 
 Any timing class can be used, in the provided sample ```src/traffic_lights.cpp``` we demonstrate the use of [boost::asio](http://www.boost.org/doc/libs/release/libs/asio/):
 ```C++
-template<typename ST, typename EV>
+template<typename ST, typename EV, typename CBA>
 struct AsioWrapper
 {
 	boost::asio::io_service io_service;
@@ -158,14 +159,12 @@ struct AsioWrapper
 ...
 ```
 (see full code for details)
-
-
+The three type parameters are the states, the events, and the type of the argument of the callback function.
 
 Once you have declared this class, the declaration of the data type of the FSM will be done with the second form of the macro:
 ```C++
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
 ```
-
 The configuration step will go as follows (assuming the states are names ST_RED, ST_GREEN, ST_ORANGE).
 As you can guess, we have here, timeouts of 5, 5, and 1 seconds:
 
@@ -175,6 +174,20 @@ As you can guess, we have here, timeouts of 5, 5, and 1 seconds:
 	fsm.assignTimeOut( ST_ORANGE, 1, ST_RED   );
 ```
 
+Once configuration is done, you need to instanciate the timer, assign it to the FSM, and start it:
+
+```C++
+	AsioWrapper<STATE,EVENT,std::string> asio;
+	fsm.assignTimer( &asio );
+	fsm.start();
+```
+
+Done !
+
+All things can be found in the runnable example in ```src/traffic_lights_1.cpp```.
+
+
+
 TO BE CONTINUED
 
 
@@ -182,7 +195,10 @@ TO BE CONTINUED
 
 - Printing the configuration:
 
+- Having string identifiers for the events:
+
 - Printing runtime data:
+
 
 TO BE CONTINUED
 

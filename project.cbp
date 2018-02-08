@@ -33,6 +33,7 @@
 		<Unit filename="src/spaghetti.css" />
 		<Unit filename="src/traffic_lights_1.cpp" />
 		<Unit filename="src/traffic_lights_2.cpp" />
+		<Unit filename="src/traffic_lights_3.cpp" />
 		<Unit filename="src/traffic_lights_client.cpp" />
 		<Unit filename="src/turnstyle_1.cpp" />
 		<Unit filename="src/turnstyle_2.cpp" />

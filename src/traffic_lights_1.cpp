@@ -4,10 +4,10 @@
 */
 
 
-#include "udp_server.hpp"
+//#include "udp_server.hpp"
 
-#define SPAG_GENERATE_DOT
-#define SPAG_PRINT_STATES
+//#define SPAG_GENERATE_DOT
+//#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include "asio_wrapper.hpp"
@@ -28,17 +28,17 @@ void callback( std::string v )
 	std::cout << "cb, value=" << v << '\n';
 }
 //-----------------------------------------------------------------------------------
-int main( int argc, char* argv[] )
+int main( int, char* argv[] )
 {
+	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+
 	fsm_t fsm;
 
-	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
-
 	std::cout << "fsm: nb states=" << fsm.nbStates() << " nb_events=" << fsm.nbEvents() << "\n";
-	fsm.assignTimeOut( ST_INIT,   5, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE, 2, ST_RED   );
+	fsm.assignTimeOut( ST_INIT,   3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
+	fsm.assignTimeOut( ST_RED,    4, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,  4, ST_ORANGE );
+	fsm.assignTimeOut( ST_ORANGE, 1, ST_RED   );
 
 	fsm.assignTransitionAlways( EV_RESET,      ST_INIT ); // if reception of message EV_RESET, then switch to state ST_RED, whatever the current state is
 	fsm.assignTransitionAlways( EV_WARNING_ON, ST_WARNING_ON );
@@ -53,16 +53,9 @@ int main( int argc, char* argv[] )
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "test1.dot" );
 
-	try
-	{
-		AsioWrapper<STATE,EVENT,std::string> asio;
-		fsm.assignTimer( &asio );
-		fsm.start();
-	}
-	catch( std::exception& e )
-	{
-		std::cerr << "catch error: " << e.what() << std::endl;
-	}
+	AsioWrapper<STATE,EVENT,std::string> asio;
+	fsm.assignTimer( &asio );
 
+	fsm.start();
 }
 

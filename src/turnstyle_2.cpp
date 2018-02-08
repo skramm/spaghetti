@@ -46,12 +46,12 @@ void configureFSM( fsm_t& fsm )
 }
 
 //-----------------------------------------------------------------------------------
-int main( int argc, char* argv[] )
+int main( int, char* argv[] )
 {
-	fsm_t fsm;
-	std::cout << argv[0] << ": " << fsm.buildOptions() << '\n';
-	std::cout << " - hit A or B for events. C: quit\n";
+	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
+	fsm_t fsm;
+	std::cout << " - hit A or B for events. C: quit\n";
 
 	configureFSM( fsm )	;
 

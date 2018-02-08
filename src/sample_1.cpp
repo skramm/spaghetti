@@ -20,8 +20,10 @@ void cbfunc( std::string s )
 	std::cout << "callback: " << s << '\n';
 }
 
-int main()
+int main( int, char* argv[] )
 {
+	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+
 	fsm_t fsm;
 	fsm.assignGlobalCallback( cbfunc );
 
@@ -69,4 +71,5 @@ int main()
 		}
 	}
 	while( !quit );
+	fsm.printLoggedData( std::cout );
 }

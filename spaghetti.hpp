@@ -142,16 +142,15 @@ struct RunTimeData
 		size_t event;
 		std::chrono::duration<double> elapsed;
 
+#if 0
 		friend std::ostream& operator << ( std::ostream& s, const StateChangeEvent& sce )
 		{
 			char sep(';');
 			s << sce.elapsed.count() << sep << sce.event << sep;
-//#ifdef SPAG_ENUM_STRINGS
-//			s << ?
-//#endif
 			s << sce.state << '\n';
 			return s;
 		}
+#endif
 	};
 
 	void alloc( size_t nbStates, size_t nbEvents )
@@ -186,13 +185,17 @@ struct RunTimeData
 		}
 		out << '\n';
 		out << " - Run history:\n#time;event;";
-/// \todo find a way to print the enum string in history (require a pointer on parent struct. But lots of templating involved...)
-//#ifdef SPAG_ENUM_STRINGS
-//		out << "event string;";
-//#endif
 		out << "state\n";
+		char sep(';');
 		for( size_t i=0; i<_history.size(); i++ )
-			out << _history[i];
+		{
+			size_t ev =_history[i].event;
+			out << _history[i].elapsed.count() << sep << ev << sep;
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _str_events[ev], maxlength );
+#endif
+			out << _history[i].state << '\n';
+		}
 	}
 	void logTransition( ST st, size_t ev )
 	{
@@ -405,11 +408,18 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /** \name Run time functions */
 ///@{
+/// start FSM : run callback associated to initial state (if any), an run timer (if any)
 		void start() const
 		{
 			runAction();
 			if( p_timer )
 				p_timer->timerInit();
+		}
+/// stop FSM : needed only if timer is used, this will cancel the pending timer
+		void stop() const
+		{
+			if( p_timer )
+				p_timer->timerCancel();
 		}
 
 /// Your timer end function/callback should call this when the timer expires
@@ -489,7 +499,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 
 /// Returns the build options
-		std::string buildOptions() const
+		static std::string buildOptions()
 		{
 			std::string out( "Spaghetti: version " );
 			out += SPAG_STRINGIZE( SPAG_VERSION );
@@ -529,6 +539,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_GENERATE_DOT
 /// Generates in current folder a dot file corresponding to the FSM (EXPERIMENTAL)
 		void writeDotFile( std::string fn ) const;
+#else
+		void writeDotFile( std::string ) const {}
 #endif
 ///@}
 
@@ -583,7 +595,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_ENABLE_LOGGING
 		mutable priv::RunTimeData<ST,EV>   _rtdata;
 #endif
-		mutable ST _current = static_cast<ST>(0);  ///< current state
+		mutable ST                         _current = static_cast<ST>(0);   ///< current state
 		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 		std::vector<priv::TimerEvent<ST>>  _timeout;         ///< Holds for each state the information on timeout

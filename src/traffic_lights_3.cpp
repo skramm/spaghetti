@@ -1,15 +1,16 @@
 /**
-\file test_traffic_lights_2.cpp
+\file test_traffic_lights_3.cpp
 \brief a simple traffic light example, build using boost::asio
 
 status: WIP
 
-Similar to version 1, with an added keyboard user interface
+Similar to version 1, with an added udp server part, that can receive data from
+test_traffic_lights_client.cpp
 */
 
-//#include "udp_server.hpp"
+#include "udp_server.hpp"
 
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 
@@ -31,6 +32,7 @@ static std::mutex* getSingletonMutex()
     static std::mutex instance;
     return &instance;
 }
+
 //-----------------------------------------------------------------------------------
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_BLINK_ON, ST_BLINK_OFF, NB_STATES };
 enum EVENT {
@@ -39,6 +41,41 @@ enum EVENT {
 	EV_WARNING_OFF, ///< blinking mode off
 	NB_EVENTS
 };
+
+
+//-----------------------------------------------------------------------------------
+/// concrete class, implements udp_server and SpagFSM, and triggers event on the FSM
+template<typename ST, typename EV, typename CBA>
+struct my_server : public udp_server<2048>
+{
+	my_server( AsioWrapper<STATE,EVENT,CBA>& asio_wrapper, int port_no )
+		: udp_server( asio_wrapper.io_service, port_no )
+	{}
+
+	std::vector<BYTE> GetResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const
+	{
+		std::cout << "received " << nb_bytes << " bytes\n";
+		switch( buffer.at(0) )
+		{
+			case 'a':
+				fsm.processEvent( EV_WARNING_ON );
+			break;
+			case 'b':
+				fsm.processEvent( EV_WARNING_OFF );
+			break;
+			case 'c':
+				fsm.processEvent( EV_RESET );
+			break;
+			default:
+				std::cout << "Error: invalid message received !\n";
+				throw;
+		}
+		return std::vector<BYTE>(); // return empty vector at present...
+	}
+
+	spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA> fsm;
+};
+
 //-----------------------------------------------------------------------------------
 /// callback function
 void cb_func( std::string s)
@@ -88,7 +125,6 @@ UI_thread( const fsm_t* fsm )
 		std::lock_guard<std::mutex> lock(*g_mutex);
 		std::cout << "Thread start, enter key anytime\n";
 	}
-	bool quit(false);
     do
     {
 		char key;
@@ -111,10 +147,11 @@ UI_thread( const fsm_t* fsm )
 					std::cout << ": reset\n";
 					fsm->processEvent( EV_RESET );
 				break;
+
 				case 'x':
 					std::cout << ": x: QUIT\n";
-					fsm->stop();
-					quit = true;
+					fsm->printLoggedData( std::cout );
+					exit(0);
 				break;
 
 				default:
@@ -122,8 +159,7 @@ UI_thread( const fsm_t* fsm )
 			}
 		}
     }
-    while( !quit );
-	fsm->printLoggedData( std::cout );
+    while(1);
 }
 //-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
@@ -133,18 +169,25 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		fsm_t fsm;
 		AsioWrapper<STATE,EVENT,std::string> asio;
+		std::cout << "io_service created\n";
 
-		fsm.assignTimer( &asio );
-		configureFSM( fsm );
+		my_server<STATE,EVENT,std::string> server( asio, 12345 );
 
-		fsm.printConfig( std::cout );
+		std::cout << "server created\n";
+
+		server.fsm.assignTimer( &asio );
+		configureFSM( server.fsm );
+
+		server.fsm.printConfig( std::cout );
+
+		server.start_receive();
+		std::cout << "server waiting\n";
+
+		server.fsm.start();
 
 		std::cout << " -start UI thread\n";
-		std::thread thread_ui( UI_thread, &fsm );
-
-		fsm.start();
+		std::thread thread_ui( UI_thread, &server.fsm );
 	}
 	catch( std::exception& e )
 	{
