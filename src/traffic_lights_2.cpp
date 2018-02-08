@@ -39,6 +39,9 @@ enum EVENT {
 	EV_WARNING_OFF, ///< blinking mode off
 	NB_EVENTS
 };
+
+#include "keyb_ui_thread.hpp"
+
 //-----------------------------------------------------------------------------------
 /// callback function
 void cb_func( std::string s)
@@ -52,10 +55,11 @@ SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 void
 configureFSM( fsm_t& fsm )
 {
-	fsm.assignTimeOut( ST_INIT,      3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,       4, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,     4, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE,    2, ST_RED    );
+	fsm.assignTimeOut( ST_INIT,      1, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
+	fsm.assignTimeOut( ST_RED,       2, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,     2, ST_ORANGE );
+	fsm.assignTimeOut( ST_ORANGE,    1, ST_RED    );
+
 	fsm.assignTimeOut( ST_BLINK_ON,  1, ST_BLINK_OFF );
 	fsm.assignTimeOut( ST_BLINK_OFF, 1, ST_BLINK_ON );
 
@@ -80,52 +84,6 @@ configureFSM( fsm_t& fsm )
 	fsm.assignStrings2Events( v_str );
 }
 //-----------------------------------------------------------------------------------
-/// Console User Interface, enables action on FSM from user input
-void
-UI_thread( const fsm_t* fsm )
-{
-	{
-		std::lock_guard<std::mutex> lock(*g_mutex);
-		std::cout << "Thread start, enter key anytime\n";
-	}
-	bool quit(false);
-    do
-    {
-		char key;
-		std::cin >> key;
-		{
-			std::lock_guard<std::mutex> lock(*g_mutex);
-			std::cout << "**********************KEY FETCH: " << key;
-
-			switch( key )
-			{
-				case 'a':
-					std::cout << ": switch to warning mode\n";
-					fsm->processEvent( EV_WARNING_ON );
-				break;
-				case 'b':
-					std::cout << ": switch to normal mode\n";
-					fsm->processEvent( EV_WARNING_OFF );
-				break;
-				case 'c':
-					std::cout << ": reset\n";
-					fsm->processEvent( EV_RESET );
-				break;
-				case 'x':
-					std::cout << ": x: QUIT\n";
-					fsm->stop();
-					quit = true;
-				break;
-
-				default:
-					std::cout << ": invalid key" << std::endl;
-			}
-		}
-    }
-    while( !quit );
-	fsm->printLoggedData( std::cout );
-}
-//-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
@@ -142,13 +100,18 @@ int main( int, char* argv[] )
 		fsm.printConfig( std::cout );
 
 		std::cout << " -start UI thread\n";
-		std::thread thread_ui( UI_thread, &fsm );
+		std::thread thread_ui( UI_thread<fsm_t>, &fsm );
 
-		fsm.start();
+		fsm.start();  // blocking !
+		thread_ui.join();
 	}
 	catch( std::exception& e )
 	{
 		std::cerr << "catch error: " << e.what() << std::endl;
+	}
+	catch( ... )
+	{
+		std::cerr << "catch unknown error\n";
 	}
 
 }

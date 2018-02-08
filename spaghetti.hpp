@@ -167,6 +167,7 @@ struct RunTimeData
 	/// Print dynamic data to \c out
 	void printData( std::ostream& out ) const
 	{
+		char sep(';');
 #ifdef SPAG_ENUM_STRINGS
 		size_t maxlength = priv::getMaxLength( _str_events );
 #endif
@@ -177,16 +178,17 @@ struct RunTimeData
 		out << " - Event counters:\n";
 		for( size_t i=0; i<_eventCounter.size(); i++ )
 		{
-			out << i << ": ";
+			out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
 			priv::PrintEnumString( out, _str_events[i], maxlength );
+			out << sep;
 #endif
 			out << _eventCounter[i] << '\n';
 		}
 		out << '\n';
 		out << " - Run history:\n#time;event;";
 		out << "state\n";
-		char sep(';');
+
 		for( size_t i=0; i<_history.size(); i++ )
 		{
 			size_t ev =_history[i].event;
@@ -578,6 +580,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 			if( _isPassState[ currentState() ] )
 			{
+#ifdef SPAG_PRINT_STATES
+				std::cout << "  -is pass-state, switching to state " << _timeout.at( _current ).nextState << '\n';
+#endif
 				_current =  _timeout.at( _current ).nextState;
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _timeout.at( _current ).nextState, EV::NB_EVENTS+1 );

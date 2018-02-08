@@ -2,10 +2,8 @@
 \file test_traffic_lights_3.cpp
 \brief a simple traffic light example, build using boost::asio
 
-status: WIP
-
-Similar to version 1, with an added udp server part, that can receive data from
-test_traffic_lights_client.cpp
+Similar to version 2, with an added udp server part, can receive data from
+traffic_lights_client.cpp
 */
 
 #include "udp_server.hpp"
@@ -41,7 +39,7 @@ enum EVENT {
 	EV_WARNING_OFF, ///< blinking mode off
 	NB_EVENTS
 };
-
+#include "keyb_ui_thread.hpp"
 
 //-----------------------------------------------------------------------------------
 /// concrete class, implements udp_server and SpagFSM, and triggers event on the FSM
@@ -93,6 +91,7 @@ configureFSM( fsm_t& fsm )
 	fsm.assignTimeOut( ST_RED,       4, ST_GREEN  );
 	fsm.assignTimeOut( ST_GREEN,     4, ST_ORANGE );
 	fsm.assignTimeOut( ST_ORANGE,    2, ST_RED    );
+
 	fsm.assignTimeOut( ST_BLINK_ON,  1, ST_BLINK_OFF );
 	fsm.assignTimeOut( ST_BLINK_OFF, 1, ST_BLINK_ON );
 
@@ -117,51 +116,6 @@ configureFSM( fsm_t& fsm )
 	fsm.assignStrings2Events( v_str );
 }
 //-----------------------------------------------------------------------------------
-/// Console User Interface, enables action on FSM from user input
-void
-UI_thread( const fsm_t* fsm )
-{
-	{
-		std::lock_guard<std::mutex> lock(*g_mutex);
-		std::cout << "Thread start, enter key anytime\n";
-	}
-    do
-    {
-		char key;
-		std::cin >> key;
-		{
-			std::lock_guard<std::mutex> lock(*g_mutex);
-			std::cout << "**********************KEY FETCH: " << key;
-
-			switch( key )
-			{
-				case 'a':
-					std::cout << ": switch to warning mode\n";
-					fsm->processEvent( EV_WARNING_ON );
-				break;
-				case 'b':
-					std::cout << ": switch to normal mode\n";
-					fsm->processEvent( EV_WARNING_OFF );
-				break;
-				case 'c':
-					std::cout << ": reset\n";
-					fsm->processEvent( EV_RESET );
-				break;
-
-				case 'x':
-					std::cout << ": x: QUIT\n";
-					fsm->printLoggedData( std::cout );
-					exit(0);
-				break;
-
-				default:
-					std::cout << ": invalid key" << std::endl;
-			}
-		}
-    }
-    while(1);
-}
-//-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
@@ -184,10 +138,11 @@ int main( int, char* argv[] )
 		server.start_receive();
 		std::cout << "server waiting\n";
 
-		server.fsm.start();
-
 		std::cout << " -start UI thread\n";
-		std::thread thread_ui( UI_thread, &server.fsm );
+		std::thread thread_ui( UI_thread<fsm_t>, &server.fsm );
+
+		server.fsm.start();
+		thread_ui.join();
 	}
 	catch( std::exception& e )
 	{

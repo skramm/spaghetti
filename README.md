@@ -73,9 +73,15 @@ With this simple example, you just do:
 	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
 	fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
 ```
+This means:
+- if a coin is inserted while in "locked" state, then switch to state "unlocked".
+- if somebody pushes the gate while in "unlocked" state, then switch to state "locked".
+
 Ok, and also tell the FSM what is to be done when a state gets triggered.
 This is done by providing a callback function.
 In this case it is the same for all, but you can have a different function for all the states.
+You don't even need to provide a callback function, it is always optional:
+some states can have one while others won't.
 The only constraint is that they must have the same signature.
 
 ```C++
