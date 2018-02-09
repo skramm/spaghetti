@@ -716,7 +716,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 	out << "FSM config:";
 	if( msg )
 		out << "msg=" << msg;
-	out << "\n - Nb States=" << nbStates() << "\n - Nb external events=" << nbEvents();
+	out << "\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
 
 	out << "\n - Transition matrix: (X:ignored event)\n";
 	printMatrix( out );
@@ -803,67 +803,6 @@ Sample programs: see the list of
 
 
 
-\subsection ssec_BuildSymbols Build Options
-
-These symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
-(with GCC, its \c -DSPAG_SOME_SYMBOL ), or by hardcoding in your program, like this:
-
-\code
-#define SPAG_SOME_SYMBOL
-#include "spaghetti.hpp"
-\endcode
-
-They all start with these 5 characters: \c SPAG_
-
-The available options/symbols are:
-- \c SPAG_PRINT_STATES : will print on stdout the steps, useful only for debugging your SpagFSM
-- \c SPAG_ENABLE_LOGGING : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
-- \c SPAG_FRIENDLY_CHECKING: A lot of checking is done to ensure no nasty bug will crash your program.
-However, in case of incorrect usage of the library by your client code (say, invalid index value),
-the default behavior is to spit a standard error message that can be difficult to understand.
-So if you define this symbol at build time, instead of getting this:
-\code
-myfile: /usr/local/include/spaghetti.hpp:236: void spag::SpagFSM<STATE, EVENT, TIM>::assignTransitionMat(const std::vector<std::vector<T> >&) [with STATE = SERSTAT; EVENT = EN_EVENTS; TIM = AsioWrapper]: Assertion `mat.size() == EVENT::NB_EVENTS' failed.
-Aborted
-\endcode
-you will get this:
-\code
-Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
- - mat.size() value=7
- - EVENT::NB_EVENTS value=8
-Exiting...
-\endcode
-If this symbol is not defined, regular checking is done with the classical \c assert().
-As usual, this checking can be removed by defining the symbol \c NDEBUG.
-<br>
-- \c SPAG_SPAG_ENUM_STRINGS : this enables the usage of enum-string mapping, for events only.
-You can provide a string either individually with
-\code
-	fsm.assignString2Event( std::make_pair(EV_MyEvent, "something happened" );
-\endcode
-or globally, by providing a vector of pairs(enum values, string). For example:
-\code
-	std::vector<std::pair<EVENT,std::string>> v_str = {
-		{ EV_RESET,       "Reset" },
-		{ EV_WARNING_ON,  "Warning On" },
-		{ EV_WARNING_OFF, "Warning Off" }
-	};
-	fsm.assignStrings2Events( v_str );
-\endcode
-These strings will then be printed out when calling the printConfig() member function.
-
-\section sec_callback CALLBACK (TEMP WILL BE MOVED)
-
-The value to be used when the callback function is called is stored (copied by value) inside the FSM,
-and is given during configuration time:
-\code
-fsm.assignCallback( st_State1, cb_myCallback, 42 );
-\endcode
-See also example file \c test_buttons.cpp
-<br>
-If several arguments are needed, then the user code needs to pack them into a \c struct,
-or use \c std::pair or \c std::tuple.
-And of course it needs to be copyable.
 
 \section sec_misc Misc.
 

@@ -12,10 +12,6 @@ Author: S. Kramm, LITIS, Rouen France - 2018/01
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 
-//#ifdef SPAG_DEBUG
-//	#include <iostream>
-//#endif
-
 typedef unsigned char BYTE;
 //-----------------------------------------------------------------------------------
 /// A udp server based on boost::asio, templated by size of buffer
@@ -51,19 +47,6 @@ class udp_server
 				)
 			);
 		}
-/*		~udp_server()
-		{
-			std::cout << "udp_server: destructor: socket cancel\n";
-			_socket.cancel();
-			std::cout << "udp_server: destructor: socket cancel DONE\n";
-		}*/
-/*		void cancel()
-		{
-#ifdef SPAG_DEBUG
-			std::cout << "udp_server: cancel asynchronous receive on socket\n";
-#endif
-			_socket.cancel();
-		}*/
 	private:
 		boost::asio::ip::udp::socket   _socket;
 		boost::asio::ip::udp::endpoint _remote_endpoint;

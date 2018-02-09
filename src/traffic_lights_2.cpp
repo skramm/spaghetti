@@ -11,8 +11,6 @@ Similar to version 1, with an added keyboard user interface
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 
-#define SPAG_DEBUG // TEMP
-
 #include "spaghetti.hpp"
 
 #include "asio_wrapper.hpp"
