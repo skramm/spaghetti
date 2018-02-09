@@ -1,15 +1,16 @@
-# spaghetti manual
+# Spaghetti manual
 
+This page demonstrates usage through several showcases, and gives additional details.
 For reference manual, please download/clone whole repo and run ```make doc```, then open
 ```html/index.html```.
 
-This page demonstrates usage through several showcases
 
 - [Showcase 1: Hello World for FSM](#showcase1)
 - [Showcase 2: let's use a timer](#showcase2)
 - Showcase 3 (TODO)
 - [Additional stuff](#additional_stuff)
 - [Build options](#build_options)
+- [FAQ](#faq)
 
 <a name="showcase1"></a>
 ## Showcase 1: Hello World for FSM
@@ -121,8 +122,9 @@ see file ```src/turnstyle_1.cpp``` and/or just clone repo and enter
 ## Showcase 2: let's use a timer
 
 Lets consider another situation: a traffic light going automatically through the three states: Red, Green, Orange.
-You need to provide a Timer class that can be used by the FSM.
-This class needs to provide these three functions:
+You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and
+an event waiting loop.
+To be usable here, this class needs to provide these three functions:
 - ```timerInit()```: initialize the timer
 - ```timerStart()```: start a timeout
 - ```timerCancel()```: cancel the timer
@@ -149,7 +151,7 @@ Once you have declared this class, the declaration of the data type of the FSM w
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
 ```
 The configuration step will go as follows (assuming the states are names ST_RED, ST_GREEN, ST_ORANGE).
-As you can guess, we have here, timeouts of 5, 5, and 1 seconds:
+As you can guess, we have here timeouts of 5, 5, and 1 seconds:
 
 ```C++
 	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
@@ -166,9 +168,9 @@ Once configuration is done, you need to instanciate the timer, assign it to the 
 ```
 
 Done !
+Remember: here the ```fsm.start()``` call needs to be the **last** one, as it is now a blocking function.
 
-All things can be found in the runnable example in ```src/traffic_lights_1.cpp```.
-
+All of this can be found in the runnable example in ```src/traffic_lights_1.cpp```.
 
 
 TO BE CONTINUED
@@ -177,21 +179,26 @@ TO BE CONTINUED
 <a name="additional_stuff"></a>
 ## Additional facilities
 
+- Some self-explaining member function can be useful:
+
+ - ```nbStates()```
+ - ```nbEvents()```
+ - ```currentState()```
+ - ```timeOutDuration( STATE )```
+
 - Printing the configuration:
 
-- Having string identifiers for the events:
 
 - Printing runtime data:
 
 
-TO BE CONTINUED
 
 
 <a name="build_options"></a>
 ## Build options
 
 Several symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
-(with GCC, its \c -DSPAG_SOME_SYMBOL ), or by hardcoding in your program, BEFORE including the library file, like this:
+(with GCC, its ```-DSPAG_SOME_SYMBOL``` ), or by hardcoding in your program, BEFORE including the library file, like this:
 
 ```C++
 #define SPAG_SOME_SYMBOL
@@ -199,6 +206,10 @@ Several symbols can change the behavior of the library and/or add additional cap
 ```
 
 They all start with these 5 characters: ```SPAG_```
+
+You can printout at runtime the build options with this static function:
+```cout << fsm_t::buildOptions()```
+(once you have defined the type ```fsm_t```).
 
 The available options/symbols are:
 - ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM
@@ -235,5 +246,21 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 	};
 	fsm.assignStrings2Events( v_str );
 ```
-These strings will then be printed out when calling the ```printConfig()``` member function.
+These strings will then be used out when calling the ```printConfig()``` and ```printData()``` member function.
+
+
+<a name="faq"></a>
+## FAQ
+
+- Q: What is the timer unit ?
+- A: There are no timer units. Timing is stored as untyped integer value, it is up to the timer class you define to handle the considered unit.
+
+- Q: What if I have more that a single argument to pass to my callback function ?
+- A: then, you'll need to "pack it" in some class, or use a ```std::pair```, or ```std::tuple```.
+
+- Q: Why that name ?
+- A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
+(see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
+So you got it.
+(and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
 

@@ -16,6 +16,7 @@ static std::mutex* getSingletonMutex()
     return &instance;
 }
 //-----------------------------------------------------------------------------------
+/// traffic light states
 enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_BLINK_ON, ST_BLINK_OFF, NB_STATES };
 enum EVENT {
 	EV_RESET=0,     ///< reset button
@@ -35,10 +36,10 @@ template<typename FSM>
 void
 configureFSM( FSM& fsm )
 {
-	fsm.assignTimeOut( ST_INIT,      1, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,       2, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,     2, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE,    1, ST_RED    );
+	fsm.assignTimeOut( ST_INIT,      2, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
+	fsm.assignTimeOut( ST_RED,       4, ST_GREEN  );
+	fsm.assignTimeOut( ST_GREEN,     4, ST_ORANGE );
+	fsm.assignTimeOut( ST_ORANGE,    2, ST_RED    );
 
 	fsm.assignTimeOut( ST_BLINK_ON,  1, ST_BLINK_OFF );
 	fsm.assignTimeOut( ST_BLINK_OFF, 1, ST_BLINK_ON );

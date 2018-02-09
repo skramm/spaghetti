@@ -8,7 +8,7 @@ traffic_lights_client.cpp
 
 #include "udp_server.hpp"
 
-//#define SPAG_PRINT_STATES
+#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 

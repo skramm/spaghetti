@@ -1,4 +1,4 @@
-# spaghetti
+# Spaghetti
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## Key points
@@ -7,14 +7,14 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 - Audience: C++ developper having to implement a FSM
 - Webpage: https://github.com/skramm/spaghetti
 - Language: C++11
-- Author: S. Kramm, LITIS, University of Rouen, France - 2018
+- Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018.
 
 ## General information
 
 ### What is this ?
  This library doesn't provide any highend algorithm, you can consider it as a container holding all that is required to implement
- a FSM.
- However, it **does not** provide the main event loop. This is up to the user code.
+ a FSM (see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine)).
+ However, it does not provide the main event loop. This is up to the user code.
  The rationale behind this is that this loop may vary greatly depending on the requirements
  (need for timeout or not, need to acquire hardware external events,...).
 
@@ -36,22 +36,6 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
   If you can live with that, then you may go ahead.
 
 
-For manual, see [here](docs/spaghetti_manual.md).
-
-
-## FAQ
-
-- Q: Why that name ?
-- A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
-(see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
-So you got it.
-(and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
-
-- Q: What if I have more that a single argument to pass to my callback function ?
-- A: then, you'll need to "pack it" in some class, or use a ```std::pair```, or ```std::tuple```.
-
-## References
-
-https://en.wikipedia.org/wiki/Finite-state_machine
+For full manual, see [here](docs/spaghetti_manual.md).
 
 

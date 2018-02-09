@@ -416,6 +416,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_EQUAL( v_str.size(), EV::NB_EVENTS );
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
+			assert( _str_events.size() > EV::NB_EVENTS );
+			_str_events[EV::NB_EVENTS]   = "*Timeout*";
+			_str_events[EV::NB_EVENTS+1] = "*  AA   *";
 		}
 #else
 		void assignString2Event( EV, std::string ) {}
@@ -466,9 +469,15 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processEvent( EV ev ) const
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
-			SPAG_LOG << "processing event " << ev << "\n";
+
+#ifdef SPAG_ENUM_STRINGS
+			SPAG_LOG << "processing event " << ev << ": \"" << _str_events[ev] << "\"\n";
+#else
+			SPAG_LOG << "processing event " << ev << '\n';
+#endif
 			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
+				SPAG_LOG << "current state=" << _current << '\n';
 				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
 					p_timer->timerCancel();
 
@@ -521,7 +530,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Returns the build options
 		static std::string buildOptions()
 		{
-			std::string out( "Spaghetti: version " );
+			std::string out( "Spaghetti version " );
 			out += SPAG_STRINGIZE( SPAG_VERSION );
 			out += "\nBuild options:";
 
@@ -873,11 +882,7 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 
 \todo find a way to ease up the usage for no timer (dummy timer struct)
 
-\todo add some way to define "passage states", that is states that have some callback but on which we just pass to another state without any condition (i.e. right away)
-
 \todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
-
-\todo write tutorial
 
 \todo add serialisation capability
 
@@ -888,4 +893,6 @@ https://github.com/aantron/better-enums
 then if a stop() is requested, the io_service will still be pending, waiting for incoming data.
 At present, have added a timerKill() function that will free the io_service, thus cancelling reception and closing socket.
 BUT: it would be better not to havec to do that...
+
+\todo handle FSM with no events ??? (only timeouts) Possible ?
 */

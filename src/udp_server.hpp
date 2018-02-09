@@ -12,9 +12,9 @@ Author: S. Kramm, LITIS, Rouen France - 2018/01
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 
-#ifdef SPAG_DEBUG
-	#include <iostream>
-#endif
+//#ifdef SPAG_DEBUG
+//	#include <iostream>
+//#endif
 
 typedef unsigned char BYTE;
 //-----------------------------------------------------------------------------------
@@ -51,12 +51,12 @@ class udp_server
 				)
 			);
 		}
-		~udp_server()
+/*		~udp_server()
 		{
 			std::cout << "udp_server: destructor: socket cancel\n";
 			_socket.cancel();
 			std::cout << "udp_server: destructor: socket cancel DONE\n";
-		}
+		}*/
 /*		void cancel()
 		{
 #ifdef SPAG_DEBUG

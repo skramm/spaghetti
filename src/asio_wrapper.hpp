@@ -1,6 +1,7 @@
 /**
 \file asio_wrapper.hpp
 \brief This file is part of the samples provided with The Spaghetti library, see
+https://github.com/skramm/spaghetti
 
 Licence: GPL 3
 */
@@ -36,9 +37,11 @@ struct AsioWrapper
 /// Timer callback function, called when timer expires.
 	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
+		SPAG_LOG << "start, err_code=" << err_code.value() << '\n';
 		switch( err_code.value() ) // check if called because of timeout, or because of canceling timeout operation
 		{
 			case boost::system::errc::operation_canceled:    // do nothing
+				SPAG_LOG << "err_code=operation_canceled\n";
 			break;
 			case 0:
 				fsm->processTimeOut();                    // normal operation: timer has expired
@@ -53,7 +56,7 @@ struct AsioWrapper
 /// Mandatory function for SpagFSM
 	void timerCancel()
 	{
-		std::cout << "Canceling timer !\n";
+		SPAG_LOG << "Canceling timer, expiry in " << ptimer->expires_from_now().total_milliseconds() << " ms.\n";
 		ptimer->cancel_one();
 	}
 
@@ -61,6 +64,8 @@ struct AsioWrapper
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
+		SPAG_LOG << "current state=" <<  fsm->currentState() << '\n';
+		SPAG_LOG << "launch timer with " << nb_sec << " s.\n";
 		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
 
 		ptimer->async_wait(
@@ -71,6 +76,7 @@ struct AsioWrapper
 				fsm
 			)
 		);
+		SPAG_LOG << "timer started, expiry in " << ptimer->expires_from_now().total_milliseconds() << " ms.\n";
 	}
 };
 
