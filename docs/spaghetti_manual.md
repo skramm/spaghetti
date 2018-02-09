@@ -2,7 +2,7 @@
 
 This page demonstrates usage through several showcases, and gives additional details.
 For reference manual, please download/clone whole repo and run ```make doc```, then open
-```html/index.html```.
+```html/index.html``` (needs doxygen).
 
 
 - [Showcase 1: Hello World for FSM](#showcase1)
@@ -179,7 +179,7 @@ TO BE CONTINUED
 <a name="additional_stuff"></a>
 ## Additional facilities
 
-- Some self-explaining member function can be useful:
+Some self-explaining member function that can be useful in user code:
 
  - ```nbStates()```
  - ```nbEvents()```
@@ -188,10 +188,25 @@ TO BE CONTINUED
 
 - Printing the configuration:
 
+The member function ```printConfig()``` will print the current configuration, for example:
+```C++
+fsm.printConfig( stsd::cout );
+```
 
 - Printing runtime data:
 
+If your FSM is able to stop (after a call to ```stop()```), you can printout the runtime data with
+```C++
+fsm.printLoggedData( std::cout );
+```
 
+This will print out
+ - the state counters (how many of times they were activated)
+ - the event counters. This also include the number of timeouts, adn the bnumber of "Always Active" transitions that were encountered.
+ - a timed log of the transitions from one state to another.
+
+Please note that if the symbol SPAG_ENUM_STRINGS is defined, the strings will appear in this data.
+Also see how these functions are used in the provided sample programs.
 
 
 <a name="build_options"></a>

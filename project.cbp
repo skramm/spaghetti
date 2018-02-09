@@ -30,6 +30,7 @@
 		<Unit filename="src/asio_wrapper.hpp" />
 		<Unit filename="src/doxyfile" />
 		<Unit filename="src/sample1.dot" />
+		<Unit filename="src/sample_0.cpp" />
 		<Unit filename="src/sample_1.cpp" />
 		<Unit filename="src/spaghetti.css" />
 		<Unit filename="src/traffic_lights_1.cpp" />
