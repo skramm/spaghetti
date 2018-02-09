@@ -2,6 +2,23 @@
 \file spaghetti.hpp
 \brief single header file of Spaghetti FSM library, see home page for full details:
 https://github.com/skramm/spaghetti
+
+Copyright 2018 Sebastien Kramm
+
+Licence: GPLv3
+
+This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef HG_SPAGHETTI_FSM_HPP
@@ -67,7 +84,7 @@ https://github.com/skramm/spaghetti
 #define SPAG_STRINGIZE( a ) SPAG_STRINGIZE2( a )
 
 // TEMP
-typedef int Duration;
+typedef size_t Duration;
 
 /// Main library namespace
 namespace spag {
@@ -826,8 +843,6 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
  - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
  - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
  - To avoid name collisions, all the symbols defined here start with "SPAG_"
-
-\todo find a way to ease up the usage for no timer (dummy timer struct)
 
 \todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
 

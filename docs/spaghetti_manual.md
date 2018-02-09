@@ -1,7 +1,11 @@
 # Spaghetti manual
 
-This page demonstrates usage through several showcases, and gives additional details.
-For reference manual, please download/clone whole repo and run ```make doc```, then open
+homepage: https://github.com/skramm/spaghetti
+
+This page demonstrates usage of the library through several showcases, and gives additional details.
+All the example are included an runnable in the src folder, just ```make demo```, then run ```bin/program_name```.
+
+For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
 
 
@@ -212,8 +216,8 @@ template<typename FSM>
 void UI_thread( const FSM* fsm )
 {
 	bool quit(false);
-    do
-    {
+	do
+	{
 		char key;
 		std::cin >> key;
 		switch( key )
@@ -223,8 +227,8 @@ void UI_thread( const FSM* fsm )
 			case 'c': fsm->processEvent( ev_Reset );      break;
 			case 'q': fsm->stop(); quit = true;           break;
 		}
-    }
-    while( !quit );
+	}
+	while( !quit );
 }
 ```
 
@@ -238,7 +242,11 @@ And we start that thread before starting the FSM:
 All of this can be found in the runnable example in ```src/traffic_lights_2.cpp```
 (and its companion header file ```src/traffic_lights_common.hpp```).
 
-
+Once you have trid this, you can also try
+```bin/traffic_light_3```.
+It is the same but with an added udp network capability:
+By running the  program ```bin/traffic_lights_client``` in another shell window
+(```bin/traffic_lights_client localhost```) or even on another machine, you can trigger the events using the network.
 
 <a name="additional_stuff"></a>
 ## Additional facilities
