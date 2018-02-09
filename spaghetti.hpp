@@ -418,7 +418,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				assignString2Event( p.first, p.second );
 			assert( _str_events.size() > EV::NB_EVENTS );
 			_str_events[EV::NB_EVENTS]   = "*Timeout*";
-			_str_events[EV::NB_EVENTS+1] = "*  AA   *";
+			_str_events[EV::NB_EVENTS+1] = "*  AA   *"; // Always Active Transition
 		}
 #else
 		void assignString2Event( EV, std::string ) {}
@@ -431,12 +431,20 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// start FSM : run callback associated to initial state (if any), an run timer (if any)
 		void start() const
 		{
+			static bool bFirst = true;
+			if(bFirst)
+				bFirst = false;
+			else
+			{
+				std::cerr << "Spaghetti: error, attempt to start the FSM twice!\n";
+				std::exit(1);
+			}
 			runAction();
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.incrementInitState();
 #endif
-			if( p_timer )
-				p_timer->timerInit();
+			if( p_timer )                 // if timing is involved,
+				p_timer->timerInit();     // then it must be started
 		}
 
 /// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer

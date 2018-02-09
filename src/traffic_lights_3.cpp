@@ -8,7 +8,7 @@ traffic_lights_client.cpp
 
 #include "udp_server.hpp"
 
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 
@@ -17,6 +17,7 @@ traffic_lights_client.cpp
 #include "asio_wrapper.hpp"
 #include "traffic_lights_common.hpp"
 
+// states and events are declared in file traffic_lights_common.hpp
 SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
@@ -65,25 +66,25 @@ int main( int, char* argv[] )
 		AsioWrapper<STATE,EVENT,std::string> asio;
 		std::cout << "io_service created\n";
 
-		my_server<STATE,EVENT,std::string> server( asio, 12345 );
+		my_server<STATE,EVENT,std::string> server( asio, 12345 ); // create udp server with asio as... well, asio object!
 
-		std::cout << "server created\n";
+		std::cout << "-server created\n";
 
 		server.fsm.assignTimer( &asio );
 		configureFSM<fsm_t>( server.fsm );
 
 		server.fsm.printConfig( std::cout );
 
-		std::cout << __FUNCTION__ << "(): server.start_receive()\n";
+		std::cout << "- server start\n";
 		server.start_receive();
 
-		std::cout << __FUNCTION__ << "(): start UI thread\n";
+		std::cout << "- start UI thread\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &server.fsm );
 
-		std::cout << __FUNCTION__ << "(): start fsm\n";
+		std::cout << "- start fsm\n";
 		server.fsm.start();  // blocking !
-		std::cout << __FUNCTION__ << "(): fsm is stopped:\n";
 		thread_ui.join();
+		std::cout << "- fsm is stopped:\n";
 	}
 	catch( std::exception& e )
 	{

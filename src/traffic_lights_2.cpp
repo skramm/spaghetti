@@ -7,7 +7,7 @@ status: WIP
 Similar to version 1, with an added keyboard user interface
 */
 
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 
@@ -18,6 +18,7 @@ Similar to version 1, with an added keyboard user interface
 #include "asio_wrapper.hpp"
 #include "traffic_lights_common.hpp"
 
+// states and events are declared in file traffic_lights_common.hpp
 SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
