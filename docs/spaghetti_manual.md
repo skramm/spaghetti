@@ -194,18 +194,16 @@ fsm.printConfig( stsd::cout );
 ```
 
 - Printing runtime data:
-
 If your FSM is able to stop (after a call to ```stop()```), you can printout the runtime data with
 ```C++
 fsm.printLoggedData( std::cout );
 ```
-
 This will print out
  - the state counters (how many of times they were activated)
  - the event counters. This also include the number of timeouts, adn the bnumber of "Always Active" transitions that were encountered.
  - a timed log of the transitions from one state to another.
 
-Please note that if the symbol SPAG_ENUM_STRINGS is defined, the strings will appear in this data.
+Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see below) is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
 
 
