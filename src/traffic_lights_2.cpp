@@ -2,8 +2,6 @@
 \file test_traffic_lights_2.cpp
 \brief a simple traffic light example, build using boost::asio
 
-status: WIP
-
 Similar to version 1, with an added keyboard user interface
 */
 
@@ -26,6 +24,7 @@ std::mutex* g_mutex;
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+	std::cout << GetBoostVersion();
 
 	g_mutex = getSingletonMutex();
 	try
@@ -43,6 +42,7 @@ int main( int, char* argv[] )
 
 		fsm.start();  // blocking !
 		thread_ui.join();
+		fsm.printLoggedData( std::cout );
 	}
 	catch( std::exception& e )
 	{

@@ -84,7 +84,7 @@ int main( int, char* argv[] )
 		std::cout << "- start fsm\n";
 		server.fsm.start();  // blocking !
 		thread_ui.join();
-		std::cout << "- fsm is stopped:\n";
+		server.fsm.printLoggedData( std::cout );
 	}
 	catch( std::exception& e )
 	{

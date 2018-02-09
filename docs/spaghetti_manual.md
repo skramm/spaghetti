@@ -7,7 +7,7 @@ For reference manual, please download/clone whole repo and run ```make doc```, t
 
 - [Showcase 1: Hello World for FSM](#showcase1)
 - [Showcase 2: let's use a timer](#showcase2)
-- Showcase 3 (TODO)
+- [Showcase 3 : mixing timeout with hardware events](#showcase3)
 - [Additional stuff](#additional_stuff)
 - [Build options](#build_options)
 - [FAQ](#faq)
@@ -172,8 +172,72 @@ Remember: here the ```fsm.start()``` call needs to be the **last** one, as it is
 
 All of this can be found in the runnable example in ```src/traffic_lights_1.cpp```.
 
+<a name="showcase3"></a>
+## Traffic lights with buttons
 
-TO BE CONTINUED
+Now, lets consider the same system but with added buttons to control it.
+We add a "Warning" button to make the system enter a "orange blinking state".
+Actually, that won't be a unique state, but two different states,
+"Blink On" and "Blink Off".
+
+Oh, and also a "Warning off" button (to return to regular cycle), and a "Reset" button (can be useful).
+
+So we have now the following states and events:
+```C++
+enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
+enum EN_Events {
+	ev_Reset=0,    ///< reset button
+	ev_WarningOn,  ///< blinking mode on
+	ev_WarningOff, ///< blinking mode off
+	NB_EVENTS
+};
+```
+
+Confiuration of the FSM will be as previously, we just add this:
+```
+	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
+	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
+
+	fsm.assignTransitionAlways( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
+	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition(       st_BlinkOff,  ev_WarningOff, st_Red );
+	fsm.assignTransition(       st_BlinkOn,   ev_WarningOff, st_Red );
+```
+
+As the ```start()``` member function is blocking, we need to handle the keyboard events in a different thread.
+So we define a "user interface" function, templated by the FSM type:
+
+```C++
+template<typename FSM>
+void UI_thread( const FSM* fsm )
+{
+	bool quit(false);
+    do
+    {
+		char key;
+		std::cin >> key;
+		switch( key )
+		{
+			case 'a': fsm->processEvent( ev_WarningOn );  break;
+			case 'b': fsm->processEvent( ev_WarningOff ); break;
+			case 'c': fsm->processEvent( ev_Reset );      break;
+			case 'q': fsm->stop(); quit = true;           break;
+		}
+    }
+    while( !quit );
+}
+```
+
+And we start that thread before starting the FSM:
+```C++
+	std::thread thread_ui( UI_thread<fsm_t>, &fsm );
+	fsm.start();  // blocking !
+	thread_ui.join();
+```
+
+All of this can be found in the runnable example in ```src/traffic_lights_2.cpp```
+(and its companion header file ```src/traffic_lights_common.hpp```).
+
 
 
 <a name="additional_stuff"></a>
@@ -271,7 +335,10 @@ These strings will then be used out when calling the ```printConfig()``` and ```
 - Q: What if I have more that a single argument to pass to my callback function ?
 - A: then, you'll need to "pack it" in some class, or use a ```std::pair```, or ```std::tuple```.
 
-- Q: Why that name ?
+- Q: can I use a callback function with a void parameter ( ```void my_callback()```)
+- A: No, unfortunately. This is because void is not a type, you can't pass it as template argument. But you can always use anything, say an integer, and ignore its value.
+
+- Q: Why that name ? Where does that come from ?
 - A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
