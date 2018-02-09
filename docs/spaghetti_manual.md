@@ -150,19 +150,19 @@ Once you have declared this class, the declaration of the data type of the FSM w
 ```C++
 SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
 ```
-The configuration step will go as follows (assuming the states are names ST_RED, ST_GREEN, ST_ORANGE).
+The configuration step will go as follows (assuming the states are names st_Red, st_Green, st_Orange).
 As you can guess, we have here timeouts of 5, 5, and 1 seconds:
 
 ```C++
-	fsm.assignTimeOut( ST_RED,    5, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,  5, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE, 1, ST_RED   );
+	fsm.assignTimeOut( st_Red,    5, st_Green  );
+	fsm.assignTimeOut( st_Green,  5, st_Orange );
+	fsm.assignTimeOut( st_Orange, 1, st_Red   );
 ```
 
 Once configuration is done, you need to instanciate the timer, assign it to the FSM, and start it:
 
 ```C++
-	AsioWrapper<STATE,EVENT,std::string> asio;
+	AsioWrapper<EN_States,EVENT,std::string> asio;
 	fsm.assignTimer( &asio );
 	fsm.start();
 ```
@@ -184,7 +184,7 @@ Some self-explaining member function that can be useful in user code:
  - ```nbStates()```
  - ```nbEvents()```
  - ```currentState()```
- - ```timeOutDuration( STATE )```
+ - ```timeOutDuration( EN_States )```
 
 - Printing the configuration:
 
@@ -253,9 +253,9 @@ You can provide a string either individually with
 or globally, by providing a vector of pairs(enum values, string). For example:
 ```C++
 	std::vector<std::pair<EVENT,std::string>> v_str = {
-		{ EV_RESET,       "Reset" },
-		{ EV_WARNING_ON,  "Warning On" },
-		{ EV_WARNING_OFF, "Warning Off" }
+		{ ev_Reset,       "Reset" },
+		{ ev_WarningOn,  "Warning On" },
+		{ ev_WarningOff, "Warning Off" }
 	};
 	fsm.assignStrings2Events( v_str );
 ```

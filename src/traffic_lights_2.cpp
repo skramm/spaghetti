@@ -17,7 +17,7 @@ Similar to version 1, with an added keyboard user interface
 #include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -31,7 +31,7 @@ int main( int, char* argv[] )
 	try
 	{
 		fsm_t fsm;
-		AsioWrapper<STATE,EVENT,std::string> asio;
+		AsioWrapper<EN_States,EN_Events,std::string> asio;
 
 		fsm.assignTimer( &asio );
 		configureFSM<fsm_t>( fsm );

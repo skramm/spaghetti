@@ -17,11 +17,11 @@ static std::mutex* getSingletonMutex()
 }
 //-----------------------------------------------------------------------------------
 /// traffic light states
-enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_BLINK_ON, ST_BLINK_OFF, NB_STATES };
-enum EVENT {
-	EV_RESET=0,     ///< reset button
-	EV_WARNING_ON,  ///< blinking mode on
-	EV_WARNING_OFF, ///< blinking mode off
+enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
+enum EN_Events {
+	ev_Reset=0,    ///< reset button
+	ev_WarningOn,  ///< blinking mode on
+	ev_WarningOff, ///< blinking mode off
 	NB_EVENTS
 };
 
@@ -36,31 +36,31 @@ template<typename FSM>
 void
 configureFSM( FSM& fsm )
 {
-	fsm.assignTimeOut( ST_INIT,      2, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,       4, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,     4, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE,    2, ST_RED    );
+	fsm.assignTimeOut( st_Init,      2, st_Red    ); // if state st_Init and time out of 5s occurs, then switch to state st_Red
+	fsm.assignTimeOut( st_Red,       4, st_Green  );
+	fsm.assignTimeOut( st_Green,     4, st_Orange );
+	fsm.assignTimeOut( st_Orange,    2, st_Red    );
 
-	fsm.assignTimeOut( ST_BLINK_ON,  1, ST_BLINK_OFF );
-	fsm.assignTimeOut( ST_BLINK_OFF, 1, ST_BLINK_ON );
+	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
+	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
 
-	fsm.assignTransitionAlways( EV_RESET,       ST_INIT ); // if reception of message EV_RESET, then switch to state ST_INIT, whatever the current state is
-	fsm.assignTransitionAlways( EV_WARNING_ON,  ST_BLINK_ON );
-	fsm.assignTransition(       ST_BLINK_OFF, EV_WARNING_OFF, ST_RED );
-	fsm.assignTransition(       ST_BLINK_ON,  EV_WARNING_OFF, ST_RED );
+	fsm.assignTransitionAlways( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
+	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition(       st_BlinkOff,  ev_WarningOff, st_Red );
+	fsm.assignTransition(       st_BlinkOn,   ev_WarningOff, st_Red );
 
 	fsm.assignGlobalCallback( cb_func );
-	fsm.assignCallbackValue( ST_RED,       "RED" );
-	fsm.assignCallbackValue( ST_GREEN,     "GREEN" );
-	fsm.assignCallbackValue( ST_ORANGE,    "ORANGE" );
-	fsm.assignCallbackValue( ST_BLINK_ON,  "BLINK-ON" );
-	fsm.assignCallbackValue( ST_BLINK_OFF, "BLINK-OFF" );
-	fsm.assignCallbackValue( ST_INIT,      "Init" );
+	fsm.assignCallbackValue( st_Red,      "RED" );
+	fsm.assignCallbackValue( st_Green,    "GREEN" );
+	fsm.assignCallbackValue( st_Orange,   "ORANGE" );
+	fsm.assignCallbackValue( st_BlinkOn,  "BLINK-ON" );
+	fsm.assignCallbackValue( st_BlinkOff, "BLINK-OFF" );
+	fsm.assignCallbackValue( st_Init,     "Init" );
 
-	std::vector<std::pair<EVENT,std::string>> v_str = {
-		{ EV_RESET,       "Reset" },
-		{ EV_WARNING_ON,  "Warning On" },
-		{ EV_WARNING_OFF, "Warning Off" }
+	std::vector<std::pair<EN_Events,std::string>> v_str = {
+		{ ev_Reset,       "Reset" },
+		{ ev_WarningOn,  "Warning On" },
+		{ ev_WarningOff, "Warning Off" }
 	};
 	fsm.assignStrings2Events( v_str );
 }
@@ -86,15 +86,15 @@ UI_thread( const FSM* fsm )
 			{
 				case 'a':
 					std::cout << ": switch to warning mode\n";
-					fsm->processEvent( EV_WARNING_ON );
+					fsm->processEvent( ev_WarningOn );
 				break;
 				case 'b':
 					std::cout << ": switch to normal mode\n";
-					fsm->processEvent( EV_WARNING_OFF );
+					fsm->processEvent( ev_WarningOff );
 				break;
 				case 'c':
 					std::cout << ": reset\n";
-					fsm->processEvent( EV_RESET );
+					fsm->processEvent( ev_Reset );
 				break;
 				case 'q':
 					std::cout << ": QUIT\n";

@@ -18,7 +18,7 @@ traffic_lights_client.cpp
 #include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -28,7 +28,7 @@ std::mutex* g_mutex;
 template<typename ST, typename EV, typename CBA>
 struct my_server : public udp_server<2048>
 {
-	my_server( AsioWrapper<STATE,EVENT,CBA>& asio_wrapper, int port_no )
+	my_server( AsioWrapper<EN_States,EN_Events,CBA>& asio_wrapper, int port_no )
 		: udp_server( asio_wrapper.io_service, port_no )
 	{}
 
@@ -38,13 +38,13 @@ struct my_server : public udp_server<2048>
 		switch( buffer.at(0) )
 		{
 			case 'a':
-				fsm.processEvent( EV_WARNING_ON );
+				fsm.processEvent( ev_WarningOn );
 			break;
 			case 'b':
-				fsm.processEvent( EV_WARNING_OFF );
+				fsm.processEvent( ev_WarningOff );
 			break;
 			case 'c':
-				fsm.processEvent( EV_RESET );
+				fsm.processEvent( ev_Reset );
 			break;
 			default:
 				std::cout << "Error: invalid message received !\n";
@@ -63,10 +63,10 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		AsioWrapper<STATE,EVENT,std::string> asio;
+		AsioWrapper<EN_States,EN_Events,std::string> asio;
 		std::cout << "io_service created\n";
 
-		my_server<STATE,EVENT,std::string> server( asio, 12345 ); // create udp server with asio as... well, asio object!
+		my_server<EN_States,EN_Events,std::string> server( asio, 12345 ); // create udp server with asio as... well, asio object!
 
 		std::cout << "-server created\n";
 

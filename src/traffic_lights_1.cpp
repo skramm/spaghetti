@@ -16,11 +16,11 @@
 #include <memory>
 
 //-----------------------------------------------------------------------------------
-enum STATE { ST_INIT=0, ST_RED, ST_ORANGE, ST_GREEN, ST_WARNING_ON, ST_WARNING_OFF, NB_STATES };
-enum EVENT { EV_RESET=0, EV_WARNING_ON, NB_EVENTS };
+enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
+enum EN_Events { ev_Reset=0, ev_WarningOn, NB_EVENTS };
 
 
-SPAG_DECLARE_FSM_TYPE( fsm_t, STATE, EVENT, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
 
 //-----------------------------------------------------------------------------------
 void callback( std::string v )
@@ -35,25 +35,25 @@ int main( int, char* argv[] )
 	fsm_t fsm;
 
 	std::cout << "fsm: nb states=" << fsm.nbStates() << " nb_events=" << fsm.nbEvents() << "\n";
-	fsm.assignTimeOut( ST_INIT,   3, ST_RED    ); // if state ST_INIT and time out of 5s occurs, then switch to state ST_RED
-	fsm.assignTimeOut( ST_RED,    4, ST_GREEN  );
-	fsm.assignTimeOut( ST_GREEN,  4, ST_ORANGE );
-	fsm.assignTimeOut( ST_ORANGE, 1, ST_RED   );
+	fsm.assignTimeOut( st_Init,   3, st_Red    ); // if state st_Init and time out of 5s occurs, then switch to state st_Red
+	fsm.assignTimeOut( st_Red,    4, st_Green  );
+	fsm.assignTimeOut( st_Green,  4, st_Orange );
+	fsm.assignTimeOut( st_Orange, 1, st_Red   );
 
-	fsm.assignTransitionAlways( EV_RESET,      ST_INIT ); // if reception of message EV_RESET, then switch to state ST_RED, whatever the current state is
-	fsm.assignTransitionAlways( EV_WARNING_ON, ST_WARNING_ON );
+	fsm.assignTransitionAlways( ev_Reset,      st_Init ); // if reception of message ev_Reset, then switch to state st_Red, whatever the current state is
+	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
 
-	fsm.assignTimeOut( ST_WARNING_ON,  1, ST_WARNING_OFF );
-	fsm.assignTimeOut( ST_WARNING_OFF, 1, ST_WARNING_ON );
+	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
+	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
 
-	fsm.assignCallback( ST_RED,    callback, std::string("RED") );
-	fsm.assignCallback( ST_ORANGE, callback, std::string("ORANGE") );
-	fsm.assignCallback( ST_GREEN,  callback, std::string("GREEN") );
+	fsm.assignCallback( st_Red,    callback, std::string("RED") );
+	fsm.assignCallback( st_Orange, callback, std::string("ORANGE") );
+	fsm.assignCallback( st_Green,  callback, std::string("GREEN") );
 
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "test1.dot" );
 
-	AsioWrapper<STATE,EVENT,std::string> asio;
+	AsioWrapper<EN_States,EN_Events,std::string> asio;
 	fsm.assignTimer( &asio );
 
 	fsm.start();
