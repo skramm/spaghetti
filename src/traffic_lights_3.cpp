@@ -4,6 +4,10 @@
 
 Similar to version 2, with an added udp server part, can receive data from
 traffic_lights_client.cpp
+
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
 
 #include "udp_server.hpp"
@@ -24,12 +28,12 @@ SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
 std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------
-/// concrete class, implements udp_server and SpagFSM, and triggers event on the FSM
-template<typename ST, typename EV, typename CBA>
-struct my_server : public udp_server<2048>
+/// concrete class, implements UdpServer and SpagFSM, and triggers event on the FSM
+//template<typename ST, typename EV, typename CBA>
+struct MyServer : public UdpServer<2048>
 {
-	my_server( AsioWrapper<EN_States,EN_Events,CBA>& asio_wrapper, int port_no )
-		: udp_server( asio_wrapper.io_service, port_no )
+	MyServer( boost::asio::io_service& io_service, int port_no )
+		: UdpServer( io_service, port_no )
 	{}
 
 	std::vector<BYTE> GetResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const
@@ -53,7 +57,7 @@ struct my_server : public udp_server<2048>
 		return std::vector<BYTE>(); // return empty vector at present...
 	}
 
-	spag::SpagFSM<ST,EV,AsioWrapper<ST,EV,CBA>,CBA> fsm;
+	fsm_t fsm;
 };
 //-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
@@ -66,7 +70,7 @@ int main( int, char* argv[] )
 		AsioWrapper<EN_States,EN_Events,std::string> asio;
 		std::cout << "io_service created\n";
 
-		my_server<EN_States,EN_Events,std::string> server( asio, 12345 ); // create udp server with asio as... well, asio object!
+		MyServer server( asio.io_service, 12345 ); // create udp server with asio
 
 		std::cout << "-server created\n";
 

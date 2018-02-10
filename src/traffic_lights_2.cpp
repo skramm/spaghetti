@@ -3,6 +3,10 @@
 \brief a simple traffic light example, build using boost::asio
 
 Similar to version 1, with an added keyboard user interface
+
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
 
 //#define SPAG_PRINT_STATES

@@ -3,6 +3,10 @@
 \brief Demo of a running 2-states FSM with:
 - 1 hardware (keyboard) event to switch from initial state to state 2 (handled from a thread)
 - 1 timeout event to switch from state 2 to initial state
+
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
 
 #define SPAG_PRINT_STATES

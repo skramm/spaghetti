@@ -1,6 +1,6 @@
 /**
 \file spaghetti.hpp
-\brief single header file of Spaghetti FSM library, see home page for full details:
+\brief single header file of Spaghetti FSM C++ library, see home page for full details:
 https://github.com/skramm/spaghetti
 
 Copyright 2018 Sebastien Kramm

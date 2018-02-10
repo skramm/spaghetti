@@ -66,15 +66,7 @@ OPT_ALL:= \
 	)
 
 
-opt:
-	@for a in 0 1; do \
-		for b in 0 1; do \
-			for c in 0 1; do \
-				echo "$$a$$b$$c"; \
-			done \
-		done \
-	done
-
+# default target
 help:
 	@echo "This is not a program but a header-only library. Therefore, it is not supposed to be build"
 	@echo -e "If you want to build the sample programs, try target 'demo'.\n"
@@ -88,7 +80,15 @@ help:
 	@echo " - install: copies single file to $(DEST_PATH)"
 
 
-# default target
+opt:
+	@for a in 0 1; do \
+		for b in 0 1; do \
+			for c in 0 1; do \
+				echo "$$a$$b$$c"; \
+			done \
+		done \
+	done
+
 demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 

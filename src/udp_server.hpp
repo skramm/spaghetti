@@ -1,8 +1,10 @@
 /**
 \file udp_server.hpp
-\brief holds definition of class udp_server, based on boost::asio
+\brief holds definition of class UdpServer, based on boost::asio
 
-Author: S. Kramm, LITIS, Rouen France - 2018/01
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
 
 #ifndef HG_UDP_SERVER_HPP
@@ -24,12 +26,12 @@ that will return the data thats needs to be send back.
 The boost::io_service is assumed to be started externally
 */
 template<size_t BUF_SIZE>
-class udp_server
+class UdpServer
 {
 	public:
 		typedef std::array<BYTE, BUF_SIZE> Buffer_t;
 
-		udp_server( boost::asio::io_service& io_service, int port_no ) //, bool sendack=false )
+		UdpServer( boost::asio::io_service& io_service, int port_no ) //, bool sendack=false )
 			: _socket( io_service, boost::asio::ip::udp::endpoint( boost::asio::ip::udp::v4(), port_no ) ) //, _sendack(sendack)
 		{
 		}
@@ -40,7 +42,7 @@ class udp_server
 				boost::asio::buffer( _recv_buffer),
 				_remote_endpoint,
 				boost::bind(
-					&udp_server::_rx_handler,
+					&UdpServer::_rx_handler,
 					this,
 					boost::asio::placeholders::error,
 					boost::asio::placeholders::bytes_transferred

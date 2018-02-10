@@ -1,7 +1,10 @@
 /**
 \file asio_wrapper.hpp
-\brief This file is part of the samples provided with The Spaghetti library, see
-https://github.com/skramm/spaghetti
+\brief This is a wrapper on boost::asio components
+
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 
 Licence: GPL 3
 */

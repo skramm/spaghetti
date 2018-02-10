@@ -1,6 +1,10 @@
 /**
 \file traffic_lights_common.hpp
 \brief holds some common code shared in traffic_lights_2.cpp and traffic_lights_3.cpp
+
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
 
 #include <thread>

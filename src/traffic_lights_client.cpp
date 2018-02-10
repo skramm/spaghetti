@@ -2,6 +2,10 @@
 \file test_traffic_lights_client.cpp
 \brief client-side for test_traffic_lights_1.cpp .
 sends udp frames to the server, using port 12345
+
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
 
 #include <string>

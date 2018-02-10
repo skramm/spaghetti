@@ -3,7 +3,9 @@
 \brief Demo program of a simple FSM with 2 events (key press), 5 states, and 1 pass state. No timer.
 \image html sample1.svg
 
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
+Homepage: https://github.com/skramm/spaghetti
 */
 
 //#define SPAG_PRINT_STATES

@@ -3,12 +3,15 @@
 \brief Turnstyle example: FSM without timer and with a custom callback function type.
 See https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
+This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+Homepage: https://github.com/skramm/spaghetti
 */
+
 #include <iostream>
 
 #define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
-
 
 #include "spaghetti.hpp"
 
