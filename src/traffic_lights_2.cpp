@@ -1,5 +1,5 @@
 /**
-\file test_traffic_lights_2.cpp
+\file traffic_lights_2.cpp
 \brief a simple traffic light example, build using boost::asio
 
 Similar to version 1, with an added keyboard user interface

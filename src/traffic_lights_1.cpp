@@ -1,5 +1,5 @@
 /**
-\file test_traffic_lights_1.cpp
+\file traffic_lights_1.cpp
 \brief a simple traffic light example, build using boost::asio as timer backend
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines

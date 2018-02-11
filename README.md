@@ -2,10 +2,11 @@
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## Key points
-- Status: alpha (currently in dev. mode), API is not stabilized yet, so don't use until advised...
+- Status: beta: All the sample programs run as expected.
 - Licence: GPL v3
 - Audience: C++ developper having to implement a FSM
 - Webpage: https://github.com/skramm/spaghetti
+- Manual : [online here](docs/spaghetti_manual.md)
 - Language: C++11
 - Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018.
 
@@ -21,6 +22,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
  This library provides an easy way to specify states and events, and how and when it will switch from one state to another.
  It also has some additional facilities, such as logging and easy timeout handling.
 
+ It is currently in beta state: everything seems to work as expected, please post issue in case of any problems.
 
 ### Main features
 
@@ -35,7 +37,5 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
   - cons: it is inherently not type safe, as states and events are provided as enum values.
   If you can live with that, then you may go ahead.
 
-
-For full manual, see [here](docs/spaghetti_manual.md).
 
 

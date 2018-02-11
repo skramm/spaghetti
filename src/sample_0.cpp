@@ -9,7 +9,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include "asio_wrapper.hpp"
@@ -62,6 +62,8 @@ UI_thread( const FSM* fsm )
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+
+	std::cout << "enter 'a' for event, 'q' to quit\n";
 
 	g_mutex = getSingletonMutex();
 	try

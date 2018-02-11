@@ -8,7 +8,7 @@ All the example are included an runnable in the src folder, just ```make demo```
 For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
 
-
+- [Fundamental concepts](#concepts)
 - [Showcase 1: Hello World for FSM](#showcase1)
 - [Showcase 2: let's use a timer](#showcase2)
 - [Showcase 3 : mixing timeout with hardware events](#showcase3)
@@ -16,24 +16,42 @@ For a reference manual, run ```make doc```, then open
 - [Build options](#build_options)
 - [FAQ](#faq)
 
+<a name="concepts"></a>
+## Fundamental concepts
+
+All you need to get this running is to download and install the file ```spaghetti.hpp```.
+then you can create a program.
+
+States and events are simply defined as enum values:
+```C++
+enum States { st_1, st_2, st_3, NB_STATES };
+enum Events { ev_1, ev_2, ev_3,  NB_EVENTS };
+```
+Naming is free except for the last value that
+**must** be ```NB_STATES``` and ```NB_EVENTS```, respectively.
+For the states, the first one (having value 0) will be the initial state.
+
+Events can be of two types:
+ - either "hardware" events (basically, it can be just a keyboard press).
+ - or "time outs", when you want to switch from state A to state B after 'x' seconds
+
+For the latter case, you need to provide a special "timing" class, that will have some requirements (see below).
+you will need to "assign" the timer to the FSM in the configuration step.
+For the other events, it is up to your code to detect these, and then call some member function.
+
 <a name="showcase1"></a>
 ## Showcase 1: Hello World for FSM
 
-Once you have downloaded the file ```spaghetti.hpp```, you are able to make the [turnstyle (WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile) example run, which is the "Hello World" for Finite State Machines.
+In this example, we show the Hello World" of FSM, which is the "Turnstyle" FSM
+(see [WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile)).
 
 First, create enums for states and events:
 
 ```C++
 #include "spaghetti.hpp"
-
 enum States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 ```
-
-As you can see, the requirement here is that they **must** have as last element
-```NB_STATES``` and ```NB_EVENTS```, respectively.
-For the states, the first one (having value 0) will be the initial state.
-
 Then, create the FSM data type:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );

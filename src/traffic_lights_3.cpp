@@ -1,5 +1,5 @@
 /**
-\file test_traffic_lights_3.cpp
+\file traffic_lights_3.cpp
 \brief a simple traffic light example, build using boost::asio
 
 Similar to version 2, with an added udp server part, can receive data from
@@ -29,7 +29,6 @@ std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------
 /// concrete class, implements UdpServer and SpagFSM, and triggers event on the FSM
-//template<typename ST, typename EV, typename CBA>
 struct MyServer : public UdpServer<2048>
 {
 	MyServer( boost::asio::io_service& io_service, int port_no )
