@@ -10,7 +10,6 @@ Homepage: https://github.com/skramm/spaghetti
 
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
-#include <iostream>
 
 enum En_States { st0, st1, st2, st3, st4, NB_STATES };
 enum En_Events { ev_1, ev_2, NB_EVENTS };

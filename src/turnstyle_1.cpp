@@ -8,7 +8,6 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-#include <iostream>
 
 #define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES

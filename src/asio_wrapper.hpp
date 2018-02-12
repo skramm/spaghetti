@@ -9,6 +9,7 @@ Homepage: https://github.com/skramm/spaghetti
 Licence: GPL 3
 */
 
+#include "spaghetti.hpp"
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 

@@ -36,7 +36,7 @@ LDFLAGS += -lboost_system -lboost_thread -pthread
 .SUFFIXES:
 
 # list of targets that are NOT files
-.PHONY: all clean cleanall doc show
+.PHONY: all clean cleanall doc show diff
 
 SHELL=/bin/bash
 
@@ -125,10 +125,15 @@ show:
 	@echo OPTIONS=$(OPTIONS)
 	@echo SVG_FILES=$(SVG_FILES)
 
+diff:
+	git diff | colordiff | aha > diff.html
+	xdg-open diff.html
+#	rm diff.html
 
 clean:
 	-rm $(OBJ_DIR)/*
 	-rm *.dot *.svg
+	-rm diff.html
 
 cleandoc:
 	-rm -r html/*

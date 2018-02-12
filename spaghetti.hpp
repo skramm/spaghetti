@@ -151,7 +151,8 @@ struct RunTimeData
 {
 	public:
 #ifdef SPAG_ENUM_STRINGS
-		RunTimeData( const std::vector<std::string>& str_events ): _str_events(str_events)
+		RunTimeData( const std::vector<std::string>& str_events, const std::vector<std::string>& str_states )
+			: _str_events(str_events), _str_states( str_states )
 #else
 		RunTimeData()
 #endif
@@ -166,6 +167,7 @@ struct RunTimeData
 		size_t event;
 		std::chrono::duration<double> elapsed;
 
+// deprecated, replaced by printData()
 #if 0
 		friend std::ostream& operator << ( std::ostream& s, const StateChangeEvent& sce )
 		{
@@ -193,7 +195,7 @@ struct RunTimeData
 		_stateCounter.clear();
 		_eventCounter.clear();
 	}
-	/// Print dynamic data to \c out
+	/// Print dynamic data (runtime data) to \c out
 	void printData( std::ostream& out ) const
 	{
 		char sep(';');
@@ -249,6 +251,7 @@ struct RunTimeData
 
 #ifdef SPAG_ENUM_STRINGS
 		const std::vector<std::string>& _str_events; ///< reference on strings of events
+		const std::vector<std::string>& _str_states; ///< reference on strings of states
 #endif
 };
 #endif
@@ -289,7 +292,7 @@ class SpagFSM
 /// Constructor
 
 #if (defined SPAG_ENABLE_LOGGING) && (defined SPAG_ENUM_STRINGS)
-		SpagFSM() : _rtdata(_str_events)
+		SpagFSM() : _rtdata( _str_events, _str_states )
 #else
 		SpagFSM()
 #endif
@@ -314,6 +317,7 @@ class SpagFSM
 #endif
 #ifdef SPAG_ENUM_STRINGS
 			_str_events.resize( EV::NB_EVENTS+2 );
+			_str_states.resize( ST::NB_STATES );
 #endif
 		}
 
@@ -421,26 +425,41 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 #ifdef SPAG_ENUM_STRINGS
-/// Assign a string to an enum value (available only if option SPAG_ENUM_STRINGS is enabled)
+/// Assign a string to an enum event value (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignString2Event( EV ev, std::string str )
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
 			_str_events[ev] = str;
 		}
-/// Assign strings to enum values (available only if option SPAG_ENUM_STRINGS is enabled)
+/// Assign a string to an enum state value (available only if option SPAG_ENUM_STRINGS is enabled)
+		void assignString2State( ST st, std::string str )
+		{
+			SPAG_CHECK_LESS( st, nbStates() );
+			_str_states[st] = str;
+		}
+/// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& v_str )
 		{
 			SPAG_CHECK_EQUAL( v_str.size(), EV::NB_EVENTS );
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
-			assert( _str_events.size() > EV::NB_EVENTS );
 			_str_events[EV::NB_EVENTS]   = "*Timeout*";
 			_str_events[EV::NB_EVENTS+1] = "*  AA   *"; // Always Active Transition
 		}
+/// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled)
+		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& v_str )
+		{
+			SPAG_CHECK_EQUAL( v_str.size(), ST::NB_STATES );
+			for( const auto& p: v_str )
+				assignString2State( p.first, p.second );
+		}
 #else
 		void assignString2Event( EV, std::string ) {}
-		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& ) {}
+		void assignString2State( ST, std::string ) {}
+		void assignStrings2Events( const std::vector<std::pair<ST,std::string>>& ) {}
+		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& ) {}
 #endif
+
 ///@}
 
 /** \name Run time functions */
@@ -652,10 +671,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::vector<char>                  _isPassState;     ///< holds 1 if this is a "pass state", that is a state with only one transition and no timeout
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _str_events;      ///< holds events strings
+		std::vector<std::string>           _str_states;      ///< holds states strings
 #endif
 /// If the user code provides a value for the callbacks, then we must store these, per state. If not, then this will remain an empty vector
 		std::vector<CBA>                   _callbackArg;
-		TIM* p_timer = 0;                                    ///< pointer on timer
+		TIM*                               p_timer = nullptr;   ///< pointer on timer
 };
 //-----------------------------------------------------------------------------------
 namespace priv
