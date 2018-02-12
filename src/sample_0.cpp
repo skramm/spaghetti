@@ -1,5 +1,5 @@
 /**
-\file test_asio_1.cpp
+\file sample_0.cpp
 \brief Demo of a running 2-states FSM with:
 - 1 hardware (keyboard) event to switch from initial state to state 2 (handled from a thread)
 - 1 timeout event to switch from state 2 to initial state
@@ -9,7 +9,8 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-//#define SPAG_PRINT_STATES
+#define SPAG_ENABLE_LOGGING
+#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include "asio_wrapper.hpp"
@@ -66,14 +67,14 @@ int main( int, char* argv[] )
 	std::cout << "enter 'a' for event, 'q' to quit\n";
 
 	g_mutex = getSingletonMutex();
+	fsm_t fsm;
 	try
 	{
-		fsm_t fsm;
 		AsioWrapper<En_States,En_Events,std::string> asio;
 
 		fsm.assignTimer( &asio );
 		fsm.assignTransition( st_init, ev_1, st_one );
-		fsm.assignTimeOut( st_one, 5, st_init);
+		fsm.assignTimeOut( st_one, 1, st_init);
 
 		fsm.printConfig( std::cout );
 
@@ -90,6 +91,7 @@ int main( int, char* argv[] )
 	{
 		std::cerr << "catch unknown error\n";
 	}
+	fsm.printLoggedData( std::cout, spag::PrintFlags::stateCount );
 }
 //-----------------------------------------------------------------------------------
 

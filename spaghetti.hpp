@@ -93,6 +93,16 @@ namespace spag {
 /// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
 struct DummyCbArg_t {};
 
+//------------------------------------------------------------------------------------
+/// Used in printLoggedData() as second argument
+enum PrintFlags
+{
+	stateCount  = 0x01
+	,eventCount = 0x02
+	,history    = 0x04
+	,all        = 0x07
+};
+
 //-----------------------------------------------------------------------------------
 /// private namespace, so user code won't hit into this
 namespace priv {
@@ -143,7 +153,7 @@ getMaxLength( const std::vector<std::string>& v_str )
 	}
 	return maxlength;
 }
-//-----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
 /// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref ssec_BuildSymbols )
 #ifdef SPAG_ENABLE_LOGGING
 template<typename ST,typename EV>
@@ -196,7 +206,7 @@ struct RunTimeData
 		_eventCounter.clear();
 	}
 	/// Print dynamic data (runtime data) to \c out
-	void printData( std::ostream& out ) const
+	void printData( std::ostream& out, PrintFlags pflags ) const
 	{
 #ifdef SPAG_ENUM_STRINGS
 		size_t maxlength_e = priv::getMaxLength( _str_events );
@@ -204,48 +214,57 @@ struct RunTimeData
 #endif
 		char sep(';');
 
-		out << " - State counters:\n";
-		for( size_t i=0; i<_stateCounter.size(); i++ )
+		if( pflags & PrintFlags::stateCount )
 		{
-			out << i << sep,
+			out << "# State counters:\n";
+			for( size_t i=0; i<_stateCounter.size(); i++ )
+			{
+				out << i << sep,
 #ifdef SPAG_ENUM_STRINGS
-			priv::PrintEnumString( out, _str_states[i], maxlength_s );
-			out << sep;
+				priv::PrintEnumString( out, _str_states[i], maxlength_s );
+				out << sep;
 #endif
-			out << _stateCounter[i] << '\n';
+				out << _stateCounter[i] << '\n';
+			}
 		}
 
-		out << "\n - Event counters:\n";
-		for( size_t i=0; i<_eventCounter.size(); i++ )
+		if( pflags & PrintFlags::eventCount )
 		{
-			out << i << sep;
+			out << "\n# Event counters:\n";
+			for( size_t i=0; i<_eventCounter.size(); i++ )
+			{
+				out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
-			priv::PrintEnumString( out, _str_events[i], maxlength_e );
-			out << sep;
+				priv::PrintEnumString( out, _str_events[i], maxlength_e );
+				out << sep;
 #endif
-			out << _eventCounter[i] << '\n';
+				out << _eventCounter[i] << '\n';
+			}
 		}
 
-		out << "\n - Run history:\n#time" << sep << "event" << sep
+		if( pflags & PrintFlags::history )
+		{
+			out << "\n# Run history:\n#time" << sep << "event" << sep
 #ifdef SPAG_ENUM_STRINGS
-			<< "event_string" << sep << "state" << sep << "state_string\n";
+				<< "event_string" << sep << "state" << sep << "state_string\n";
 #else
-			<< "state\n";
+				<< "state\n";
 #endif
-		for( size_t i=0; i<_history.size(); i++ )
-		{
-			size_t ev =_history[i].event;
-			size_t st =_history[i].state;
-			out << _history[i].elapsed.count() << sep << ev << sep;
+			for( size_t i=0; i<_history.size(); i++ )
+			{
+				size_t ev =_history[i].event;
+				size_t st =_history[i].state;
+				out << _history[i].elapsed.count() << sep << ev << sep;
 #ifdef SPAG_ENUM_STRINGS
-			priv::PrintEnumString( out, _str_events[ev], maxlength_e );
-			out << sep;
+				priv::PrintEnumString( out, _str_events[ev], maxlength_e );
+				out << sep;
 #endif
-			out << st << sep;
+				out << st << sep;
 #ifdef SPAG_ENUM_STRINGS
-			priv::PrintEnumString( out, _str_states[ev], maxlength_s );
+				priv::PrintEnumString( out, _str_states[ev], maxlength_s );
 #endif
-			out << '\n';
+				out << '\n';
+			}
 		}
 	}
 	void logTransition( ST st, size_t ev )
@@ -282,6 +301,7 @@ resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t n
 }
 
 } // priv namespace end
+
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
 /**
@@ -575,12 +595,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
 #ifdef SPAG_ENABLE_LOGGING
 /// Print dynamic data to \c str
-		void printLoggedData( std::ostream& str ) const
+		void printLoggedData( std::ostream& str, PrintFlags pf=PrintFlags::all ) const
 		{
-			_rtdata.printData( str );
+			_rtdata.printData( str, pf );
 		}
 #else
-		void printLoggedData( std::ostream& ) const {}
+		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 #endif
 
 /// Returns the build options
@@ -663,7 +683,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				_rtdata.logTransition( _timeout.at( _current ).nextState, EV::NB_EVENTS+1 );
 #endif
 				runAction();              // re-entry
-			}
+			}   /// \todo STACKOVERFLOW INCOMING !!!
 		}
 		void printMatrix( std::ostream& str ) const;
 
