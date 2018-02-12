@@ -1,6 +1,6 @@
 # Spaghetti manual
 
-homepage: https://github.com/skramm/spaghetti
+Homepage: https://github.com/skramm/spaghetti
 
 This page demonstrates usage of the library through several showcases, and gives additional details.
 All the example are included an runnable in the src folder, just ```make demo```, then run ```bin/program_name```.
@@ -19,8 +19,8 @@ For a reference manual, run ```make doc```, then open
 <a name="concepts"></a>
 ## Fundamental concepts
 
-All you need to get this running is to download and install the file ```spaghetti.hpp```.
-then you can create a program.
+All you need to get this running is to download and install the file ```spaghetti.hpp``` to a location where your compiler can find it (```/usr/local/include``` is usually pretty good).
+Then you can create a program.
 
 States and events are simply defined as enum values:
 ```C++
@@ -36,8 +36,8 @@ Events can be of two types:
  - or "time outs", when you want to switch from state A to state B after 'x' seconds
 
 For the latter case, you need to provide a special "timing" class, that will have some requirements (see below).
-you will need to "assign" the timer to the FSM in the configuration step.
-For the other events, it is up to your code to detect these, and then call some member function.
+You will need to "assign" the timer to the FSM in the configuration step.
+For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
 
 <a name="showcase1"></a>
 ## Showcase 1: Hello World for FSM
@@ -67,7 +67,7 @@ int main()
 	fsm_t fsm;
 ```
 
-Now, you need to configure your FSM, that is define what event in what state will trigger switching to what state.
+Next, you need to configure your FSM, that is define what event in what state will trigger switching to what state.
 With this simple example, you just do:
 ```C++
 	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
@@ -137,7 +137,9 @@ while( 1 );
 
 That's it!
 All of this is given as a sample program,
-see file ```src/turnstyle_1.cpp``` and/or just clone repo and enter
+see file
+[src/turnstyle_1.cpp](https://github.com/skramm/spaghetti/blob/master/src/turnstyle_1.cpp)
+and/or just clone repo and enter
 ```make demo -j4``` followed by ```bin/turnstyle_1```.
 
 <a name="showcase2"></a>
@@ -151,7 +153,7 @@ To be usable here, this class needs to provide these three functions:
 - ```timerStart()```: start a timeout
 - ```timerCancel()```: cancel the timer
 
-Any timing class can be used, in the provided sample ```src/traffic_lights.cpp``` we demonstrate the use of [boost::asio](http://www.boost.org/doc/libs/release/libs/asio/):
+Any timing class can be used, in the provided sample ```src/traffic_lights_1.cpp``` we demonstrate the use of [boost::asio](http://www.boost.org/doc/libs/release/libs/asio/):
 ```C++
 template<typename ST, typename EV, typename CBA>
 struct AsioWrapper
@@ -192,7 +194,8 @@ Once configuration is done, you need to instanciate the timer, assign it to the 
 Done !
 Remember: here the ```fsm.start()``` call needs to be the **last** one, as it is now a blocking function.
 
-All of this can be found in the runnable example in ```src/traffic_lights_1.cpp```.
+All of this can be found in the runnable example in
+[src/traffic_lights_1.cpp](https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_1.cpp)
 
 <a name="showcase3"></a>
 ## Traffic lights with buttons
@@ -215,8 +218,8 @@ enum EN_Events {
 };
 ```
 
-Confiuration of the FSM will be as previously, we just add this:
-```
+Configuration of the FSM will be as previously, we just add this:
+```C++
 	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
 	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
 
@@ -257,13 +260,14 @@ And we start that thread before starting the FSM:
 	thread_ui.join();
 ```
 
-All of this can be found in the runnable example in ```src/traffic_lights_2.cpp```
-(and its companion header file ```src/traffic_lights_common.hpp```).
+All of this can be found in the runnable example in [src/traffic_lights_2.cpp](https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_2.cpp)
+and its companion header file
+[src/traffic_lights_common.hpp](
+https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_common.hpp).
 
-Once you have trid this, you can also try
-```bin/traffic_light_3```.
+Once you have tried this, you can also try ```bin/traffic_light_3```.
 It is the same but with an added udp network capability:
-By running the  program ```bin/traffic_lights_client``` in another shell window
+by running the  program ```bin/traffic_lights_client``` in another shell window
 (```bin/traffic_lights_client localhost```) or even on another machine, you can trigger the events using the network.
 
 <a name="additional_stuff"></a>
@@ -277,7 +281,6 @@ Some self-explaining member function that can be useful in user code:
  - ```timeOutDuration( EN_States )```
 
 - Printing the configuration:
-
 The member function ```printConfig()``` will print the current configuration, for example:
 ```C++
 fsm.printConfig( stsd::cout );
@@ -288,10 +291,16 @@ If your FSM is able to stop (after a call to ```stop()```), you can printout the
 ```C++
 fsm.printLoggedData( std::cout );
 ```
-This will print out
+This will print out, in a CSV style:
  - the state counters (how many of times they were activated)
  - the event counters. This also include the number of timeouts, adn the bnumber of "Always Active" transitions that were encountered.
  - a timed log of the transitions from one state to another.
+
+ You can pass to this function a second parameter, to specify **what** data you want:
+ - ```PrintFlags::stateCount``` : print state counters
+ - ```PrintFlags::eventCount``` : print event counters
+ - ```PrintFlags::history``` : print runtime history
+ - ```PrintFlags::all```: all of the above (default value)
 
 Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see below) is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
@@ -335,15 +344,16 @@ Exiting...
 If this symbol is not defined, regular checking is done with the classical ```assert()```.
 As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 
-- ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for events only.
+- ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++
-	fsm.assignString2Event( std::make_pair(EV_MyEvent, "something happened" );
+	fsm.assignString2Event( std::make_pair(ev_MyEvent, "something happened" );
+	fsm.assignString2Statet( std::make_pair(st_Arizona, "Arizona state" );
 ```
 or globally, by providing a vector of pairs(enum values, string). For example:
 ```C++
 	std::vector<std::pair<EVENT,std::string>> v_str = {
-		{ ev_Reset,       "Reset" },
+		{ ev_Reset,      "Reset" },
 		{ ev_WarningOn,  "Warning On" },
 		{ ev_WarningOff, "Warning Off" }
 	};
@@ -369,4 +379,3 @@ These strings will then be printed out when calling the ```printConfig()``` and 
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
-
