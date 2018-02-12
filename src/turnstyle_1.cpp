@@ -9,6 +9,7 @@ Homepage: https://github.com/skramm/spaghetti
 */
 
 
+#define SPAG_ENUM_STRINGS
 #define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 
@@ -40,6 +41,9 @@ void configureFSM( fsm_t& fsm )
 
 	fsm.assignCallback( st_Locked,   cb_func, true );
 	fsm.assignCallback( st_Unlocked, cb_func, false );
+
+	fsm.assignString2State( st_Locked, "Locked" );
+	fsm.assignString2Event( ev_Coin,   "Enter coin" );
 }
 
 //-----------------------------------------------------------------------------------
@@ -48,7 +52,7 @@ int main( int, char* argv[] )
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
-	std::cout << " - hit A or B for events. C: quit\n";
+	std::cout << " - hit 'a' or 'b' for events. 'q': quit\n";
 
 	configureFSM( fsm )	;
 //	fsm.printConfig( std::cout );
@@ -61,20 +65,17 @@ int main( int, char* argv[] )
 		std::cin >> key;
 		switch( key )
 		{
-			case 'A':
 			case 'a':
 				std::cout << "Event: push\n";
 				fsm.processEvent( ev_Push );
 			break;
 
-			case 'B':
 			case 'b':
 				std::cout << "Event: coin\n";
 				fsm.processEvent( ev_Coin );
 			break;
 
-			case 'C':
-			case 'c':
+			case 'q':
 				quit = true;
 			break;
 

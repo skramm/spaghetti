@@ -198,39 +198,54 @@ struct RunTimeData
 	/// Print dynamic data (runtime data) to \c out
 	void printData( std::ostream& out ) const
 	{
-		char sep(';');
 #ifdef SPAG_ENUM_STRINGS
-		size_t maxlength = priv::getMaxLength( _str_events );
+		size_t maxlength_e = priv::getMaxLength( _str_events );
+		size_t maxlength_s = priv::getMaxLength( _str_states );
 #endif
+		char sep(';');
+
 		out << " - State counters:\n";
 		for( size_t i=0; i<_stateCounter.size(); i++ )
-			out << i << ": " << _stateCounter[i] << '\n';
-		out << '\n';
-		out << " - Event counters:\n";
+		{
+			out << i << sep,
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _str_states[i], maxlength_s );
+			out << sep;
+#endif
+			out << _stateCounter[i] << '\n';
+		}
+
+		out << "\n - Event counters:\n";
 		for( size_t i=0; i<_eventCounter.size(); i++ )
 		{
 			out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
-			priv::PrintEnumString( out, _str_events[i], maxlength );
+			priv::PrintEnumString( out, _str_events[i], maxlength_e );
 			out << sep;
 #endif
 			out << _eventCounter[i] << '\n';
 		}
-		out << '\n';
-		out << " - Run history:\n#time" << sep << "event" << sep
-#ifdef SPAG_ENUM_STRINGS
-			<< "event_string" << sep
-#endif
-			<< "state\n";
 
+		out << "\n - Run history:\n#time" << sep << "event" << sep
+#ifdef SPAG_ENUM_STRINGS
+			<< "event_string" << sep << "state" << sep << "state_string\n";
+#else
+			<< "state\n";
+#endif
 		for( size_t i=0; i<_history.size(); i++ )
 		{
 			size_t ev =_history[i].event;
+			size_t st =_history[i].state;
 			out << _history[i].elapsed.count() << sep << ev << sep;
 #ifdef SPAG_ENUM_STRINGS
-			priv::PrintEnumString( out, _str_events[ev], maxlength );
+			priv::PrintEnumString( out, _str_events[ev], maxlength_e );
+			out << sep;
 #endif
-			out << _history[i].state << '\n';
+			out << st << sep;
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _str_states[ev], maxlength_s );
+#endif
+			out << '\n';
 		}
 	}
 	void logTransition( ST st, size_t ev )
@@ -318,6 +333,8 @@ class SpagFSM
 #ifdef SPAG_ENUM_STRINGS
 			_str_events.resize( EV::NB_EVENTS+2 );
 			_str_states.resize( ST::NB_STATES );
+			_str_events[EV::NB_EVENTS]   = "*Timeout*";
+			_str_events[EV::NB_EVENTS+1] = "*  AA   *"; // Always Active Transition
 #endif
 		}
 
@@ -443,8 +460,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_EQUAL( v_str.size(), EV::NB_EVENTS );
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
-			_str_events[EV::NB_EVENTS]   = "*Timeout*";
-			_str_events[EV::NB_EVENTS+1] = "*  AA   *"; // Always Active Transition
 		}
 /// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& v_str )
@@ -565,10 +580,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			_rtdata.printData( str );
 		}
 #else
-		void printLoggedData( std::ostream& ) const
-		{
-//			#warning "printLoggedData(): disabled function (SPAG_ENABLE_LOGGING undefined)"
-		}
+		void printLoggedData( std::ostream& ) const {}
 #endif
 
 /// Returns the build options
@@ -763,9 +775,20 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 	for( size_t i=0; i<_timeout.size(); i++ )
 		out << i << "  ";
 	out << "\n   ";
+
+#ifdef SPAG_ENUM_STRINGS
+	size_t maxlength = priv::getMaxLength( _str_states );
+#endif
+
 	for( size_t i=0; i<_timeout.size(); i++ )
-		out <<  (_timeout[i].enabled?'o':'.') << "  ";
-	out << '\n';
+	{
+		out << i;
+#ifdef SPAG_ENUM_STRINGS
+		out << ':';
+		priv::PrintEnumString( out, _str_states[i], maxlength );
+#endif
+		out << '|' << (_timeout[i].enabled?'o':'.') << '\n';
+	}
 }
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_GENERATE_DOT

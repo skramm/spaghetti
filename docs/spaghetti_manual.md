@@ -349,7 +349,7 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 	};
 	fsm.assignStrings2Events( v_str );
 ```
-These strings will then be used out when calling the ```printConfig()``` and ```printData()``` member function.
+These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 
 
 <a name="faq"></a>
