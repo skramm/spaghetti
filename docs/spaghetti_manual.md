@@ -32,12 +32,24 @@ Naming is free except for the last value that
 For the states, the first one (having value 0) will be the initial state.
 
 Events can be of two types:
- - either "hardware" events (basically, it can be just a keyboard press).
- - or "time outs", when you want to switch from state A to state B after 'x' seconds
+ - either "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
+ - or "time outs", when you want to switch from state A to state B after 'x' seconds. There are handled separately.
 
 For the latter case, you need to provide a special "timing" class, that will have some requirements (see below).
 You will need to "assign" the timer to the FSM in the configuration step.
 For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
+
+States can be of two types.
+Usually, the FSM will switch from one state to another when some transition becomes active.
+It can be a Timeout or a hardware event.
+But in some situations, you may want an "always active" transition.
+Transitions are driven by events, that themselves are handled by user-code.
+So obviously, we can't handle "always active" transition that way.
+So this library provides a special state status, called "pass-state".
+A pass-state will have only **one** transition, that will always be active, which means that once we arrive on such a state, the FSM will immediately switch to the next state.
+
+Limitations: a pass-state cannot lead to another pass-state. However, it can have a associated callback function.
+
 
 <a name="showcase1"></a>
 ## Showcase 1: Hello World for FSM
@@ -56,7 +68,7 @@ Then, create the FSM data type:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-This means you declare the type ```fsm_t```, using ```States``` and ```Events```, with callback functions having a bool as an argument.
+This means you declare the type ```fsm_t```, using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
 (Alternatively, you could also use a ```typedef```, but lets say this is easier at present.)
 
 Now, you can instanciate the fsm:
@@ -210,7 +222,15 @@ Oh, and also a "Warning off" button (to return to regular cycle), and a "Reset" 
 
 So we have now the following states and events:
 ```C++
-enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
+enum EN_States {
+	st_Init,
+	st_Red,
+	st_Orange,
+	st_Green,
+	st_BlinkOn,
+	st_BlinkOff,
+	NB_STATES
+};
 enum EN_Events {
 	ev_Reset=0,    ///< reset button
 	ev_WarningOn,  ///< blinking mode on
@@ -219,7 +239,7 @@ enum EN_Events {
 };
 ```
 
-Configuration of the FSM will be as previously, we just add this:
+Configuration of the FSM will be as previously, we just add this (self-explanatory):
 ```C++
 	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
 	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
@@ -349,7 +369,7 @@ As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 You can provide a string either individually with
 ```C++
 	fsm.assignString2Event( std::make_pair(ev_MyEvent, "something happened" );
-	fsm.assignString2Statet( std::make_pair(st_Arizona, "Arizona state" );
+	fsm.assignString2State( std::make_pair(st_Arizona, "Arizona state" );
 ```
 or globally, by providing a vector of pairs(enum values, string). For example:
 ```C++
@@ -360,6 +380,8 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 	};
 	fsm.assignStrings2Events( v_str );
 ```
+(and similarly with ```assignStrings2States()``` for states.)
+
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 
 
