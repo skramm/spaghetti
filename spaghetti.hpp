@@ -624,13 +624,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 ///@{
 		constexpr size_t nbStates() const
 		{
-//			assert( _transition_mat.size() );
-//			return _transition_mat[0].size();
 			return ST::NB_STATES;
 		}
 		constexpr size_t nbEvents() const
 		{
-//			return _transition_mat.size();
 			return EV::NB_EVENTS;
 		}
 		ST currentState() const
@@ -710,32 +707,43 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_LOG << "switching to state " << _current << ", starting action\n";
 
-			if( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent.enabled )
-			{
-				assert( p_timer );
-				SPAG_LOG << "timeout enabled, duration=" <<  _stateInfo[ static_cast<int>(_current) ]._timerEvent.duration << "\n";
-				p_timer->timerStart( this );
-			}
-			if( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._callback ) // if there is a callback stored, then call it
-			{
-				SPAG_LOG << "callback function start:\n";
-				_stateInfo[ SPAG_P_CAST2IDX(_current) ]._callback( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._callbackArg );
-			}
-			else
-				SPAG_LOG << "no callback provided\n";
+			auto stateInfo = _stateInfo[ SPAG_P_CAST2IDX(_current) ];
+			runAction_DoJob( stateInfo );
 
-			if( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._isPassState )
+			if( stateInfo._isPassState )
 			{
+				assert( !stateInfo._timerEvent.enabled );
 				SPAG_LOG << "is pass-state, switching to state " << _transition_mat[0][ SPAG_P_CAST2IDX(_current) ] << '\n';
 				_current =  _transition_mat[0][ SPAG_P_CAST2IDX(_current) ];
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, EV::NB_EVENTS+1 );
 #endif
-				runAction();              // re-entry
-			}   /// \todo STACKOVERFLOW INCOMING !!!
+				runAction_DoJob( stateInfo );
+			}
 		}
+
+/// sub-function of runAction(), needed for pass-states
+		void runAction_DoJob( const priv::StateInfo<ST,CBA>& stateInfo ) const
+		{
+			if( stateInfo._timerEvent.enabled )
+			{
+				assert( p_timer );
+				assert( !stateInfo._isPassState );
+				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent.duration << "\n";
+				p_timer->timerStart( this );
+			}
+			if( stateInfo._callback ) // if there is a callback stored, then call it
+			{
+				SPAG_LOG << "callback function start:\n";
+				stateInfo._callback( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._callbackArg );
+			}
+			else
+				SPAG_LOG << "no callback provided\n";
+		}
+
 		void printMatrix( std::ostream& str ) const;
 
+/// Checks configuration for any illegal situation. Throws error if one is encountered.
 		void doChecking() const
 		{
 			for( size_t i=0; i<nbStates(); i++ )
@@ -743,9 +751,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				auto state = _stateInfo[i];
 				if( state._isPassState )
 				{
-					size_t nextState =SPAG_P_CAST2IDX( _transition_mat[0][i] );
+					size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
 					if( _stateInfo[ nextState ]._isPassState )
 						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) ) );
+					if( state._timerEvent.enabled )
+						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) ) );
 				}
 			}
 		}
