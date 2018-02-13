@@ -293,7 +293,7 @@ fsm.printLoggedData( std::cout );
 ```
 This will print out, in a CSV style:
  - the state counters (how many of times they were activated)
- - the event counters. This also include the number of timeouts, adn the bnumber of "Always Active" transitions that were encountered.
+ - the event counters. This also include the number of timeouts, and the number of "Always Active" transitions that were encountered.
  - a timed log of the transitions from one state to another.
 
  You can pass to this function a second parameter, to specify **what** data you want:

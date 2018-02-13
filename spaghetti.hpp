@@ -267,6 +267,7 @@ struct RunTimeData
 			}
 		}
 	}
+/// Logs a transition from current state to state \c st, that was produced by event \c ev
 	void logTransition( ST st, size_t ev )
 	{
 		assert( ev < EV::NB_EVENTS+2 );
@@ -299,6 +300,13 @@ resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t n
 	for( auto& e: mat )
 		e.resize( nb_cols );
 }
+//-----------------------------------------------------------------------------------
+/// enum used for configuration errors (more to be added)
+enum EN_ConfigError
+{
+	CE_TimeOutAndPassState
+};
+
 
 } // priv namespace end
 
@@ -395,6 +403,8 @@ class SpagFSM
 			for( auto& line: _ignored_events )
 				line[static_cast<int>( st1 )] = 1;
 			_isPassState[st1] = 1;
+			if( _timeout[st1].enabled )
+				throw std::logic_error( getConfigErrorMessage( priv::CE_TimeOutAndPassState, st1 ) );
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final:
@@ -416,6 +426,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_LESS( st_curr, nbStates() );
 			SPAG_CHECK_LESS( st_next, nbStates() );
 			_timeout[ static_cast<int>( st_curr ) ] = priv::TimerEvent<ST>( st_next, dur );
+
+			if( _isPassState[st_curr] )
+				throw std::logic_error( getConfigErrorMessage( priv::CE_TimeOutAndPassState, st_curr ) );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
@@ -530,21 +543,19 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			}
 		}
 
-/// Your timer end function/callback should call this when the timer expires
+/// User-code timer end function/callback should call this when the timer expires
 		void processTimeOut() const
 		{
 			SPAG_LOG << "processing timeout event, delay was " << _timeout.at( _current ).duration << "\n";
 			assert( _timeout.at( _current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
-
 			_current = _timeout[ _current ].nextState;
-
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.logTransition( _current, EV::NB_EVENTS );
 #endif
 			runAction();
 		}
 
-/// Your callback should call this function when an external event occurs
+/// User-code should call this function when an external event occurs
 		void processEvent( EV ev ) const
 		{
 			SPAG_CHECK_LESS( ev, nbEvents() );
@@ -556,12 +567,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
-				SPAG_LOG << "current state=" << _current << '\n';
 				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
 					p_timer->timerCancel();
-
-				_current = _transition_mat[ev].at( _current );  // 2 - switch to next state
-
+				_current = _transition_mat[ev].at( _current );      // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, ev );
 #endif
@@ -654,6 +662,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 ///////////////////////////////////
 
 	private:
+/// Run associated action with a state switch
 		void runAction() const
 		{
 			SPAG_LOG << "switching to state " << _current << ", starting action\n";
@@ -675,17 +684,36 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			else
 				SPAG_LOG << "no callback provided\n";
 
-			if( _isPassState[ currentState() ] )
+			if( _isPassState[ _current ] )
 			{
-				SPAG_LOG << "is pass-state, switching to state " << _timeout.at( _current ).nextState << '\n';
-				_current =  _timeout.at( _current ).nextState;
+				SPAG_LOG << "is pass-state, switching to state " << _transition_mat[0][_current] << '\n';
+				_current =  _transition_mat[0][_current];
 #ifdef SPAG_ENABLE_LOGGING
-				_rtdata.logTransition( _timeout.at( _current ).nextState, EV::NB_EVENTS+1 );
+				_rtdata.logTransition( _current, EV::NB_EVENTS+1 );
 #endif
 				runAction();              // re-entry
 			}   /// \todo STACKOVERFLOW INCOMING !!!
 		}
 		void printMatrix( std::ostream& str ) const;
+
+		std::string getConfigErrorMessage( priv::EN_ConfigError ce, ST st ) const
+		{
+			std::string msg( "Spaghetti: configuration error: " );
+			switch( ce )
+			{
+				case priv::CE_TimeOutAndPassState:
+					msg += "state ";
+					msg += std::to_string( static_cast<int>(st) );
+#ifdef SPAG_ENUM_STRINGS
+					msg += " / ";
+					msg += _str_states[st];
+#endif
+					msg += " cannot have both a timeout and a pass-state flag";
+				break;
+				default: assert(0);
+			}
+			return msg;
+		}
 
 /////////////////////////////
 // private data section
@@ -914,10 +942,6 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 \todo for enum to string automatic conversion, maybe use this ? :
 https://github.com/aantron/better-enums
 
-\todo Problem (demonstrated in traffic_lights_3.cpp): if a network asynchronous receive is pending and timeout occurs before,
-then if a stop() is requested, the io_service will still be pending, waiting for incoming data.
-At present, have added a timerKill() function that will free the io_service, thus cancelling reception and closing socket.
-BUT: it would be better not to havec to do that...
 
 \todo handle FSM with no events ??? (only timeouts) Possible ?
 */
