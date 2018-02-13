@@ -52,7 +52,7 @@ int main( int, char* argv[] )
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
-	std::cout << " - hit 'a' or 'b' for events. 'q': quit\n";
+	std::cout << "Enter key anytime (c: coin, p: push, q: quit)\n";
 
 	configureFSM( fsm )	;
 //	fsm.printConfig( std::cout );
@@ -65,12 +65,12 @@ int main( int, char* argv[] )
 		std::cin >> key;
 		switch( key )
 		{
-			case 'a':
+			case 'p':
 				std::cout << "Event: push\n";
 				fsm.processEvent( ev_Push );
 			break;
 
-			case 'b':
+			case 'c':
 				std::cout << "Event: coin\n";
 				fsm.processEvent( ev_Coin );
 			break;

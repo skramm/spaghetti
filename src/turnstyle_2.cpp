@@ -40,7 +40,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st_Locked,   ev_Push, st_Locked );
 	fsm.assignTransition( st_Unlocked, ev_Coin, st_Unlocked );
 
-	fsm.assignTimeOut( st_Unlocked, 4, st_Locked );
+	fsm.assignTimeOut( st_Unlocked, 3, st_Locked );
 
 	fsm.assignCallback( st_Locked,   cb_func, true );
 	fsm.assignCallback( st_Unlocked, cb_func, false );

@@ -8,7 +8,7 @@ Homepage: https://github.com/skramm/spaghetti
 */
 
 //#define SPAG_PRINT_STATES
-#define SPAG_ENUM_STRINGS
+//#define SPAG_ENUM_STRINGS
 #include "spaghetti.hpp"
 
 

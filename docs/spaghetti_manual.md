@@ -109,7 +109,8 @@ void cb_func( bool b )
 }
 ```
 Done for configuration.
-Now, how to run this. (Here, you don't really need to because there are no timeout, but its recommended to do so, to avoid forgetting it afterwards. Just call ```start()``` ).
+Now, to run this you need to call ```start()```.
+(In this simple example, you could avoid this as there are no timeouts involved, but its recommended to do so as it also performs some configuration checks.)
 
 Here the events will be triggered by the keyboard, so lets do this:
 ```C++

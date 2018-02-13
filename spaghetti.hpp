@@ -113,8 +113,8 @@ template<typename ST>
 struct TimerEvent
 {
 	ST        nextState = static_cast<ST>(0); ///< state to switch to
-	Duration  duration  = 1;                     ///< duration
-	bool      enabled   = 0;                     ///< this state uses or not a timeout (default is no)
+	Duration  duration  = 1;                  ///< duration
+	bool      enabled   = 0;                  ///< this state uses or not a timeout (default is no)
 
 	TimerEvent()
 		: nextState(static_cast<ST>(0))
@@ -126,6 +126,15 @@ struct TimerEvent
 	{
 		enabled = true;
 	}
+};
+//-----------------------------------------------------------------------------------
+template<typename ST,typename CBA>
+struct StateInfo
+{
+	TimerEvent<ST>           _timerEvent;   ///< Holds for each state the information on timeout
+	std::function<void(CBA)> _callback;     ///< callback function
+	CBA                      _callbackArg;  ///< value of argument of callback function
+	bool                     _isPassState = false;  ///< true if this is a "pass state", that is a state with only one transition and no timeout
 };
 //-----------------------------------------------------------------------------------
 void
@@ -301,12 +310,45 @@ resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t n
 		e.resize( nb_cols );
 }
 //-----------------------------------------------------------------------------------
-/// enum used for configuration errors (more to be added)
+/// Used for configuration errors (more to be added). Used through priv::getConfigErrorMessage()
 enum EN_ConfigError
 {
-	CE_TimeOutAndPassState
+	CE_TimeOutAndPassState,   ///< state has both timeout and pass-state flags active
+	CE_IllegalPassState       ///< pass-state is followed by another pass-state
 };
 
+//-----------------------------------------------------------------------------------
+template<typename ST>
+std::string
+getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
+{
+	std::string msg( "Spaghetti: configuration error: " );
+	switch( ce )
+	{
+		case priv::CE_TimeOutAndPassState:
+			msg += "state ";
+			msg += std::to_string( static_cast<int>(st) );
+//#ifdef SPAG_ENUM_STRINGS
+//			msg += " '";
+//			msg += _str_states[st];
+//			msg += "'";
+//#endif
+			msg += " cannot have both a timeout and a pass-state flag";
+		break;
+		case CE_IllegalPassState:
+			msg += "state ";
+			msg += std::to_string( static_cast<int>(st) );
+//#ifdef SPAG_ENUM_STRINGS
+//			msg += " '";
+//			msg += _str_states[st];
+//			msg += "'";
+//#endif
+			msg += " cannot be followed by another pass-state";
+		break;
+		default: assert(0);
+	}
+	return msg;
+}
 
 } // priv namespace end
 
@@ -345,12 +387,7 @@ class SpagFSM
 			priv::resizemat( _transition_mat, EV::NB_EVENTS, ST::NB_STATES );
 			priv::resizemat( _ignored_events, EV::NB_EVENTS, ST::NB_STATES );
 
-			_callback.resize( ST::NB_STATES );    // no callbacks stored at init
-			if( !std::is_same<DummyCbArg_t, CBA>::value )
-				_callbackArg.resize( ST::NB_STATES );
-
-			_timeout.resize( ST::NB_STATES );    // timeouts info (see class TimerEvent)
-			_isPassState.resize( ST::NB_STATES );
+			_stateInfo.resize( ST::NB_STATES );    // states information
 
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
@@ -358,6 +395,7 @@ class SpagFSM
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.alloc( ST::NB_STATES, EV::NB_EVENTS );
 #endif
+
 #ifdef SPAG_ENUM_STRINGS
 			_str_events.resize( EV::NB_EVENTS+2 );
 			_str_states.resize( ST::NB_STATES );
@@ -402,9 +440,9 @@ class SpagFSM
 				line[static_cast<int>( st1 )] = st2;
 			for( auto& line: _ignored_events )
 				line[static_cast<int>( st1 )] = 1;
-			_isPassState[st1] = 1;
-			if( _timeout[st1].enabled )
-				throw std::logic_error( getConfigErrorMessage( priv::CE_TimeOutAndPassState, st1 ) );
+			_stateInfo[st1]._isPassState = 1;
+			if( _stateInfo[st1]._timerEvent.enabled )
+				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, st1 ) );
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final:
@@ -417,7 +455,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_LESS( st_final, nbStates() );
 			for( size_t i=0; i<nbStates(); i++ )
 				if( i != static_cast<size_t>(st_final) )
-					_timeout[ static_cast<size_t>( st_final ) ] = priv::TimerEvent<ST>( st_final, dur );
+					_stateInfo[ static_cast<size_t>( st_final ) ]._timerEvent = priv::TimerEvent<ST>( st_final, dur );
 		}
 
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
@@ -425,10 +463,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_CHECK_LESS( st_curr, nbStates() );
 			SPAG_CHECK_LESS( st_next, nbStates() );
-			_timeout[ static_cast<int>( st_curr ) ] = priv::TimerEvent<ST>( st_next, dur );
-
-			if( _isPassState[st_curr] )
-				throw std::logic_error( getConfigErrorMessage( priv::CE_TimeOutAndPassState, st_curr ) );
+			_stateInfo[ static_cast<int>( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur );
+			if( _stateInfo[st_curr]._isPassState )
+				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, st_curr ) );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
@@ -451,22 +488,21 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )
 		{
 			SPAG_CHECK_LESS( st, nbStates() );
-			_callback[ st ] = func;
-			if( !std::is_same<CBA,DummyCbArg_t>::value )
-				_callbackArg[ st ] = cb_arg;
+			_stateInfo[ st ]._callback    = func;
+			_stateInfo[ st ]._callbackArg = cb_arg;
 		}
 
 /// Assigns a callback function to all the states, will be called each time the state is activated
 		void assignGlobalCallback( Callback_t func )
 		{
 			for( size_t i=0; i<ST::NB_STATES; i++ )
-				_callback[ i ] = func;
+				_stateInfo[ i ]._callback = func;
 		}
 
 		void assignCallbackValue( ST st, CBA cb_arg )
 		{
 			SPAG_CHECK_LESS( st, nbStates() );
-			_callbackArg[ st ] = cb_arg;
+			_stateInfo[ st ]._callbackArg = cb_arg;
 		}
 
 		void assignTimer( TIM* t )
@@ -523,6 +559,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				std::cerr << "Spaghetti: error, attempt to start the FSM twice!\n";
 				std::exit(1);
 			}
+			doChecking();
+
 			runAction();
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.incrementInitState();
@@ -546,9 +584,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// User-code timer end function/callback should call this when the timer expires
 		void processTimeOut() const
 		{
-			SPAG_LOG << "processing timeout event, delay was " << _timeout.at( _current ).duration << "\n";
-			assert( _timeout.at( _current ).enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
-			_current = _timeout[ _current ].nextState;
+			SPAG_LOG << "processing timeout event, delay was " << _stateInfo[ _current ]._timerEvent.duration << "\n";
+			assert( _stateInfo[ _current ]._timerEvent.enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
+			_current = _stateInfo[ static_cast<int>( _current ) ]._timerEvent.nextState;
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.logTransition( _current, EV::NB_EVENTS );
 #endif
@@ -567,7 +605,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 			if( _ignored_events.at( ev ).at( _current ) != 0 )
 			{
-				if( _timeout.at( _current ).enabled )               // 1 - cancel the waiting timer, if any
+				if( _stateInfo[ static_cast<int>( _current ) ]._timerEvent.enabled )               // 1 - cancel the waiting timer, if any
 					p_timer->timerCancel();
 				_current = _transition_mat[ev].at( _current );      // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
@@ -582,14 +620,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /** \name Misc. helper functions */
 ///@{
-		size_t nbStates() const
+		constexpr size_t nbStates() const
 		{
-			assert( _transition_mat.size() );
-			return _transition_mat[0].size();
+//			assert( _transition_mat.size() );
+//			return _transition_mat[0].size();
+			return ST::NB_STATES;
 		}
-		size_t nbEvents() const
+		constexpr size_t nbEvents() const
 		{
-			return _transition_mat.size();
+//			return _transition_mat.size();
+			return EV::NB_EVENTS;
 		}
 		ST currentState() const
 		{
@@ -597,7 +637,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 		Duration timeOutDuration( ST st ) const
 		{
-			return _timeout.at(st).duration;
+			SPAG_CHECK_LESS( st, nbStates() );
+			return _stateInfo[ static_cast<int>(st) ]._timerEvent.duration;
 		}
 
 		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
@@ -667,24 +708,21 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_LOG << "switching to state " << _current << ", starting action\n";
 
-			if( _timeout.at( _current ).enabled )
+			if( _stateInfo[ static_cast<int>(_current) ]._timerEvent.enabled )
 			{
 				assert( p_timer );
-				SPAG_LOG << "timeout enabled, duration=" << _timeout.at( _current ).duration << "\n";
+				SPAG_LOG << "timeout enabled, duration=" <<  _stateInfo[ static_cast<int>(_current) ]._timerEvent.duration << "\n";
 				p_timer->timerStart( this );
 			}
-			if( _callback.at( _current ) ) // if there is a callback stored, then call it
+			if( _stateInfo[ _current ]._callback ) // if there is a callback stored, then call it
 			{
 				SPAG_LOG << "callback function start:\n";
-				if( std::is_same<CBA,DummyCbArg_t>::value )
-					_callback.at( _current )( CBA() );
-				else
-					_callback.at( _current )( _callbackArg.at( _current ) );
+				_stateInfo[ _current ]._callback( _stateInfo[ _current ]._callbackArg );
 			}
 			else
 				SPAG_LOG << "no callback provided\n";
 
-			if( _isPassState[ _current ] )
+			if( _stateInfo[ _current ]._isPassState )
 			{
 				SPAG_LOG << "is pass-state, switching to state " << _transition_mat[0][_current] << '\n';
 				_current =  _transition_mat[0][_current];
@@ -696,25 +734,19 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 		void printMatrix( std::ostream& str ) const;
 
-		std::string getConfigErrorMessage( priv::EN_ConfigError ce, ST st ) const
+		void doChecking() const
 		{
-			std::string msg( "Spaghetti: configuration error: " );
-			switch( ce )
+			for(size_t i=0; i<nbStates(); i++ )
 			{
-				case priv::CE_TimeOutAndPassState:
-					msg += "state ";
-					msg += std::to_string( static_cast<int>(st) );
-#ifdef SPAG_ENUM_STRINGS
-					msg += " / ";
-					msg += _str_states[st];
-#endif
-					msg += " cannot have both a timeout and a pass-state flag";
-				break;
-				default: assert(0);
+				auto state = _stateInfo[i];
+				if( state._isPassState )
+				{
+					ST nextState = _transition_mat[0][i];
+					if( _stateInfo[ nextState ]._isPassState )
+						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) ) );
+				}
 			}
-			return msg;
 		}
-
 /////////////////////////////
 // private data section
 /////////////////////////////
@@ -726,15 +758,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		mutable ST                         _current = static_cast<ST>(0);   ///< current state
 		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
-		std::vector<priv::TimerEvent<ST>>  _timeout;         ///< Holds for each state the information on timeout
-		std::vector<Callback_t>            _callback;        ///< holds for each state the callback function to be called
-		std::vector<char>                  _isPassState;     ///< holds 1 if this is a "pass state", that is a state with only one transition and no timeout
+
+		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state the details
+
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _str_events;      ///< holds events strings
 		std::vector<std::string>           _str_states;      ///< holds states strings
 #endif
-/// If the user code provides a value for the callbacks, then we must store these, per state. If not, then this will remain an empty vector
-		std::vector<CBA>                   _callbackArg;
 		TIM*                               p_timer = nullptr;   ///< pointer on timer
 };
 //-----------------------------------------------------------------------------------
@@ -820,7 +850,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 
 	out << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
 	out << "       STATES:\n   ";
-	for( size_t i=0; i<_timeout.size(); i++ )
+	for( size_t i=0; i<_stateInfo.size(); i++ )
 		out << i << "  ";
 	out << "\n   ";
 
@@ -828,14 +858,14 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 	size_t maxlength = priv::getMaxLength( _str_states );
 #endif
 
-	for( size_t i=0; i<_timeout.size(); i++ )
+	for( size_t i=0; i<_stateInfo.size(); i++ )
 	{
 		out << i;
 #ifdef SPAG_ENUM_STRINGS
 		out << ':';
 		priv::PrintEnumString( out, _str_states[i], maxlength );
 #endif
-		out << '|' << (_timeout[i].enabled?'o':'.') << '\n';
+		out << '|' << (_stateInfo[i]._timerEvent.enabled?'o':'.') << '\n';
 	}
 }
 //-----------------------------------------------------------------------------------
@@ -901,12 +931,11 @@ struct NoTimer
 #endif // HG_SPAGHETTI_FSM_HPP
 
 /**
-\page p_manual Spaghetti manual
+\page p_manual Spaghetti reference manual
 
 
 Sample programs: see the list of
 <a href="../src/html/files.html" target="_blank">sample programs</a>.
-
 
 
 

@@ -9,7 +9,7 @@ Homepage: https://github.com/skramm/spaghetti
 */
 
 #define SPAG_ENABLE_LOGGING
-//#define SPAG_PRINT_STATES
+#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 enum En_States { st0, st1, st2, st3, st4, NB_STATES };
