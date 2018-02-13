@@ -31,6 +31,8 @@ Naming is free except for the last value that
 **must** be ```NB_STATES``` and ```NB_EVENTS```, respectively.
 For the states, the first one (having value 0) will be the initial state.
 
+You can use either classical C++03 enums or C++11 scoped enums (```enum class { st1, st2,...```), everything gets casted internally anyway.
+
 Events can be of two types:
  - either "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
  - or "time outs", when you want to switch from state A to state B after 'x' seconds. There are handled separately.

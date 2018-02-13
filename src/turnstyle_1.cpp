@@ -15,7 +15,7 @@ Homepage: https://github.com/skramm/spaghetti
 
 #include "spaghetti.hpp"
 
-enum States { st_Locked, st_Unlocked, NB_STATES };
+enum class States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 
 /// callback function
@@ -29,20 +29,19 @@ void cb_func( bool b )
 
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 
-
 //-----------------------------------------------------------------------------------
 void configureFSM( fsm_t& fsm )
 {
-	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
-	fsm.assignTransition( st_Unlocked, ev_Push, st_Locked );
+	fsm.assignTransition( States::st_Locked,   ev_Coin, States::st_Unlocked );
+	fsm.assignTransition( States::st_Unlocked, ev_Push, States::st_Locked );
 
-	fsm.assignTransition( st_Locked,   ev_Push, st_Locked );
-	fsm.assignTransition( st_Unlocked, ev_Coin, st_Unlocked );
+	fsm.assignTransition( States::st_Locked,   ev_Push, States::st_Locked );
+	fsm.assignTransition( States::st_Unlocked, ev_Coin, States::st_Unlocked );
 
-	fsm.assignCallback( st_Locked,   cb_func, true );
-	fsm.assignCallback( st_Unlocked, cb_func, false );
+	fsm.assignCallback( States::st_Locked,   cb_func, true );
+	fsm.assignCallback( States::st_Unlocked, cb_func, false );
 
-	fsm.assignString2State( st_Locked, "Locked" );
+	fsm.assignString2State( States::st_Locked, "Locked" );
 	fsm.assignString2Event( ev_Coin,   "Enter coin" );
 }
 

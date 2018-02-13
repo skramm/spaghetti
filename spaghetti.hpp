@@ -24,6 +24,9 @@ This program is free software: you can redistribute it and/or modify
 #ifndef HG_SPAGHETTI_FSM_HPP
 #define HG_SPAGHETTI_FSM_HPP
 
+/// \todo Need performance evaluation of this build option
+#define SPAG_USE_ARRAY
+
 #define SPAG_VERSION 0.1
 
 #include <vector>
@@ -149,8 +152,12 @@ PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 }
 //-----------------------------------------------------------------------------------
 /// Helper function, returns max length of string in vector
+/**
+type T is \c std::vector<std::string>> or \c std::array<std::string>>
+*/
+template<typename T>
 size_t
-getMaxLength( const std::vector<std::string>& v_str )
+getMaxLength( const T& v_str )
 {
 	size_t maxlength(0);
 	if( v_str.size() > 1 )
@@ -184,9 +191,9 @@ struct RunTimeData
 /// a state-change event, used for logging, see _history
 	struct StateChangeEvent
 	{
-		ST state;
-		size_t event;
-		std::chrono::duration<double> elapsed;
+		ST     _state;
+		size_t _event; ///< stored as size_t because it will hold values other than the ones in the enum
+		std::chrono::duration<double> _elapsed;
 
 // deprecated, replaced by printData()
 #if 0
@@ -263,9 +270,9 @@ struct RunTimeData
 #endif
 			for( size_t i=0; i<_history.size(); i++ )
 			{
-				size_t ev =_history[i].event;
-				size_t st =_history[i].state;
-				out << _history[i].elapsed.count() << sep << ev << sep;
+				size_t ev = _history[i]._event;
+				size_t st = SPAG_P_CAST2IDX(_history[i]._state);
+				out << _history[i]._elapsed.count() << sep << ev << sep;
 #ifdef SPAG_ENUM_STRINGS
 				priv::PrintEnumString( out, _str_events[ev], maxlength_e );
 				out << sep;
@@ -279,12 +286,15 @@ struct RunTimeData
 		}
 	}
 /// Logs a transition from current state to state \c st, that was produced by event \c ev
+/**
+event stored as size_t because we may pass values other thant the ones in the enum (timeout and Always Active transitions)
+*/
 	void logTransition( ST st, size_t ev )
 	{
 		assert( ev < EV::NB_EVENTS+2 );
 		assert( st < ST::NB_STATES );
 		_eventCounter[ ev ]++;
-		_stateCounter[ st ]++;
+		_stateCounter[ SPAG_P_CAST2IDX(st) ]++;
 		_history.push_back( StateChangeEvent{ st, ev, std::chrono::high_resolution_clock::now() - _startTime } );
 	}
 
@@ -296,8 +306,8 @@ struct RunTimeData
 		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
 
 #ifdef SPAG_ENUM_STRINGS
-		const std::vector<std::string>& _str_events; ///< reference on strings of events
-		const std::vector<std::string>& _str_states; ///< reference on strings of states
+		const std::vector<std::string>& _str_events; ///< reference on vector of strings of events
+		const std::vector<std::string>& _str_states; ///< reference on vector of strings of states
 #endif
 };
 #endif
@@ -384,25 +394,26 @@ class SpagFSM
 		SpagFSM()
 #endif
 		{
-			static_assert( EV::NB_EVENTS > 0, "Error, you need to provide at least one event" );
-			static_assert( ST::NB_STATES > 1, "Error, you need to provide at least two states" );
-			priv::resizemat( _transition_mat, EV::NB_EVENTS, ST::NB_STATES );
-			priv::resizemat( _ignored_events, EV::NB_EVENTS, ST::NB_STATES );
+			static_assert( SPAG_P_CAST2IDX(EV::NB_EVENTS) > 0, "Error, you need to provide at least one event" );
+			static_assert( SPAG_P_CAST2IDX(ST::NB_STATES) > 1, "Error, you need to provide at least two states" );
+			priv::resizemat( _transition_mat, SPAG_P_CAST2IDX(EV::NB_EVENTS), SPAG_P_CAST2IDX(ST::NB_STATES) );
+			priv::resizemat( _ignored_events, SPAG_P_CAST2IDX(EV::NB_EVENTS), SPAG_P_CAST2IDX(ST::NB_STATES) );
 
+#ifndef SPAG_USE_ARRAY
 			_stateInfo.resize( ST::NB_STATES );    // states information
-
+#endif
 			for( auto& e: _ignored_events )      // all external events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
 
 #ifdef SPAG_ENABLE_LOGGING
-			_rtdata.alloc( ST::NB_STATES, EV::NB_EVENTS );
+			_rtdata.alloc( SPAG_P_CAST2IDX(ST::NB_STATES), SPAG_P_CAST2IDX(EV::NB_EVENTS) );
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
-			_str_events.resize( EV::NB_EVENTS+2 );
-			_str_states.resize( ST::NB_STATES );
-			_str_events[EV::NB_EVENTS]   = "*Timeout*";
-			_str_events[EV::NB_EVENTS+1] = "*  AA   *"; // Always Active Transition
+			_str_events.resize( SPAG_P_CAST2IDX(EV::NB_EVENTS)+2 );
+			_str_states.resize( SPAG_P_CAST2IDX(ST::NB_STATES) );
+			_str_events[ SPAG_P_CAST2IDX(EV::NB_EVENTS)   ] = "*Timeout*";
+			_str_events[ SPAG_P_CAST2IDX(EV::NB_EVENTS+1) ] = "*  AA   *"; // Always Active Transition
 #endif
 		}
 
@@ -426,18 +437,18 @@ class SpagFSM
 /// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
 		void assignTransition( ST st1, EV ev, ST st2 )
 		{
-			SPAG_CHECK_LESS( st1, nbStates() );
-			SPAG_CHECK_LESS( st2, nbStates() );
-			SPAG_CHECK_LESS( ev,  nbEvents() );
-			_transition_mat[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX( st1 ) ] = st2;
-			_ignored_events[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX( st1 ) ] = 1;
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev),  nbEvents() );
+			_transition_mat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = st2;
+			_ignored_events[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = 1;
 		}
 
 /// Assigns a transition to a "pass state": once on state \c st1, the FSM will switch right away to \c st2
 		void assignTransition( ST st1, ST st2 )
 		{
-			SPAG_CHECK_LESS( st1, nbStates() );
-			SPAG_CHECK_LESS( st2, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
 			for( auto& line: _transition_mat )
 				line[ SPAG_P_CAST2IDX( st1 ) ] = st2;
 			for( auto& line: _ignored_events )
@@ -454,7 +465,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 */
 		void assignGlobalTimeOut( ST st_final, Duration dur )
 		{
-			SPAG_CHECK_LESS( st_final, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_final), nbStates() );
 			for( size_t i=0; i<nbStates(); i++ )
 				if( i != SPAG_P_CAST2IDX(st_final) )
 					_stateInfo[ SPAG_P_CAST2IDX( st_final ) ]._timerEvent = priv::TimerEvent<ST>( st_final, dur );
@@ -463,8 +474,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
 		void assignTimeOut( ST st_curr, Duration dur, ST st_next )
 		{
-			SPAG_CHECK_LESS( st_curr, nbStates() );
-			SPAG_CHECK_LESS( st_next, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur );
 			if( _stateInfo[st_curr]._isPassState )
 				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, st_curr ) );
@@ -473,8 +484,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
 		void assignTransitionAlways( EV ev, ST st )
 		{
-			SPAG_CHECK_LESS( st, nbStates() );
-			SPAG_CHECK_LESS( ev, nbEvents() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			for( auto& e: _transition_mat[ ev ] )
 				e = st;
 			for( auto& e: _ignored_events[ ev ] )
@@ -482,14 +493,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 		void allowEvent( ST st, EV ev )
 		{
-			SPAG_CHECK_LESS( st, nbStates() );
-			SPAG_CHECK_LESS( ev, nbEvents() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			_ignored_events[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = 1;
 		}
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )
 		{
-			SPAG_CHECK_LESS( st, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callback    = func;
 			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callbackArg = cb_arg;
 		}
@@ -503,7 +514,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 		void assignCallbackValue( ST st, CBA cb_arg )
 		{
-			SPAG_CHECK_LESS( st, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callbackArg = cb_arg;
 		}
 
@@ -516,13 +527,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Assign a string to an enum event value (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignString2Event( EV ev, std::string str )
 		{
-			SPAG_CHECK_LESS( ev, nbEvents() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			_str_events[ SPAG_P_CAST2IDX(ev) ] = str;
 		}
 /// Assign a string to an enum state value (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignString2State( ST st, std::string str )
 		{
-			SPAG_CHECK_LESS( st, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			_str_states[ SPAG_P_CAST2IDX(st) ] = str;
 		}
 /// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled)
@@ -578,8 +589,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			{
 				SPAG_LOG << "call timerCancel()\n";
 				p_timer->timerCancel();
-//				SPAG_LOG << "call timerKill()\n";
-//				p_timer->timerKill();  /// \todo WHE SHOULDN'T HAVE TO USE THIS !!!
+				SPAG_LOG << "call timerKill()\n";
+				p_timer->timerKill();
 			}
 		}
 
@@ -598,7 +609,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// User-code should call this function when an external event occurs
 		void processEvent( EV ev ) const
 		{
-			SPAG_CHECK_LESS( ev, nbEvents() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 
 #ifdef SPAG_ENUM_STRINGS
 			SPAG_LOG << "processing event " << ev << ": \"" << _str_events[ev] << "\"\n";
@@ -624,11 +635,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 ///@{
 		constexpr size_t nbStates() const
 		{
-			return ST::NB_STATES;
+			return SPAG_P_CAST2IDX(ST::NB_STATES);
 		}
 		constexpr size_t nbEvents() const
 		{
-			return EV::NB_EVENTS;
+			return SPAG_P_CAST2IDX(EV::NB_EVENTS);
 		}
 		ST currentState() const
 		{
@@ -636,7 +647,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 		Duration timeOutDuration( ST st ) const
 		{
-			SPAG_CHECK_LESS( st, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			return _stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent.duration;
 		}
 
@@ -705,7 +716,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Run associated action with a state switch
 		void runAction() const
 		{
-			SPAG_LOG << "switching to state " << _current << ", starting action\n";
+			SPAG_LOG << "switching to state " << SPAG_P_CAST2IDX(_current) << ", starting action\n";
 
 			auto stateInfo = _stateInfo[ SPAG_P_CAST2IDX(_current) ];
 			runAction_DoJob( stateInfo );
@@ -713,7 +724,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( stateInfo._isPassState )
 			{
 				assert( !stateInfo._timerEvent.enabled );
-				SPAG_LOG << "is pass-state, switching to state " << _transition_mat[0][ SPAG_P_CAST2IDX(_current) ] << '\n';
+				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transition_mat[0][ SPAG_P_CAST2IDX(_current) ]) << '\n';
 				_current =  _transition_mat[0][ SPAG_P_CAST2IDX(_current) ];
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, EV::NB_EVENTS+1 );
@@ -771,7 +782,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 
+#ifdef SPAG_USE_ARRAY
+		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state the details
+#else
 		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state the details
+#endif
 
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _str_events;      ///< holds events strings
@@ -965,7 +980,7 @@ Sample programs: see the list of
 
 \section sec_devinfo Developper information
 
-\subsection_codingConventions Coding style
+\subsection ssec_codingConventions Coding style
 
 Most of it is pretty obvious by parsing the code, but here are some additional points:
 
@@ -976,7 +991,10 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
  - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
  - To avoid name collisions, all the symbols defined here start with "SPAG_"
 
-\todo add an option so that in case we transition from one state to the same state, should the callback be called each time, or not ?
+
+\subsection ssec_todos TODOS
+
+\todo use C++11 class enums ?
 
 \todo add serialisation capability
 
@@ -985,4 +1003,12 @@ https://github.com/aantron/better-enums
 
 
 \todo handle FSM with no events ??? (only timeouts) Possible ?
+
+\todo enable passing the FSM itself to the callback, to enable dynamic behaviour
+(either editing the config at run-time, or generating events when certain situation is met).
+
+\todo add some tests, and write a sample to evaluation performance
+
+
+
 */
