@@ -127,4 +127,12 @@ GetBoostVersion()
 }
 //-----------------------------------------------------------------------------------
 
+/**
+\mainpage
 
+This is the reference pages related to the samples provided with the
+Spaghetti library.
+
+To get back to the reference manual of the library,
+<a href="../../html/index.html">click here</a>.
+*/

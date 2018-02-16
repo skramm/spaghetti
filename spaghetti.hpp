@@ -94,9 +94,9 @@ typedef size_t Duration;
 /// Main library namespace
 namespace spag {
 
-
-/// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
-struct DummyCbArg_t {};
+// DEPRECATED
+// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
+//struct DummyCbArg_t {};
 
 //------------------------------------------------------------------------------------
 /// Used in printLoggedData() as second argument
@@ -118,8 +118,8 @@ template<typename ST>
 struct TimerEvent
 {
 	ST        nextState = static_cast<ST>(0); ///< state to switch to
-	Duration  duration  = 1;                  ///< duration
-	bool      enabled   = 0;                  ///< this state uses or not a timeout (default is no)
+	Duration  duration  = 0;                  ///< duration
+	bool      enabled   = false;              ///< this state uses or not a timeout (default is no)
 
 	TimerEvent()
 		: nextState(static_cast<ST>(0))
@@ -330,6 +330,7 @@ enum EN_ConfigError
 };
 
 //-----------------------------------------------------------------------------------
+/// Configuration error printing function
 template<typename ST>
 std::string
 getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
@@ -380,7 +381,7 @@ Requirements: the two enums \b MUST have the following requirements:
  - the last element \b must be NB_STATES and NB_EVENTS, respectively
  - the first state must have value 0
 */
-template<typename ST, typename EV,typename TIM,typename CBA=DummyCbArg_t>
+template<typename ST, typename EV,typename TIM,typename CBA=int>
 class SpagFSM
 {
 	typedef std::function<void(CBA)> Callback_t;
@@ -420,7 +421,7 @@ class SpagFSM
 /** \name Configuration of FSM */
 ///@{
 /// Assigned ignored event matrix
-		void assignIgnEvMatrix( const std::vector<std::vector<int>>& mat )
+		void assignEventMatrix( const std::vector<std::vector<int>>& mat )
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    EV::NB_EVENTS );
 			SPAG_CHECK_EQUAL( mat[0].size(), ST::NB_STATES );
@@ -434,7 +435,7 @@ class SpagFSM
 			_transition_mat = mat;
 		}
 
-/// Assigns an external transition event \c ev to switch from event \c st1 to event \c st2
+/// Assigns an external transition event \c ev to switch from state \c st1 to state \c st2
 		void assignTransition( ST st1, EV ev, ST st2 )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
@@ -633,18 +634,22 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /** \name Misc. helper functions */
 ///@{
+/// Return nb of states
 		constexpr size_t nbStates() const
 		{
 			return SPAG_P_CAST2IDX(ST::NB_STATES);
 		}
+/// Return nb of events
 		constexpr size_t nbEvents() const
 		{
 			return SPAG_P_CAST2IDX(EV::NB_EVENTS);
 		}
+/// Return current state
 		ST currentState() const
 		{
 			return _current;
 		}
+/// Return duration of time out for state \c st, or 0 if none
 		Duration timeOutDuration( ST st ) const
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
@@ -770,6 +775,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				}
 			}
 		}
+
 /////////////////////////////
 // private data section
 /////////////////////////////
@@ -936,7 +942,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 
 //-----------------------------------------------------------------------------------
 /// dummy struct, useful in case there is no need for a timer
-template<typename ST, typename EV,typename CBA=DummyCbArg_t>
+template<typename ST, typename EV,typename CBA=int>
 struct NoTimer
 {
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
@@ -960,17 +966,21 @@ struct NoTimer
 /**
 \page p_manual Spaghetti reference manual
 
+- for doc on classes/functions, see doxygen-generated index just above.
+- for user manual, see markdown pages:
+ - home page: https://github.com/skramm/spaghetti
+ - manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
 
-Sample programs: see the list of
+\section sec_misc Misc. other informations
+
+\subsection ssec_samples Sample programs
+
+Check list here:
 <a href="../src/html/files.html" target="_blank">sample programs</a>.
 
 
 
-
-
-\section sec_misc Misc.
-
-\subsection sec_related Possibly related software
+\subsection ssec_related Possibly related software
 
  - Boost MSM: http://www.boost.org/doc/libs/release/libs/msm/
  - Boost Statechart: http://www.boost.org/doc/libs/release/libs/statechart/
@@ -978,9 +988,9 @@ Sample programs: see the list of
 
 
 
-\section sec_devinfo Developper information
+\section ssec_devinfo Developper information
 
-\subsection ssec_codingConventions Coding style
+<b>Coding style</b>
 
 Most of it is pretty obvious by parsing the code, but here are some additional points:
 
@@ -994,7 +1004,6 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 
 \subsection ssec_todos TODOS
 
-\todo use C++11 class enums ?
 
 \todo add serialisation capability
 

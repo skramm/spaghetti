@@ -296,6 +296,28 @@ by running the  program ```bin/traffic_lights_client``` in another shell window
 <a name="additional_stuff"></a>
 ## Additional facilities
 
+
+For FSM configuration, you can proceed as described above but it can be tedious for larger situations.
+Instead, you can also assign directly a </b>transition matrix</b>, with the events in lines, the states in columns, and each table cell defining the state
+to switch to.
+This is done with the member function ```assignTransitionMat()```.
+
+For example, say you have a 3 states (```st1,st2,st3```) / 2 events (```ev```) FSM,
+and you want to switch from each of the states to the next one if the "event 1" occurs, and switch back to initial state if "event 2" occurs.
+
+```C++
+	std::vector<std::vector<ST>> mat = {
+		{ 1, 2, 0 },
+		{ 0, 0, 0 }
+	};
+
+	fsm.assignTransitionMat( mat );
+```
+Of course, some of the transitions from one state to another are not allowed, not you also need to provide an
+</b>authorization matrix</b>, that defines what can and what cannot be done.
+
+This is done with the member function ```assignEventMatrix()```.
+
 Some self-explaining member function that can be useful in user code:
 
  - ```nbStates()```

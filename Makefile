@@ -99,7 +99,7 @@ html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css
 	@echo "* Processing Doxygen on main file"
 	doxygen doxyfile
 
-src/html/index.html: $(SRC_FILES) src/doxyfile
+src/html/index.html: $(SRC_FILES) $(HEADER_FILES) src/doxyfile
 	@echo "* Processing Doxygen on sample programs"
 	cd src; doxygen doxyfile
 
@@ -119,7 +119,7 @@ show:
 	@echo HEADER_FILES=$(HEADER_FILES)
 	@echo SRC_FILES=$(SRC_FILES)
 	@echo OBJ_FILES=$(OBJ_FILES)
-	@echo OPT_ALL=$(OPT_ALL)
+#	@echo OPT_ALL=$(OPT_ALL)
 	@echo EXEC_FILES=$(EXEC_FILES)
 	@echo DOT_FILES=$(DOT_FILES)
 	@echo OPTIONS=$(OPTIONS)
