@@ -403,7 +403,7 @@ class SpagFSM
 #ifndef SPAG_USE_ARRAY
 			_stateInfo.resize( ST::NB_STATES );    // states information
 #endif
-			for( auto& e: _ignored_events )      // all external events will be ignored at init
+			for( auto& e: _ignored_events )      // all events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
 
 #ifdef SPAG_ENABLE_LOGGING
@@ -492,11 +492,19 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			for( auto& e: _ignored_events[ ev ] )
 				e = 1;
 		}
-		void allowEvent( ST st, EV ev )
+/// Allow all events of the transition matrix
+		void allowAllEvents()
+		{
+			for( auto& line: _ignored_events )
+				for( auto& e: line )
+					e = 1;
+		}
+/// Allow event \c ev when on state \c st
+		void allowEvent( ST st, EV ev, bool what=true )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			_ignored_events[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = 1;
+			_ignored_events[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = (what?1:0);
 		}
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )

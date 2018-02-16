@@ -17,7 +17,7 @@ For a reference manual, run ```make doc```, then open
 - [FAQ](#faq)
 
 <a name="concepts"></a>
-## Fundamental concepts
+## 1 - Fundamental concepts
 
 All you need to get this running is to download and install the file ```spaghetti.hpp``` to a location where your compiler can find it (```/usr/local/include``` is usually pretty good).
 Then you can create a program.
@@ -54,7 +54,7 @@ Limitations: a pass-state cannot lead to another pass-state. However, it can hav
 
 
 <a name="showcase1"></a>
-## Showcase 1: Hello World for FSM
+## 2 - Showcase 1: Hello World for FSM
 
 In this example, we show the Hello World" of FSM, which is the "Turnstyle" FSM
 (see [WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile)).
@@ -158,7 +158,7 @@ and/or just clone repo and enter
 ```make demo -j4``` followed by ```bin/turnstyle_1```.
 
 <a name="showcase2"></a>
-## Showcase 2: let's use a timer
+## 3 - Showcase 2: let's use a timer
 
 Lets consider another situation: a traffic light going automatically through the three states: Red, Green, Orange.
 You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and
@@ -213,7 +213,7 @@ All of this can be found in the runnable example in
 [src/traffic_lights_1.cpp](https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_1.cpp)
 
 <a name="showcase3"></a>
-## Traffic lights with buttons
+## 4 - Traffic lights with buttons
 
 Now, lets consider the same system but with added buttons to control it.
 We add a "Warning" button to make the system enter a "orange blinking state".
@@ -294,30 +294,55 @@ by running the  program ```bin/traffic_lights_client``` in another shell window
 (```bin/traffic_lights_client localhost```) or even on another machine, you can trigger the events using the network.
 
 <a name="additional_stuff"></a>
-## Additional facilities
+## 5 - Additional facilities
 
-
+### 5.1 - Configuration of the FSM
 For FSM configuration, you can proceed as described above but it can be tedious for larger situations.
 Instead, you can also assign directly a </b>transition matrix</b>, with the events in lines, the states in columns, and each table cell defining the state
 to switch to.
 This is done with the member function ```assignTransitionMat()```.
 
-For example, say you have a 3 states (```st1,st2,st3```) / 2 events (```ev```) FSM,
+For example, say you have a 3 states (```st0,st1,st2```) and 2 events (```ev1,ev2```)
 and you want to switch from each of the states to the next one if the "event 1" occurs, and switch back to initial state if "event 2" occurs.
+You can build a "matrix" (vector of vector) holding that information and assign it to the FSM.
 
 ```C++
-	std::vector<std::vector<ST>> mat = {
-		{ 1, 2, 0 },
-		{ 0, 0, 0 }
+	std::vector<std::vector<En_States>> trMat = {
+//           st0 - st1 - st2
+/* ev1 */  { st1 , st2 , st0 },
+/* ev2 */  { st0 , st0 , st0 }
 	};
-
-	fsm.assignTransitionMat( mat );
+	fsm.assignTransitionMat( trMat );
 ```
-Of course, some of the transitions from one state to another are not allowed, not you also need to provide an
-</b>authorization matrix</b>, that defines what can and what cannot be done.
+However, this doesn't take into account the fact that some of the transitions from one state to another may or may not be allowed.
+So you also need to provide an **authorization matrix**, that defines what can and what cannot be done.
 
 This is done with the member function ```assignEventMatrix()```.
+For example and with the above code, if we want to disable transitionning from state st2 to st0 when event ev2 occurs, it will be this:
+```C++
+	std::vector<std::vector<En_States>> eventMat = {
+//          st0 - st1 - st2
+/* ev1 */  { 1 ,   1 ,   1 },
+/* ev2 */  { 1 ,   1 ,   0 }
+	};
+	fsm.assignEventMatrix( eventMat );
+```
+As you can see, '1' means transition is allowed, '0' means it is disabled.
 
+Of course in such a situation, it would be simpler to use the following two member functions:
+```C++
+	fsm.allowAllEvents();
+	fsm.allowEvent( ev2, st2, false );
+```
+
+The first one allows all events for all the states.
+The second one disables event ```ev2``` when on state ```st2```.
+Please not that this latter function can also be used to **allow** an event, for example one could write:
+```fsm.allowEvent( ev2, st2, true )```
+or just
+```fsm.allowEvent( ev2, st2 )```.
+
+### 5.2 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
  - ```nbStates()```
@@ -347,12 +372,14 @@ This will print out, in a CSV style:
  - ```PrintFlags::history``` : print runtime history
  - ```PrintFlags::all```: all of the above (default value)
 
+These flags can be "OR-ed" to have several ones active.
+
 Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see below) is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
 
 
 <a name="build_options"></a>
-## Build options
+## 6 - Build options
 
 Several symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
 (with GCC, its ```-DSPAG_SOME_SYMBOL``` ), or by hardcoding in your program, BEFORE including the library file, like this:
@@ -410,12 +437,12 @@ These strings will then be printed out when calling the ```printConfig()``` and 
 
 
 <a name="faq"></a>
-## FAQ
+## 7 - FAQ
 
-- Q: What is the timer unit ?
+- Q: What is the timer unit?
 - A: There are no timer units. Timing is stored as untyped integer value, it is up to the timer class you define to handle the considered unit.
 
-- Q: What if I have more that a single argument to pass to my callback function ?
+- Q: What if I have more that a single argument to pass to my callback function?
 - A: then, you'll need to "pack it" in some class, or use a ```std::pair```, or ```std::tuple```.
 
 - Q: can I use a callback function with a void parameter ( ```void my_callback()```)
