@@ -209,9 +209,9 @@ void myCallback( std::string v )
 And the configuration will include this:
 ```C++
 	fsm.assignGlobalCallback( myCallback );
-	assignCallbackValue( st_Red,    "red" );
-	assignCallbackValue( st_Orange, "Orange" );
-	assignCallbackValue( st_Green,  "Green" );
+	fsm.assignCallbackValue( st_Red,    "red" );
+	fsm.assignCallbackValue( st_Orange, "Orange" );
+	fsm.assignCallbackValue( st_Green,  "Green" );
 ```
 
 Once configuration is done, you need to instanciate the timer, assign it to the FSM, and start it:
