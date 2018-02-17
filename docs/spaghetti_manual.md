@@ -474,8 +474,8 @@ and runtime errors will throw a
 
 - Q: *Why are certain functions (for example:
 ```writeDotFile()```) not always enabled? Why do I have to pass a build option to "activate" them?*
-<br>
-The rationale is that this doesn't require you to edit your source code between "building up and testing" and "production" phases.
+<br/>
+A: The rationale is that this doesn't require you to edit your source code between "building up and testing" and "production" phases.
 In the first phase, you may need to produce that information, and in the second phase, you could want reduced memory footprint. So just disable the build option and the function reduces automatically to nothing.
 
 - Q: *What if I have more that a single argument to pass to my callback function?*<br/>
