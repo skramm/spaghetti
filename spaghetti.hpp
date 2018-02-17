@@ -112,19 +112,19 @@ namespace priv {
 template<typename ST>
 struct TimerEvent
 {
-	ST        nextState = static_cast<ST>(0); ///< state to switch to
-	Duration  duration  = 0;                  ///< duration
-	bool      enabled   = false;              ///< this state uses or not a timeout (default is no)
+	ST       _nextState = static_cast<ST>(0); ///< state to switch to
+	Duration _duration  = 0;                  ///< duration
+	bool     _enabled   = false;              ///< this state uses or not a timeout (default is no)
 
 	TimerEvent()
-		: nextState(static_cast<ST>(0))
-		, duration(0)
-		, enabled(false)
+		: _nextState(static_cast<ST>(0))
+		, _duration(0)
+		, _enabled(false)
 	{
 	}
-	TimerEvent( ST st, Duration dur ): nextState(st), duration(dur)
+	TimerEvent( ST st, Duration dur ): _nextState(st), _duration(dur)
 	{
-		enabled = true;
+		_enabled = true;
 	}
 };
 //-----------------------------------------------------------------------------------
@@ -454,7 +454,7 @@ class SpagFSM
 			for( auto& line: _ignored_events )
 				line[ SPAG_P_CAST2IDX( st1 ) ] = 1;
 			_stateInfo[st1]._isPassState = 1;
-			if( _stateInfo[st1]._timerEvent.enabled )
+			if( _stateInfo[st1]._timerEvent._enabled )
 				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, st1 ) );
 		}
 
@@ -608,9 +608,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// User-code timer end function/callback should call this when the timer expires
 		void processTimeOut() const
 		{
-			SPAG_LOG << "processing timeout event, delay was " << _stateInfo[ _current ]._timerEvent.duration << "\n";
-			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent.enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
-			_current = _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent.nextState;
+			SPAG_LOG << "processing timeout event, delay was " << _stateInfo[ _current ]._timerEvent._duration << "\n";
+			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent._enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
+			_current = _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._nextState;
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.logTransition( _current, EV::NB_EVENTS );
 #endif
@@ -629,7 +629,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 			if( _ignored_events[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX(_current) ] != 0 )
 			{
-				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent.enabled )               // 1 - cancel the waiting timer, if any
+				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )               // 1 - cancel the waiting timer, if any
 					p_timer->timerCancel();
 				_current = _transition_mat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
@@ -663,7 +663,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		Duration timeOutDuration( ST st ) const
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
-			return _stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent.duration;
+			return _stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent._duration;
 		}
 
 		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
@@ -738,7 +738,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 			if( stateInfo._isPassState )
 			{
-				assert( !stateInfo._timerEvent.enabled );
+				assert( !stateInfo._timerEvent._enabled );
 				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transition_mat[0][ SPAG_P_CAST2IDX(_current) ]) << '\n';
 				_current =  _transition_mat[0][ SPAG_P_CAST2IDX(_current) ];
 #ifdef SPAG_ENABLE_LOGGING
@@ -751,11 +751,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// sub-function of runAction(), needed for pass-states
 		void runAction_DoJob( const priv::StateInfo<ST,CBA>& stateInfo ) const
 		{
-			if( stateInfo._timerEvent.enabled )
+			if( stateInfo._timerEvent._enabled )
 			{
 				assert( p_timer );
 				assert( !stateInfo._isPassState );
-				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent.duration << "\n";
+				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
 				p_timer->timerStart( this );
 			}
 			if( stateInfo._callback ) // if there is a callback stored, then call it
@@ -780,7 +780,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 					size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
 					if( _stateInfo[ nextState ]._isPassState )
 						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) ) );
-					if( state._timerEvent.enabled )
+					if( state._timerEvent._enabled )
 						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) ) );
 				}
 			}
@@ -908,7 +908,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		out << ':';
 		priv::PrintEnumString( out, _str_states[i], maxlength );
 #endif
-		out << '|' << (_stateInfo[i]._timerEvent.enabled?'o':'.') << '\n';
+		out << '|' << (_stateInfo[i]._timerEvent._enabled?'o':'.') << '\n';
 	}
 }
 //-----------------------------------------------------------------------------------
@@ -918,37 +918,6 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 {
-#if 0
-// 1 - build graph
-	typedef boost::adjacency_list<
-		boost::vecS,
-		boost::vecS,
-		boost::directedS
-		> graph_t;
-
-	typedef boost::graph_traits<graph_t>::vertex_descriptor vertex_t;
-//	typedef boost::graph_traits<graph_t>::edge_descriptor   edge_t;
-
-	graph_t g;
-
-	for( size_t i=0; i<ST::NB_STATES; i++ )
-		boost::add_vertex(g);
-
-	for( size_t i=0; i<nbEvents(); i++ )
-		for( size_t j=0; j<nbStates(); j++ )
-			if( _ignored_events[i][j] )
-			{
-				vertex_t v1 = j;
-				vertex_t v2 = _transition_mat[i][j];
-				boost::add_edge( v1, v2, g );
-			}
-
-// 2 - print
-	std::ofstream f ( fname );
-	if( !f.is_open() )
-		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
-	boost::write_graphviz( f, g );
-#else
 	std::ofstream f ( fname );
 	if( !f.is_open() )
 		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
@@ -963,11 +932,15 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 	for( size_t j=0; j<ST::NB_STATES; j++ )
 		if( _stateInfo[j]._isPassState )
 			f << j << " -> " << _transition_mat[0][j] << " [label=\"AA\"];\n";
-
+		else
+		{
+			if( _stateInfo[j]._timerEvent._enabled )
+				f << j << " -> " << _stateInfo[j]._timerEvent._nextState
+					<< " [label=\"TO:"
+					<< _stateInfo[j]._timerEvent._duration
+					<< "\"];\n";
+		}
 	f << "}\n";
-
-
-#endif
 }
 
 #endif // SPAG_GENERATE_DOTFILE
