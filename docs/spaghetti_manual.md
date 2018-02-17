@@ -198,10 +198,25 @@ As you can guess, we have here timeouts of 5, 5, and 1 seconds:
 	fsm.assignTimeOut( st_Orange, 1, st_Red   );
 ```
 
-Once configuration is done, you need to instanciate the timer, assign it to the FSM, and start it:
-
+For the callback, lets say it will just print out the current color, so we can use a string argument:
 ```C++
-	AsioWrapper<EN_States,EVENT,std::string> asio;
+void myCallback( std::string v )
+{
+	std::cout << "color=" << v << '\n';
+}
+```
+
+And the configuration will include this:
+```C++
+	fsm.assignGlobalCallback( myCallback );
+	assignCallbackValue( st_Red,    "red" );
+	assignCallbackValue( st_Orange, "Orange" );
+	assignCallbackValue( st_Green,  "Green" );
+```
+
+Once configuration is done, you need to instanciate the timer, assign it to the FSM, and start it:
+```C++
+	AsioWrapper<States,Events,std::string> asio;
 	fsm.assignTimer( &asio );
 	fsm.start();
 ```
@@ -337,7 +352,7 @@ Of course in such a situation, it would be simpler to use the following two memb
 
 The first one allows all events for all the states.
 The second one disables event ```ev2``` when on state ```st2```.
-Please not that this latter function can also be used to **allow** an event, for example one could write:
+Please note that this latter function can also be used to **allow** an event, for example one could write:
 ```fsm.allowEvent( ev2, st2, true )```
 or just
 ```fsm.allowEvent( ev2, st2 )```.

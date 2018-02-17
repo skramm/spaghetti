@@ -24,7 +24,7 @@ This program is free software: you can redistribute it and/or modify
 #ifndef HG_SPAGHETTI_FSM_HPP
 #define HG_SPAGHETTI_FSM_HPP
 
-/// \todo Need performance evaluation of this build option
+/// \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
 #define SPAG_VERSION 0.1
