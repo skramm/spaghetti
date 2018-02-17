@@ -31,11 +31,12 @@ Naming is free except for the last value that
 **must** be ```NB_STATES``` and ```NB_EVENTS```, respectively.
 For the states, the first one (having value 0) will be the initial state.
 
-You can use either classical C++03 enums or C++11 scoped enums (```enum class { st1, st2,...```), everything gets casted internally anyway.
+You can use either classical C++03 enums or C++11 scoped enums (```enum class { st1, st2,...```).
+The latter adds of course some type safety.
 
 Events can be of two types:
- - either "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
- - or "time outs", when you want to switch from state A to state B after 'x' seconds. There are handled separately.
+- either "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
+- or "time outs", when you want to switch from state A to state B after 'x' seconds. There are handled separately.
 
 For the latter case, you need to provide a special "timing" class, that will have some requirements (see below).
 You will need to "assign" the timer to the FSM in the configuration step.
@@ -466,17 +467,21 @@ $ dot -Tsvg inputfile.dot >outputfile.svg
 - Q: *What is the timer unit?*<br/>
 A: There are no timer units. Timing is stored as untyped integer value, it is up to the timer class you define to handle the considered unit.
 
-- Q: *How are errors handled ?*<br/>
+- Q: *How does this library differ from the other ones?*<br/>
+A: Most of the other libraries define the states as C++ classes.
+While this can have some advantages, it requires you to create a class for each state.
+With Spaghetti, you just add an enumerator value.
+
+- Q: *How are runtime errors handled?*<br/>
 A: Using exceptions. Configuration errors will throw a
 [```std::logic_error```](http://en.cppreference.com/w/cpp/error/logic_error)
-and runtime errors will throw a
+and runtime errors (in the sense: "FSM runtime") will throw a
 [```std::runtime_error```](http://en.cppreference.com/w/cpp/error/runtime_error)
 
-- Q: *Why are certain functions (for example:
-```writeDotFile()```) not always enabled? Why do I have to pass a build option to "activate" them?*
-<br/>
-A: The rationale is that this doesn't require you to edit your source code between "building up and testing" and "production" phases.
-In the first phase, you may need to produce that information, and in the second phase, you could want reduced memory footprint. So just disable the build option and the function reduces automatically to nothing.
+- Q: *Why are certain functions (for example: ```writeDotFile()```) not always enabled? Why do I have to pass a build option to "activate" them?*<br/>
+A: The rationale is that this doesn't require editing your source code between "building up and testing" and "production" phases.
+In the first phase, you may need to produce that information, and in the second phase, you could want reduced memory footprint.
+So just disable the build option and the optional functions get reduced automatically to nothing.
 
 - Q: *What if I have more that a single argument to pass to my callback function?*<br/>
 A: You'll need to "pack it" in some class, or use a
