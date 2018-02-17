@@ -7,7 +7,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-//#define SPAG_GENERATE_DOT
+#define SPAG_GENERATE_DOTFILE
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
@@ -43,7 +43,7 @@ int main( int, char* argv[] )
 	fsm.assignCallback( st_Green,  callback, std::string("GREEN") );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "test1.dot" );
+	fsm.writeDotFile( "traffic_lights_1.dot" );
 
 	AsioWrapper<EN_States,EN_Events,std::string> asio;
 	fsm.assignTimer( &asio );

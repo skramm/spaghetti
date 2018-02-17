@@ -21,8 +21,8 @@ SPAG_PRINT_STATES \
 SPAG_ENABLE_LOGGING \
 SPAG_FRIENDLY_CHECKING
 
-LIST:=file1 file2
-OPT:=A B
+#LIST:=file1 file2
+#OPT:=A B
 
 
 # this is needed for the demo programs
@@ -54,16 +54,16 @@ DOT_FILES := $(wildcard *.dot)
 DOT_FILES += $(wildcard src/*.dot)
 SVG_FILES := $(DOT_FILES:.dot=.svg)
 
-FILES=$(basename $(SRC_FILES))
+#FILES=$(basename $(SRC_FILES))
 
-OPT_ALL:= \
-	$(foreach a, $(FILES), \
-		$(foreach b, $(OPT), \
-			$(foreach c, $(OPT), \
-				$(foreach d, $(OPT), $(a)_$(b)$(c)$(d).obj ) \
-			) \
-		) \
-	)
+#OPT_ALL:= \
+#	$(foreach a, $(FILES), \
+#		$(foreach b, $(OPT), \
+#			$(foreach c, $(OPT), \
+#				$(foreach d, $(OPT), $(a)_$(b)$(c)$(d).obj ) \
+#			) \
+#		) \
+#	)
 
 
 # default target

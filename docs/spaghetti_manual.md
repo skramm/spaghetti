@@ -8,13 +8,13 @@ All the example are included an runnable in the src folder, just ```make demo```
 For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
 
-- [Fundamental concepts](#concepts)
-- [Showcase 1: Hello World for FSM](#showcase1)
-- [Showcase 2: let's use a timer](#showcase2)
-- [Showcase 3 : mixing timeout with hardware events](#showcase3)
-- [Additional stuff](#additional_stuff)
-- [Build options](#build_options)
-- [FAQ](#faq)
+1. [Fundamental concepts](#concepts)
+1. [Showcase 1: Hello World for FSM](#showcase1)
+1. [Showcase 2: let's use a timer](#showcase2)
+1. [Showcase 3 : mixing timeout with hardware events](#showcase3)
+1. [Additional stuff](#additional_stuff)
+1. [Build options](#build_options)
+1. [FAQ](#faq)
 
 <a name="concepts"></a>
 ## 1 - Fundamental concepts
@@ -386,10 +386,10 @@ This will print out, in a CSV style:
  - ```PrintFlags::eventCount``` : print event counters
  - ```PrintFlags::history``` : print runtime history
  - ```PrintFlags::all```: all of the above (default value)
-
+<br>
 These flags can be "OR-ed" to have several ones active.
-
-Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see below) is defined, the strings will appear in this data.
+<br>
+Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see below, "Build options") is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
 
 
@@ -407,7 +407,9 @@ Several symbols can change the behavior of the library and/or add additional cap
 They all start with these 5 characters: ```SPAG_```
 
 You can printout at runtime the build options with this static function:
-```cout << fsm_t::buildOptions()```
+```C++
+std::cout << fsm_t::buildOptions()
+```
 (once you have defined the type ```fsm_t```).
 
 The available options/symbols are:
@@ -450,21 +452,42 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 
+- ```SPAG_GENERATE_DOTFILE``` :
+this enables the member function ```writeDotFile( std::string )```.
+When called, it will generate in current folder a .dot file of the current configuration that can be used to produce an image of the corresponding graph, using the well-know tool Graphviz.
+For example, with
+```
+$ dot -Tsvg inputfile.dot >outputfile.svg
+```
 
 <a name="faq"></a>
 ## 7 - FAQ
 
-- Q: What is the timer unit?
-- A: There are no timer units. Timing is stored as untyped integer value, it is up to the timer class you define to handle the considered unit.
+- Q: *What is the timer unit?*<br/>
+A: There are no timer units. Timing is stored as untyped integer value, it is up to the timer class you define to handle the considered unit.
 
-- Q: What if I have more that a single argument to pass to my callback function?
-- A: then, you'll need to "pack it" in some class, or use a ```std::pair```, or ```std::tuple```.
+- Q: *How are errors handled ?*<br/>
+A: Using exceptions. Configuration errors will throw a
+[```std::logic_error```](http://en.cppreference.com/w/cpp/error/logic_error)
+and runtime errors will throw a
+[```std::runtime_error```](http://en.cppreference.com/w/cpp/error/runtime_error)
 
-- Q: can I use a callback function with a void parameter ( ```void my_callback()```)
-- A: No, unfortunately. This is because void is not a type, you can't pass it as template argument. But you can always use anything, say an integer, and ignore its value.
+- Q: *Why are certain functions (for example:
+```writeDotFile()```) not always enabled? Why do I have to pass a build option to "activate" them?*
+<br>
+The rationale is that this doesn't require you to edit your source code between "building up and testing" and "production" phases.
+In the first phase, you may need to produce that information, and in the second phase, you could want reduced memory footprint. So just disable the build option and the function reduces automatically to nothing.
 
-- Q: Why that name ? Where does that come from ?
-- A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
+- Q: *What if I have more that a single argument to pass to my callback function?*<br/>
+A: You'll need to "pack it" in some class, or use a
+[```std::pair```](http://en.cppreference.com/w/cpp/utility/pair),
+or a [```std::tuple```](http://en.cppreference.com/w/cpp/utility/tuple).
+
+- Q: *Can I use a callback function with a void parameter ( ```void my_callback()```)*<br/>
+A: No, unfortunately. This is because void is not a type, you can't pass it as template argument. But you can always use anything, say an integer, and ignore its value.
+
+- Q: *Why that name ? Where does that come from?*<br/>
+A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)

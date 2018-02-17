@@ -36,11 +36,6 @@ This program is free software: you can redistribute it and/or modify
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
 
-#ifdef SPAG_GENERATE_DOT
-	#include <boost/graph/adjacency_list.hpp>
-	#include <boost/graph/graphviz.hpp>
-#endif
-
 #ifdef SPAG_ENABLE_LOGGING
 	#include <chrono>
 #endif
@@ -720,7 +715,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			return out;
 		}
 
-#ifdef SPAG_GENERATE_DOT
+#ifdef SPAG_GENERATE_DOTFILE
 /// Generates in current folder a dot file corresponding to the FSM (EXPERIMENTAL)
 		void writeDotFile( std::string fn ) const;
 #else
@@ -917,12 +912,13 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 	}
 }
 //-----------------------------------------------------------------------------------
-#ifdef SPAG_GENERATE_DOT
-/// WIP, still experimental
+#ifdef SPAG_GENERATE_DOTFILE
+/// Saves in current folder a .dot file of the FSM, to be rendered with Graphviz
 template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 {
+#if 0
 // 1 - build graph
 	typedef boost::adjacency_list<
 		boost::vecS,
@@ -950,10 +946,31 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 // 2 - print
 	std::ofstream f ( fname );
 	if( !f.is_open() )
-		throw std::string( "unable to open file: " + fname );
+		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
 	boost::write_graphviz( f, g );
+#else
+	std::ofstream f ( fname );
+	if( !f.is_open() )
+		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
+	f << "digraph G {\n";
+	f << "0 [shape=\"doublecircle\"];\n";
+	for( size_t i=0; i<EV::NB_EVENTS; i++ )
+		for( size_t j=0; j<ST::NB_STATES; j++ )
+			if( _ignored_events[i][j] )
+				if( !_stateInfo[j]._isPassState )
+					f << j << " -> " << _transition_mat[i][j] << " [label=\"" << i << "\"];\n";
+
+	for( size_t j=0; j<ST::NB_STATES; j++ )
+		if( _stateInfo[j]._isPassState )
+			f << j << " -> " << _transition_mat[0][j] << " [label=\"AA\"];\n";
+
+	f << "}\n";
+
+
+#endif
 }
-#endif // SPAG_GENERATE_DOT
+
+#endif // SPAG_GENERATE_DOTFILE
 
 //-----------------------------------------------------------------------------------
 namespace priv {
@@ -1037,6 +1054,6 @@ https://github.com/aantron/better-enums
 
 \todo add some tests, and write a sample to evaluation performance
 
-
+\todo in writeDotFile(), try to add the strings, if any.
 
 */

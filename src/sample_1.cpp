@@ -8,6 +8,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+#define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
 #define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
@@ -53,6 +54,8 @@ int main( int, char* argv[] )
 	fsm.assignTransition( st4, st0 );   // st4 is a "pass state": no transition
 
 	fsm.printConfig( std::cout );
+	fsm.writeDotFile( "sample1.dot" );
+
 	std::cout << "Enter event key: 1 or 2 (q:quit)\n";
 	bool quit(false);
 	do
