@@ -363,7 +363,11 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 	return msg;
 }
 
-} // priv namespace end
+template<typename ST, typename EV,typename CBA=int>
+struct NoTimer;
+
+
+} // namespace priv
 
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
@@ -466,6 +470,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 */
 		void assignGlobalTimeOut( ST st_final, Duration dur )
 		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_final), nbStates() );
 			for( size_t i=0; i<nbStates(); i++ )
 				if( i != SPAG_P_CAST2IDX(st_final) )
@@ -475,6 +480,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
 		void assignTimeOut( ST st_curr, Duration dur, ST st_next )
 		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur );
@@ -529,6 +535,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 		void assignTimer( TIM* t )
 		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			p_timer = t;
 		}
 
@@ -819,7 +826,7 @@ void printChars( std::ostream& out, size_t n, char c )
 }
 //-----------------------------------------------------------------------------------
 
-} // namespace priv end
+} // namespace priv
 
 //-----------------------------------------------------------------------------------
 /// helper function template for printConfig()
@@ -949,22 +956,26 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 #endif // SPAG_GENERATE_DOT
 
 //-----------------------------------------------------------------------------------
+namespace priv {
 /// dummy struct, useful in case there is no need for a timer
-template<typename ST, typename EV,typename CBA=int>
+template<typename ST, typename EV,typename CBA>
 struct NoTimer
 {
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
 	void timerCancel() {}
 	void timerInit() {}
 };
+} // namespace priv
 
 //-----------------------------------------------------------------------------------
 
-} // namespace spag end
+} // namespace spag
 
+/// Shorthand for declaring the type of FSM, without a timer
 #define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
-	typedef spag::SpagFSM<st,ev,spag::NoTimer<st,ev,cbarg>,cbarg> type;
+	typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type;
 
+/// Shorthand for declaring the type of FSM
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type;
 

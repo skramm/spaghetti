@@ -27,6 +27,11 @@ int main( int, char* argv[] )
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
+
+//	fsm.assignGlobalTimeOut( st0, 5 );  // if uncommented, these lines will trigger
+//	fsm.assignTimeOut( st0, 5 , st1 );  // a static assert, because we have no timer here
+
+
 	fsm.assignGlobalCallback( cbfunc );
 
 	fsm.assignCallbackValue( st0, "Init" );
