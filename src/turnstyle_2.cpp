@@ -8,6 +8,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+#define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 
@@ -107,6 +108,7 @@ int main( int, char* argv[] )
 
 	configureFSM( fsm )	;
 	fsm.printConfig( std::cout );
+	fsm.writeDotFile( "turnstyle_2.dot" );
 
 	AsioWrapper<States,Events,bool> timer;
 	fsm.assignTimer( &timer );
