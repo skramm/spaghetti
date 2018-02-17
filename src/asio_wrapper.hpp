@@ -2,6 +2,12 @@
 \file asio_wrapper.hpp
 \brief This is a wrapper on boost::asio components
 
+\todo To keep the io_service running when not timer is active, a
+\c boost::asio::io_service::work is launched.
+Unfortunately, this was available in boost 1.54, but got deprecated and is not present anymore
+(at least in 1.66).
+So this needs a fix.
+
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
 Homepage: https://github.com/skramm/spaghetti
@@ -23,27 +29,50 @@ That last point isn't that obvious, has it also must have a lifespan not limited
 template<typename ST, typename EV, typename CBA=int>
 struct AsioWrapper
 {
-	boost::asio::io_service io_service;
+	private:
+
+#if BOOST_VERSION < 106600
+	boost::asio::io_service _io_service;
 /// see http://www.boost.org/doc/libs/1_54_0/doc/html/boost_asio/reference/io_service.html
 /// "Stopping the io_service from running out of work" at bottom of page
-	boost::asio::io_service::work work;
+	boost::asio::io_service::work _work;
+#else
+	boost::asio::io_context _io_service;
+#endif
+
 	std::unique_ptr<boost::asio::deadline_timer> ptimer; ///< pointer on timer, will be allocated int constructor
 
+	public:
 /// Constructor
-	AsioWrapper(): work( io_service )
+#if BOOST_VERSION < 106600
+	AsioWrapper() : _work( _io_service )
 	{
-		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(io_service) );
+		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
 	}
+#else
+	AsioWrapper()
+	{
+// see http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
+		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
+		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
+	}
+#endif
+
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
+
+	boost::asio::io_service& get_io_service()
+	{
+		return _io_service;
+	}
 
 /// Mandatory function for SpagFSM. Called only once, when FSM is started
 	void timerInit()
 	{
-		io_service.run();          // blocking call !!!
+		_io_service.run();          // blocking call !!!
 	}
 	void timerKill()
 	{
-		io_service.stop();
+		_io_service.stop();
 	}
 /// Timer callback function, called when timer expires.
 	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
@@ -61,7 +90,7 @@ struct AsioWrapper
 				throw;
 		}
 	}
-/// Mandatory function for SpagFSM. Cancel the pending async timer, but restarts the io_service if needed \todo HOW DO I DO THAT!!!
+/// Mandatory function for SpagFSM. Cancel the pending async timer
 	void timerCancel()
 	{
 //		SPAG_LOG << "Canceling timer, expiry in " << ptimer->expires_from_now().total_milliseconds() << " ms.\n";

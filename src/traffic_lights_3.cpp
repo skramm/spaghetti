@@ -69,7 +69,7 @@ int main( int, char* argv[] )
 		AsioWrapper<EN_States,EN_Events,std::string> asio;
 		std::cout << "io_service created\n";
 
-		MyServer server( asio.io_service, 12345 ); // create udp server with asio
+		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 
 		std::cout << "-server created\n";
 
