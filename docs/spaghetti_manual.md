@@ -36,8 +36,9 @@ The latter adds of course some type safety.
 But all these values are internally casted to integers, so **do not** assign values to the enumerators!
 
 Events can be of two types:
-- either "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
-- or "time outs", when you want to switch from state A to state B after 'x' seconds. There are handled separately.
+- "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
+But you can have none ! Then the above enum will be defined as ```enum Events { NB_EVENTS }```.
+- "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
 
 For the latter case, you need to provide a special "timing" class, that will have some requirements (see below).
 You will need to "assign" the timer to the FSM in the configuration step.

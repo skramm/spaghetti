@@ -89,8 +89,8 @@ struct AsioWrapper
 				fsm->processTimeOut();                    // normal operation: timer has expired
 			break;
 			default:                                         // all other values
-				std::cout << "unexpected error code, message=" << err_code.message() << "\n";
-				throw;
+				std::cerr << "unexpected error code, message=" << err_code.message() << "\n";
+				throw std::runtime_error( "Spaghetti: timer unexpected error: " + err_code.message() );
 		}
 	}
 /// Mandatory function for SpagFSM. Cancel the pending async timer

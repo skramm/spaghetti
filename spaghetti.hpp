@@ -1072,4 +1072,6 @@ https://github.com/aantron/better-enums
 \todo in writeDotFile(), try to add the strings, if any.
 
 \todo enable the possibility to have two concurrent FSM working in parallel
+
+\todo integrate asio timer to library (v2)
 */
