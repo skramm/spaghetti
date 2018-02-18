@@ -31,35 +31,36 @@ struct AsioWrapper
 {
 	private:
 
-#if BOOST_VERSION < 106600
+// if external io_service, then we only hold a reference on it
+#ifdef SPAG_EXTERNAL_EVENT_LOOP
+	boost::asio::io_service& _io_service;
+#else
 	boost::asio::io_service _io_service;
+#endif
+
+#if BOOST_VERSION < 106600
 /// see http://www.boost.org/doc/libs/1_54_0/doc/html/boost_asio/reference/io_service.html
 /// "Stopping the io_service from running out of work" at bottom of page
 	boost::asio::io_service::work _work;
-#else
-	boost::asio::io_context _io_service;
 #endif
 
 	std::unique_ptr<boost::asio::deadline_timer> ptimer; ///< pointer on timer, will be allocated int constructor
 
 	public:
 /// Constructor
-#if BOOST_VERSION < 106600
-	AsioWrapper() : _work( _io_service )
-	{
-//		std::cout << "Boost < 1.66, started work\n";
-		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
-	}
+#ifdef SPAG_EXTERNAL_EVENT_LOOP
+	AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
 #else
-	AsioWrapper()
+	AsioWrapper() : _work( _io_service )
+#endif
 	{
-//		std::cout << "Boost >= 1.66, started executor_work_guard\n";
-
 // see http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
+#if BOOST_VERSION >= 106600
+//		std::cout << "Boost >= 1.66, started executor_work_guard\n";
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
+#endif
 		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
 	}
-#endif
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
 

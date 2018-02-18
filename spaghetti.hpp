@@ -584,8 +584,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.incrementInitState();
 #endif
+#ifndef SPAG_EXTERNAL_EVENT_LOOP
 			if( p_timer )                 // if timing is involved,
 				p_timer->timerInit();     // then it must be started
+#endif
 		}
 
 /// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer

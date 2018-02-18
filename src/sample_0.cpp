@@ -60,6 +60,11 @@ UI_thread( const FSM* fsm )
     while( !quit );
 }
 //-----------------------------------------------------------------------------------
+void cb_func( std::string s )
+{
+	std::cout << "callback: " << s << '\n';
+}
+//-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
@@ -67,19 +72,19 @@ int main( int, char* argv[] )
 	std::cout << "enter 'a' for event, 'q' to quit\n";
 
 	g_mutex = getSingletonMutex();
+
 	fsm_t fsm;
+	AsioWrapper<En_States,En_Events,std::string> asio;
+	fsm.assignTimer( &asio );
 	try
 	{
-		AsioWrapper<En_States,En_Events,std::string> asio;
-
-		fsm.assignTimer( &asio );
 		fsm.assignTransition( st_init, ev_1, st_one );
 		fsm.assignTimeOut(    st_one,  1,    st_init);
 
+		fsm.assignCallback( st_init, cb_func, "st0" );
+		fsm.assignCallback( st_one, cb_func, "st1" );
 		fsm.printConfig( std::cout );
-std::cout << "Printconfig done\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &fsm );
-std::cout << "thread done\n";
 		fsm.start();  // blocking !
 		thread_ui.join();
 	}
