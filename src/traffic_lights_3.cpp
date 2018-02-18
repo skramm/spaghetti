@@ -81,7 +81,6 @@ int main( int, char* argv[] )
 		std::cout << "- server start\n";
 		server.start_receive();
 
-		std::cout << "- start UI thread\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &server.fsm );
 
 		std::cout << "- start fsm\n";

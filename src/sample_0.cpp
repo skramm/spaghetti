@@ -85,11 +85,11 @@ int main( int, char* argv[] )
 	}
 	catch( std::exception& e )
 	{
-		std::cerr << "catch error: " << e.what() << std::endl;
+		std::cerr << "catch: error: " << e.what() << std::endl;
 	}
 	catch( ... )
 	{
-		std::cerr << "catch unknown error\n";
+		std::cerr << "catch: unknown error\n";
 	}
 	fsm.printLoggedData( std::cout, spag::PrintFlags::stateCount );
 }

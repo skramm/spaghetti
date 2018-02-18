@@ -33,6 +33,7 @@ For the states, the first one (having value 0) will be the initial state.
 
 You can use either classical C++03 enums or C++11 scoped enums (```enum class { st1, st2,...```).
 The latter adds of course some type safety.
+But all these values are internally casted to integers, so **do not** assign values to the enumerators!
 
 Events can be of two types:
 - either "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.

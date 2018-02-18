@@ -14,7 +14,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "asio_wrapper.hpp"
 
 //-----------------------------------------------------------------------------------
-enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
+enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, NB_STATES };
 enum EN_Events { ev_Reset=0, NB_EVENTS };
 
 

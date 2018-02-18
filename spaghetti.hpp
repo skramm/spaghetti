@@ -320,8 +320,10 @@ resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t n
 /// Used for configuration errors (more to be added). Used through priv::getConfigErrorMessage()
 enum EN_ConfigError
 {
-	CE_TimeOutAndPassState,   ///< state has both timeout and pass-state flags active
-	CE_IllegalPassState       ///< pass-state is followed by another pass-state
+	CE_TimeOutAndPassState   ///< state has both timeout and pass-state flags active
+	,CE_IllegalPassState     ///< pass-state is followed by another pass-state
+	,CE_SamePassState        ///< pass state leads to same state
+	,CE_DeadEndState         ///< state has no escape path !
 };
 
 //-----------------------------------------------------------------------------------
@@ -330,29 +332,30 @@ template<typename ST>
 std::string
 getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 {
-	std::string msg( "Spaghetti: configuration error: " );
+	std::string msg( "Spaghetti: configuration error: state " );
+	msg += std::to_string( SPAG_P_CAST2IDX(st) );
+//#ifdef SPAG_ENUM_STRINGS
+//	msg += " '";
+//	msg += _str_states[st];
+//	msg += "'";
+//#endif
+	msg += ' ';
+
 	switch( ce )
 	{
 		case priv::CE_TimeOutAndPassState:
-			msg += "state ";
-			msg += std::to_string( static_cast<size_t>(st) );
-//#ifdef SPAG_ENUM_STRINGS
-//			msg += " '";
-//			msg += _str_states[st];
-//			msg += "'";
-//#endif
-			msg += " cannot have both a timeout and a pass-state flag";
+			msg += "cannot have both a timeout and a pass-state flag";
 		break;
 		case CE_IllegalPassState:
-			msg += "state ";
-			msg += std::to_string( static_cast<size_t>(st) );
-//#ifdef SPAG_ENUM_STRINGS
-//			msg += " '";
-//			msg += _str_states[st];
-//			msg += "'";
-//#endif
-			msg += " cannot be followed by another pass-state";
+			msg += "cannot be followed by another pass-state";
 		break;
+		case CE_SamePassState:
+			msg += "pass-state cannot lead to itself";
+		break;
+		case CE_DeadEndState:
+			msg += "has no escape path";
+		break;
+
 		default: assert(0);
 	}
 	return msg;
@@ -454,8 +457,6 @@ class SpagFSM
 			for( auto& line: _ignored_events )
 				line[ SPAG_P_CAST2IDX( st1 ) ] = 1;
 			_stateInfo[st1]._isPassState = 1;
-			if( _stateInfo[st1]._timerEvent._enabled )
-				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, st1 ) );
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final:
@@ -479,8 +480,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur );
-			if( _stateInfo[st_curr]._isPassState )
-				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, st_curr ) );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
@@ -778,11 +777,24 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				if( state._isPassState )
 				{
 					size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
+					if( nextState == i )
+						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
 					if( _stateInfo[ nextState ]._isPassState )
-						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) ) );
+						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
 					if( state._timerEvent._enabled )
-						throw( std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) ) );
+						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
 				}
+			}
+			for( size_t i=0; i<nbStates(); i++ ) // check for any dead-end situations
+			{
+				bool foundValid(false);
+//				auto state = _stateInfo[i];
+				for( size_t j=0; j<nbEvents(); j++ )
+					if( _transition_mat[j][i] != i )      // if the transition leads to another state
+						if( _ignored_events[j][i] == 1 )  // AND it is allowed
+							foundValid = true;
+				if( !foundValid )
+					throw std::logic_error( priv::getConfigErrorMessage( priv::CE_DeadEndState, i ) );
 			}
 		}
 
@@ -854,7 +866,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		if( maxlength )
 			priv::PrintEnumString( out, _str_events[i], maxlength );
 #else
-	for( size_t i=0; i<std::max(capt.size(),_transition_mat.size()); i++ )
+	for( size_t i=0; i<std::max( capt.size(), nbEvents() ); i++ )
 	{
 		if( i<capt.size() )
 			out << capt[i];
@@ -862,7 +874,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 #endif
 			out << ' ';
 
-		if( i<_transition_mat.size() )
+		if( i<nbEvents() )
 		{
 			out << ' ' << i << " | ";
 			for( size_t j=0; j<_transition_mat[i].size(); j++ )
@@ -922,12 +934,14 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 	if( !f.is_open() )
 		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
 	f << "digraph G {\n";
-	f << "0 [shape=\"doublecircle\"];\n";
+	f << "0 [label=\"S0\",shape=\"doublecircle\"];\n";
+	for( size_t j=1; j<ST::NB_STATES; j++ )
+		f << j << " [label=\"S" << j << "\"];\n";
 	for( size_t i=0; i<EV::NB_EVENTS; i++ )
 		for( size_t j=0; j<ST::NB_STATES; j++ )
 			if( _ignored_events[i][j] )
 				if( !_stateInfo[j]._isPassState )
-					f << j << " -> " << _transition_mat[i][j] << " [label=\"" << i << "\"];\n";
+					f << j << " -> " << _transition_mat[i][j] << " [label=\"E" << i << "\"];\n";
 
 	for( size_t j=0; j<ST::NB_STATES; j++ )
 		if( _stateInfo[j]._isPassState )
@@ -1029,4 +1043,6 @@ https://github.com/aantron/better-enums
 
 \todo in writeDotFile(), try to add the strings, if any.
 
+\todo move all configuration checks to check() function, so that all the configuration function
+can be marked as noexcept
 */

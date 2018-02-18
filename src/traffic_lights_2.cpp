@@ -12,7 +12,7 @@ Homepage: https://github.com/skramm/spaghetti
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
-
+#define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
 #include "asio_wrapper.hpp"
@@ -40,8 +40,8 @@ int main( int, char* argv[] )
 		configureFSM<fsm_t>( fsm );
 
 		fsm.printConfig( std::cout );
+		fsm.writeDotFile( "traffic_lights_2.dot" );
 
-		std::cout << " -start UI thread\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &fsm );
 
 		fsm.start();  // blocking !
