@@ -420,9 +420,12 @@ std::cout << fsm_t::buildOptions()
 (once you have defined the type ```fsm_t```).
 
 The available options/symbols are:
-1. ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM
-1. ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
-1. ```SPAG_FRIENDLY_CHECKING```: A lot of checking is done to ensure no nasty bug will crash your program.
+
+1 -  ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM
+
+2 -  ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+
+3 -  ```SPAG_FRIENDLY_CHECKING```: A lot of checking is done to ensure no nasty bug will crash your program.
 However, in case of incorrect usage of the library by your client code (say, invalid index value),
 the default behavior is to spit a standard error message that can be difficult to understand.
 So if you define this symbol at build time, instead of getting this:
@@ -440,7 +443,7 @@ Exiting...
 If this symbol is not defined, regular checking is done with the classical ```assert()```.
 As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 
-1. ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
+4 - ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++
 	fsm.assignString2Event( std::make_pair(ev_MyEvent, "something happened" );
@@ -459,7 +462,7 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 <br>
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 
-1. ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
+5 - ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
 In that case, the Timer class must not hold the timer.
 If it does, then starting the FSM (```fsm.start()```) will be a blocking function, thus is would not possible to start a second FSM.
 So you need to provide the event loop separately and define this symbol.
@@ -467,7 +470,7 @@ The changes is that now the start function will not be blocking:
 you can start all the needed FSM, then eventually start the event loop.
 This is demonstrated in sample program [src/sample_2.cpp](../blob/master/src/sample_2.cpp).
 
-1. ```SPAG_GENERATE_DOTFILE``` : this enables the member function ```writeDotFile( std::string )```.
+6 - ```SPAG_GENERATE_DOTFILE``` : this enables the member function ```writeDotFile( std::string )```.
 When called, it will generate in current folder a .dot file of the current configuration that can be used to produce an image of the corresponding graph, using the well-know tool Graphviz.
 For example, with
 ```
