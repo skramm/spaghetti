@@ -36,7 +36,9 @@ int main( int, char* argv[] )
 //	fsm.assignString2State( st_2, "STATE-2" );
 
 	fsm_A.assignTimeOut( st_1, 1, st_2 );
+	fsm_A.assignTimeOut( st_2, 1, st_1 );
 	fsm_B.assignTimeOut( st_1, 1, st_2 );
+	fsm_B.assignTimeOut( st_2, 1, st_1 );
 
 	fsm_A.assignGlobalCallback( cb );
 	fsm_B.assignGlobalCallback( cb );

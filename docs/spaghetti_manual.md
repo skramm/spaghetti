@@ -496,6 +496,15 @@ or a [```std::tuple```](http://en.cppreference.com/w/cpp/utility/tuple).
 - Q: *Can I use a callback function with a void parameter ( ```void my_callback()```)*<br/>
 A: No, unfortunately. This is because void is not a type, you can't pass it as template argument. But you can always use anything, say an integer, and ignore its value.
 
+-Q: *Can I use this for a hierarchical FSM?*
+<br/>
+A: at present, no, but this is considered for future releases
+
+-Q: *Can I have two concurrent FSM working at the same time?*
+<br/>
+A: at present, no due to the blocking nature of the start() function but this issue is currently being considered.
+
+
 - Q: *Why that name ? Where does that come from?*<br/>
 A: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).

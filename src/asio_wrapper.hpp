@@ -47,11 +47,14 @@ struct AsioWrapper
 #if BOOST_VERSION < 106600
 	AsioWrapper() : _work( _io_service )
 	{
+//		std::cout << "Boost < 1.66, started work\n";
 		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
 	}
 #else
 	AsioWrapper()
 	{
+//		std::cout << "Boost >= 1.66, started executor_work_guard\n";
+
 // see http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
 		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );

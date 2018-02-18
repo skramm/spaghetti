@@ -324,6 +324,7 @@ enum EN_ConfigError
 	,CE_IllegalPassState     ///< pass-state is followed by another pass-state
 	,CE_SamePassState        ///< pass state leads to same state
 	,CE_DeadEndState         ///< state has no escape path !
+	,CE_TimeOutSameState     ///< Time out leads to same state
 };
 
 //-----------------------------------------------------------------------------------
@@ -355,7 +356,9 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 		case CE_DeadEndState:
 			msg += "has no escape path";
 		break;
-
+		case CE_TimeOutSameState:
+			msg += ": TimeOut leads to same state";
+		break;
 		default: assert(0);
 	}
 	return msg;
@@ -574,14 +577,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// start FSM : run callback associated to initial state (if any), an run timer (if any)
 		void start() const
 		{
-			static bool bFirst = true;
-			if(bFirst)
-				bFirst = false;
-			else
-			{
-				std::cerr << "Spaghetti: error, attempt to start the FSM twice!\n";
-				std::exit(1);
-			}
 			doChecking();
 
 			runAction();
@@ -787,14 +782,21 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			}
 			for( size_t i=0; i<nbStates(); i++ ) // check for any dead-end situations
 			{
-				bool foundValid(false);
-//				auto state = _stateInfo[i];
-				for( size_t j=0; j<nbEvents(); j++ )
-					if( _transition_mat[j][i] != i )      // if the transition leads to another state
-						if( _ignored_events[j][i] == 1 )  // AND it is allowed
-							foundValid = true;
-				if( !foundValid )
-					throw std::logic_error( priv::getConfigErrorMessage( priv::CE_DeadEndState, i ) );
+				if( _stateInfo[i]._timerEvent._enabled )
+				{
+					if( _stateInfo[i]._timerEvent._nextState == i )
+						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutSameState, i ) );
+				}
+				else
+				{
+					bool foundValid(false);
+					for( size_t j=0; j<nbEvents(); j++ )
+						if( _transition_mat[j][i] != i )      // if the transition leads to another state
+							if( _ignored_events[j][i] == 1 )  // AND it is allowed
+								foundValid = true;
+					if( !foundValid )
+						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_DeadEndState, i ) );
+				}
 			}
 		}
 
@@ -1069,6 +1071,5 @@ https://github.com/aantron/better-enums
 
 \todo in writeDotFile(), try to add the strings, if any.
 
-\todo move all configuration checks to check() function, so that all the configuration function
-can be marked as noexcept
+\todo enable the possibility to have two concurrent FSM working in parallel
 */
