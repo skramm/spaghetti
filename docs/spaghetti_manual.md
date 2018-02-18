@@ -468,7 +468,7 @@ If it does, then starting the FSM (```fsm.start()```) will be a blocking functio
 So you need to provide the event loop separately and define this symbol.
 The changes is that now the start function will not be blocking:
 you can start all the needed FSM, then eventually start the event loop.
-This is demonstrated in sample program [src/sample_2.cpp](../blob/master/src/sample_2.cpp).
+This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).
 
 6 - ```SPAG_GENERATE_DOTFILE``` : this enables the member function ```writeDotFile( std::string )```.
 When called, it will generate in current folder a .dot file of the current configuration that can be used to produce an image of the corresponding graph, using the well-know tool Graphviz.
@@ -511,7 +511,7 @@ A: No, unfortunately. This is because void is not a type, you can't pass it as t
 A: at present, no, but this is considered for future releases
 
 - Q: *Can I have two concurrent FSM working at the same time?*<br/>
-A: Yes! See sample program [src/sample_2.cpp](../blob/master/src/sample_2.cpp) that demonstrates this.
+A: Yes! See sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp) that demonstrates this.
 This need symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see above.
 
 
