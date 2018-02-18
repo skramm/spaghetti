@@ -400,26 +400,25 @@ class SpagFSM
 		SpagFSM()
 #endif
 		{
-			static_assert( SPAG_P_CAST2IDX(EV::NB_EVENTS) > 0, "Error, you need to provide at least one event" );
 			static_assert( SPAG_P_CAST2IDX(ST::NB_STATES) > 1, "Error, you need to provide at least two states" );
-			priv::resizemat( _transition_mat, SPAG_P_CAST2IDX(EV::NB_EVENTS), SPAG_P_CAST2IDX(ST::NB_STATES) );
-			priv::resizemat( _ignored_events, SPAG_P_CAST2IDX(EV::NB_EVENTS), SPAG_P_CAST2IDX(ST::NB_STATES) );
+			priv::resizemat( _transition_mat, nbEvents(), nbStates() );
+			priv::resizemat( _ignored_events, nbEvents(), nbStates() );
 
 #ifndef SPAG_USE_ARRAY
-			_stateInfo.resize( ST::NB_STATES );    // states information
+			_stateInfo.resize( nbStates() );    // states information
 #endif
 			for( auto& e: _ignored_events )      // all events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
 
 #ifdef SPAG_ENABLE_LOGGING
-			_rtdata.alloc( SPAG_P_CAST2IDX(ST::NB_STATES), SPAG_P_CAST2IDX(EV::NB_EVENTS) );
+			_rtdata.alloc( nbStates(), nbEvents() );
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
-			_str_events.resize( SPAG_P_CAST2IDX(EV::NB_EVENTS)+2 );
-			_str_states.resize( SPAG_P_CAST2IDX(ST::NB_STATES) );
-			_str_events[ SPAG_P_CAST2IDX(EV::NB_EVENTS)   ] = "*Timeout*";
-			_str_events[ SPAG_P_CAST2IDX(EV::NB_EVENTS+1) ] = "*  AA   *"; // Always Active Transition
+			_str_events.resize( nbEvents()+2 );
+			_str_states.resize( nbStates() );
+			_str_events[ nbEvents()   ] = "*Timeout*";
+			_str_events[ nbEvents()+1 ] = "*  AA   *"; // Always Active Transition
 #endif
 		}
 
@@ -428,15 +427,17 @@ class SpagFSM
 /// Assigned ignored event matrix
 		void assignEventMatrix( const std::vector<std::vector<int>>& mat )
 		{
-			SPAG_CHECK_EQUAL( mat.size(),    EV::NB_EVENTS );
-			SPAG_CHECK_EQUAL( mat[0].size(), ST::NB_STATES );
+			assert( mat.size() );
+			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
+			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
 			_ignored_events = mat;
 		}
 
 		void assignTransitionMat( const std::vector<std::vector<ST>>& mat )
 		{
-			SPAG_CHECK_EQUAL( mat.size(),    EV::NB_EVENTS );
-			SPAG_CHECK_EQUAL( mat[0].size(), ST::NB_STATES );
+			assert( mat.size() );
+			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
+			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
 			_transition_mat = mat;
 		}
 
@@ -520,7 +521,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Assigns a callback function to all the states, will be called each time the state is activated
 		void assignGlobalCallback( Callback_t func )
 		{
-			for( size_t i=0; i<ST::NB_STATES; i++ )
+			for( size_t i=0; i<nbStates(); i++ )
 				_stateInfo[ SPAG_P_CAST2IDX(i) ]._callback = func;
 		}
 
@@ -552,14 +553,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& v_str )
 		{
-			SPAG_CHECK_EQUAL( v_str.size(), EV::NB_EVENTS );
+			SPAG_CHECK_EQUAL( v_str.size(), nbEvents() );
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
 		}
 /// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& v_str )
 		{
-			SPAG_CHECK_EQUAL( v_str.size(), ST::NB_STATES );
+			SPAG_CHECK_EQUAL( v_str.size(), nbStates() );
 			for( const auto& p: v_str )
 				assignString2State( p.first, p.second );
 		}
@@ -606,7 +607,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent._enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
 			_current = _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._nextState;
 #ifdef SPAG_ENABLE_LOGGING
-			_rtdata.logTransition( _current, EV::NB_EVENTS );
+			_rtdata.logTransition( _current, nbEvents() );
 #endif
 			runAction();
 		}
@@ -736,7 +737,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transition_mat[0][ SPAG_P_CAST2IDX(_current) ]) << '\n';
 				_current =  _transition_mat[0][ SPAG_P_CAST2IDX(_current) ];
 #ifdef SPAG_ENABLE_LOGGING
-				_rtdata.logTransition( _current, EV::NB_EVENTS+1 );
+				_rtdata.logTransition( _current, nbEvents()+1 );
 #endif
 				runAction_DoJob( stateInfo );
 			}
@@ -843,7 +844,6 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 {
-	assert( _transition_mat.size() );
 	size_t maxlength(0);
 #ifdef SPAG_ENUM_STRINGS
 	maxlength = priv::getMaxLength( _str_events );
@@ -853,12 +853,12 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	priv::printChars( out, maxlength, ' ' );
 	out << "       STATES:\n      ";
 	priv::printChars( out, maxlength, ' ' );
-	for( size_t i=0; i<_transition_mat[0].size(); i++ )
+	for( size_t i=0; i<nbStates(); i++ )
 		out << i << "  ";
 	out << "\n----";
 	priv::printChars( out, maxlength, '-' );
 	out << '|';
-	for( size_t i=0; i<_transition_mat[0].size(); i++ )
+	for( size_t i=0; i<nbStates(); i++ )
 		out << "---";
 	out << '\n';
 
@@ -963,15 +963,15 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
 	f << "digraph G {\n";
 	f << "0 [label=\"S0\",shape=\"doublecircle\"];\n";
-	for( size_t j=1; j<ST::NB_STATES; j++ )
+	for( size_t j=1; j<nbStates(); j++ )
 		f << j << " [label=\"S" << j << "\"];\n";
-	for( size_t i=0; i<EV::NB_EVENTS; i++ )
-		for( size_t j=0; j<ST::NB_STATES; j++ )
+	for( size_t i=0; i<nbEvents(); i++ )
+		for( size_t j=0; j<nbStates(); j++ )
 			if( _ignored_events[i][j] )
 				if( !_stateInfo[j]._isPassState )
 					f << j << " -> " << _transition_mat[i][j] << " [label=\"E" << i << "\"];\n";
 
-	for( size_t j=0; j<ST::NB_STATES; j++ )
+	for( size_t j=0; j<nbStates(); j++ )
 		if( _stateInfo[j]._isPassState )
 			f << j << " -> " << _transition_mat[0][j] << " [label=\"AA\"];\n";
 		else

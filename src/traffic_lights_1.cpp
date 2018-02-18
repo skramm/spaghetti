@@ -14,8 +14,9 @@ Homepage: https://github.com/skramm/spaghetti
 #include "asio_wrapper.hpp"
 
 //-----------------------------------------------------------------------------------
-enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, NB_STATES };
-enum EN_Events { ev_Reset=0, NB_EVENTS };
+enum EN_States { st_Init, st_Red, st_Orange, st_Green, NB_STATES };
+//enum EN_Events { ev_Reset=0, NB_EVENTS };
+enum EN_Events { NB_EVENTS };
 
 
 SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
