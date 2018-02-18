@@ -1,6 +1,7 @@
 /**
 \file sample_2.cpp
-\brief demo program of concurrent FSM, each with its own timeouts.
+\brief demo program of concurrent FSM, each with its own timeouts, using ASIO.
+Needs symbol SPAG_EXTERNAL_EVENT_LOOP
 
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
@@ -32,13 +33,12 @@ int main( int, char* argv[] )
 
 	fsm_A.assignTimeOut( st_1, 2, st_2 );
 	fsm_A.assignTimeOut( st_2, 2, st_1 );
+	fsm_A.assignGlobalCallback( cb );
+
+	fsm_B.assignConfig( fsm_A );
+
 	fsm_B.assignTimeOut( st_1, 3, st_2 );
 	fsm_B.assignTimeOut( st_2, 3, st_1 );
-
-	fsm_A.assignGlobalCallback( cb );
-	fsm_B.assignGlobalCallback( cb );
-
-//	fsm_B.setConfig( fsm_A.GetConfig() );
 
 	fsm_A.assignCallbackValue( st_1, "st1-A" );
 	fsm_A.assignCallbackValue( st_2, "st2-A" );
@@ -56,8 +56,8 @@ int main( int, char* argv[] )
 
 	try
 	{
-		fsm_A.start();  // blocking !
-		fsm_B.start();  // blocking !
+		fsm_A.start();  // non-blocking: external event loop !
+		fsm_B.start();
 		io_service.run();
 	}
 	catch( std::exception& e )

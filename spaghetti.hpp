@@ -367,7 +367,6 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 template<typename ST, typename EV,typename CBA=int>
 struct NoTimer;
 
-
 } // namespace priv
 
 //-----------------------------------------------------------------------------------
@@ -535,6 +534,20 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			p_timer = t;
+		}
+
+/// Assign configuration from other FSM
+		void assignConfig( const SpagFSM& fsm )
+		{
+			SPAG_CHECK_EQUAL( nbEvents(), fsm.nbEvents() );
+			SPAG_CHECK_EQUAL( nbStates(), fsm.nbStates() );
+			_transition_mat = fsm._transition_mat;
+			_ignored_events = fsm._ignored_events;
+			_stateInfo      = fsm._stateInfo;
+#ifdef SPAG_ENUM_STRINGS
+			_str_events     = fsm._str_events;
+			_str_states     = fsm._str_states;
+#endif
 		}
 
 #ifdef SPAG_ENUM_STRINGS
