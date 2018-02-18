@@ -861,12 +861,12 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	out << '\n';
 
 #ifdef SPAG_ENUM_STRINGS
-	for( size_t i=0; i<_transition_mat.size(); i++ )
+	for( size_t i=0; i<nbEvents()+2; i++ )
 	{
 		if( maxlength )
 			priv::PrintEnumString( out, _str_events[i], maxlength );
 #else
-	for( size_t i=0; i<std::max( capt.size(), nbEvents() ); i++ )
+	for( size_t i=0; i<std::max( capt.size(), nbEvents()+2 ); i++ )
 	{
 		if( i<capt.size() )
 			out << capt[i];
@@ -877,13 +877,35 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		if( i<nbEvents() )
 		{
 			out << ' ' << i << " | ";
-			for( size_t j=0; j<_transition_mat[i].size(); j++ )
+			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _ignored_events[i][j] )
 					out << _transition_mat[i][j];
 				else
-					out << 'X';
+					out << '.';
 				out << "  ";
+			}
+		}
+		if( i == nbEvents() ) // TimeOut
+		{
+			out << " TO| ";
+			for( size_t j=0; j<nbStates(); j++ )
+			{
+				if( _stateInfo[j]._timerEvent._enabled )
+					out << _stateInfo[j]._timerEvent._nextState << "  ";
+				else
+					out << ".  ";
+			}
+		}
+		if( i == nbEvents()+1 ) // Pass-state
+		{
+			out << " PS| ";
+			for( size_t j=0; j<nbStates(); j++ )
+			{
+				if( _stateInfo[j]._isPassState )
+					out << _transition_mat[0][j] << " ";
+				else
+					out << ".  ";
 			}
 		}
 		out << '\n';
@@ -895,19 +917,21 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 {
-	out << "FSM config:";
+	out << "---------------------\nFSM config:";
 	if( msg )
 		out << "msg=" << msg;
-	out << "\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
+	out << '\n';
+//	out << "\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
 
-	out << "\n - Transition matrix: (X:ignored event)\n";
+//	out << "\n - Transition matrix: (.:ignored event)\n";
 	printMatrix( out );
 
+#if 0
 	out << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
 	out << "       STATES:\n   ";
 	for( size_t i=0; i<_stateInfo.size(); i++ )
 		out << i << "  ";
-	out << "\n   ";
+//	out << "\n   ";
 
 #ifdef SPAG_ENUM_STRINGS
 	size_t maxlength = priv::getMaxLength( _str_states );
@@ -922,6 +946,8 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 #endif
 		out << '|' << (_stateInfo[i]._timerEvent._enabled?'o':'.') << '\n';
 	}
+#endif
+	out << "---------------------\n";
 }
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_GENERATE_DOTFILE
