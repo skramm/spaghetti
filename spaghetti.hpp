@@ -1077,9 +1077,7 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 https://github.com/aantron/better-enums
 
 
-\todo handle FSM with no events ??? (only timeouts) Possible ?
-
-\todo enable passing the FSM itself to the callback, to enable dynamic behaviour
+\todo enable passing the FSM itself to the callback, to enable dynamic behavior
 (either editing the config at run-time, or generating events when certain situation is met).
 
 \todo add some tests, and write a sample to evaluation performance
@@ -1089,4 +1087,6 @@ https://github.com/aantron/better-enums
 \todo enable the possibility to have two concurrent FSM working in parallel
 
 \todo integrate asio timer to library (v2)
+
+\todo fix issue with duration
 */
