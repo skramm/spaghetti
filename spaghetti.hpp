@@ -324,7 +324,6 @@ enum EN_ConfigError
 	,CE_IllegalPassState     ///< pass-state is followed by another pass-state
 	,CE_SamePassState        ///< pass state leads to same state
 //	,CE_DeadEndState         ///< state has no escape path - DEPRECATED !
-	,CE_TimeOutSameState     ///< Time out leads to same state
 };
 
 //-----------------------------------------------------------------------------------
@@ -356,9 +355,6 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 /*		case CE_DeadEndState:
 			msg += "has no escape path";
 		break; */
-		case CE_TimeOutSameState:
-			msg += ": TimeOut leads to same state";
-		break;
 		default: assert(0);
 	}
 	return msg;
@@ -416,6 +412,16 @@ class SpagFSM
 #ifdef SPAG_ENUM_STRINGS
 			_str_events.resize( nbEvents()+2 );
 			_str_states.resize( nbStates() );
+			std::generate(                          // assign default strings, so it doesn't stay empty
+				_str_states.begin(),
+				_str_states.end(),
+				[](){ static int idx; std::string s = "St-"; s += std::to_string(idx++); return s; } // lambda
+			);
+			std::generate(                          // assign default strings, so it doesn't stay empty
+				_str_events.begin(),
+				_str_events.end(),
+				[](){ static int idx; std::string s = "Ev-"; s += std::to_string(idx++); return s; } // lambda
+			);
 			_str_events[ nbEvents()   ] = "*Timeout*";
 			_str_events[ nbEvents()+1 ] = "*  AA   *"; // Always Active Transition
 #endif
@@ -566,14 +572,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& v_str )
 		{
-			SPAG_CHECK_EQUAL( v_str.size(), nbEvents() );
+			SPAG_CHECK_LESS( v_str.size(), nbEvents()+1 );
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
 		}
 /// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& v_str )
 		{
-			SPAG_CHECK_EQUAL( v_str.size(), nbStates() );
+			SPAG_CHECK_LESS( v_str.size(), nbStates()+1 );
 			for( const auto& p: v_str )
 				assignString2State( p.first, p.second );
 		}
@@ -935,12 +941,6 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
 		}
 	}
-	for( size_t i=0; i<nbStates(); i++ ) // check for any wrong timeout states
-		if( _stateInfo[i]._timerEvent._enabled )
-		{
-			if( SPAG_P_CAST2IDX( _stateInfo[i]._timerEvent._nextState ) == i )
-				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutSameState, i ) );
-		}
 
 // check for unreachable states
 	std::vector<size_t> unreachableStates;
