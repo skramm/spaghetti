@@ -9,12 +9,13 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+#define SPAG_EMBED_ASIO_TIMER
 #define SPAG_FRIENDLY_CHECKING
 #define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
-#include "asio_wrapper.hpp"
+//#include "asio_wrapper.hpp"
 
 #include <thread>
 #include <mutex>
@@ -23,7 +24,7 @@ Homepage: https://github.com/skramm/spaghetti
 enum En_States { st_init, st_one, NB_STATES };
 enum En_Events { ev_1, NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE( fsm_t, En_States, En_Events, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, En_States, En_Events, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -75,8 +76,6 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 
 	fsm_t fsm;
-	AsioWrapper<En_States,En_Events,std::string> asio;
-	fsm.assignTimer( &asio );
 	try
 	{
 		fsm.assignTransition( st_init, ev_1, st_one );

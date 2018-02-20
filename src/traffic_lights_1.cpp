@@ -7,17 +7,16 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+#define SPAG_EMBED_ASIO_TIMER
 #define SPAG_GENERATE_DOTFILE
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
-
-#include "asio_wrapper.hpp"
 
 //-----------------------------------------------------------------------------------
 enum EN_States { st_Init, st_Red, st_Orange, st_Green, NB_STATES };
 enum EN_Events { NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, EN_States, EN_Events, std::string );
 
 //-----------------------------------------------------------------------------------
 void callback( std::string v )
@@ -43,9 +42,6 @@ int main( int, char* argv[] )
 
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "traffic_lights_1.dot" );
-
-	AsioWrapper<EN_States,EN_Events,std::string> asio;
-	fsm.assignTimer( &asio );
 
 	fsm.start();
 }
