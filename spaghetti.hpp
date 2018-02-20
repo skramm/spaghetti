@@ -323,7 +323,7 @@ enum EN_ConfigError
 	CE_TimeOutAndPassState   ///< state has both timeout and pass-state flags active
 	,CE_IllegalPassState     ///< pass-state is followed by another pass-state
 	,CE_SamePassState        ///< pass state leads to same state
-	,CE_DeadEndState         ///< state has no escape path !
+//	,CE_DeadEndState         ///< state has no escape path - DEPRECATED !
 	,CE_TimeOutSameState     ///< Time out leads to same state
 };
 
@@ -353,9 +353,9 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 		case CE_SamePassState:
 			msg += "pass-state cannot lead to itself";
 		break;
-		case CE_DeadEndState:
+/*		case CE_DeadEndState:
 			msg += "has no escape path";
-		break;
+		break; */
 		case CE_TimeOutSameState:
 			msg += ": TimeOut leads to same state";
 		break;
@@ -778,43 +778,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 		void printMatrix( std::ostream& str ) const;
-
-/// Checks configuration for any illegal situation. Throws error if one is encountered.
-		void doChecking() const
-		{
-			for( size_t i=0; i<nbStates(); i++ )
-			{
-				auto state = _stateInfo[i];
-				if( state._isPassState )
-				{
-					size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
-					if( nextState == i )
-						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
-					if( _stateInfo[ nextState ]._isPassState )
-						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
-					if( state._timerEvent._enabled )
-						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
-				}
-			}
-			for( size_t i=0; i<nbStates(); i++ ) // check for any dead-end situations
-			{
-				if( _stateInfo[i]._timerEvent._enabled )
-				{
-					if( _stateInfo[i]._timerEvent._nextState == i )
-						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutSameState, i ) );
-				}
-				else
-				{
-					bool foundValid(false);
-					for( size_t j=0; j<nbEvents(); j++ )
-						if( _transition_mat[j][i] != i )      // if the transition leads to another state
-							if( _ignored_events[j][i] == 1 )  // AND it is allowed
-								foundValid = true;
-					if( !foundValid )
-						throw std::logic_error( priv::getConfigErrorMessage( priv::CE_DeadEndState, i ) );
-				}
-			}
-		}
+		void doChecking() const;
+		bool isReachable( size_t ) const;
 
 /////////////////////////////
 // private data section
@@ -926,6 +891,98 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			}
 		}
 		out << '\n';
+	}
+}
+//-----------------------------------------------------------------------------------
+/// Helper function, returns true if state \c st is referenced in \c _transition_mat (and that the transition is allowed)
+/// or it has a Timeout or pass-state transition
+template<typename ST, typename EV,typename T,typename CBA>
+bool
+SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
+{
+	for( size_t i=0; i<nbStates(); i++ )
+		if( i != st )
+		{
+			for( size_t k=0; k<nbEvents(); k++ )
+				if( SPAG_P_CAST2IDX( _transition_mat[k][i] ) == st )
+					if( _ignored_events[k][i] == 1 )
+						return true;
+
+			if( _stateInfo[i]._timerEvent._enabled )
+				if( SPAG_P_CAST2IDX( _stateInfo[i]._timerEvent._nextState ) == st )
+					return true;
+		}
+
+	return false;
+}
+//-----------------------------------------------------------------------------------
+/// Checks configuration for any illegal situation. Throws error if one is encountered.
+template<typename ST, typename EV,typename T,typename CBA>
+void
+SpagFSM<ST,EV,T,CBA>::doChecking() const
+{
+	for( size_t i=0; i<nbStates(); i++ )
+	{
+		auto state = _stateInfo[i];
+		if( state._isPassState )
+		{
+			size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
+			if( nextState == i )
+				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
+			if( _stateInfo[ nextState ]._isPassState )
+				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
+			if( state._timerEvent._enabled )
+				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
+		}
+	}
+	for( size_t i=0; i<nbStates(); i++ ) // check for any wrong timeout states
+		if( _stateInfo[i]._timerEvent._enabled )
+		{
+			if( SPAG_P_CAST2IDX( _stateInfo[i]._timerEvent._nextState ) == i )
+				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutSameState, i ) );
+		}
+
+// check for unreachable states
+	std::vector<size_t> unreachableStates;
+	for( size_t i=1; i<nbStates(); i++ )         // we start from index 1, because 0 is the initial state, and thus is always reachable!
+		if( !isReachable( i ) )
+			unreachableStates.push_back( i );
+	for( const auto& st: unreachableStates )
+	{
+		std::cout << "Spaghetti: Warning, state " << st
+#ifdef SPAG_ENUM_STRINGS
+			<< " (" << _str_states[st] << ')'
+#endif
+			<< " is unreachable\n";
+	}
+
+	for( size_t i=0; i<nbStates(); i++ ) // check for any dead-end situations
+	{
+		bool foundValid(false);
+		if( _stateInfo[i]._timerEvent._enabled )
+			foundValid = true;
+		else
+		{
+			for( size_t j=0; j<nbEvents(); j++ )
+				if( SPAG_P_CAST2IDX( _transition_mat[j][i] ) != i )   // if the transition leads to another state
+					if( _ignored_events[j][i] == 1 )                  // AND it is allowed
+						foundValid = true;
+		}
+
+		if( !foundValid )                     // if we didn't find a valid transition
+			if( std::find(
+				unreachableStates.begin(),
+				unreachableStates.end(),
+				i
+			) == unreachableStates.end() )     // AND it is not in the unreachable states list
+		{
+			std::cout << "Spaghetti: Warning, state " << i
+#ifdef SPAG_ENUM_STRINGS
+				<< " (" << _str_states[i] << ')'
+#endif
+				<< " is a dead-end\n";
+//					throw std::logic_error( priv::getConfigErrorMessage( priv::CE_DeadEndState, i ) );
+		}
 	}
 }
 //-----------------------------------------------------------------------------------

@@ -19,7 +19,10 @@ CFLAGS = -std=c++11 -Wall -O2 -I.
 OPTIONS:= \
 SPAG_PRINT_STATES \
 SPAG_ENABLE_LOGGING \
-SPAG_FRIENDLY_CHECKING
+SPAG_FRIENDLY_CHECKING \
+SPAG_ENUM_STRINGS \
+SPAG_EXTERNAL_EVENT_LOOP \
+SPAG_GENERATE_DOTFILE
 
 #LIST:=file1 file2
 #OPT:=A B
@@ -42,13 +45,17 @@ SHELL=/bin/bash
 
 BIN_DIR=bin
 SRC_DIR=src
+SRC_DIR_T=tests
 OBJ_DIR=obj
 
 
 HEADER_FILES := $(wildcard $(SRC_DIR)/*.h*)
 SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
-OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
-EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,$(BIN_DIR)/%,$(SRC_FILES))
+SRC_FILES_T  := $(wildcard $(SRC_DIR_T)/*.cpp)
+OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,   $(OBJ_DIR)/%.o, $(SRC_FILES))
+OBJ_FILES_T  := $(patsubst $(SRC_DIR_T)/%.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES_T))
+EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,   $(BIN_DIR)/%,   $(SRC_FILES))
+EXEC_FILES_T := $(patsubst $(SRC_DIR_T)/%.cpp, $(BIN_DIR)/%,   $(SRC_FILES_T))
 
 DOT_FILES := $(wildcard *.dot)
 DOT_FILES += $(wildcard src/*.dot)
@@ -79,17 +86,10 @@ help:
 	@echo " - doc (assumes doxygen installed)"
 	@echo " - install: copies single file to $(DEST_PATH)"
 
+demo: $(EXEC_FILES) $(EXEC_FILES_T)
+	@echo "- Done target $@"
 
-opt:
-	@for a in 0 1; do \
-		for b in 0 1; do \
-			for c in 0 1; do \
-				echo "$$a$$b$$c"; \
-			done \
-		done \
-	done
-
-demo: $(EXEC_FILES)
+tests: $(EXEC_FILES_T)
 	@echo "- Done target $@"
 
 doc: html/index.html src/html/index.html
@@ -118,9 +118,12 @@ GRAPHIZ_APP = dot
 show:
 	@echo HEADER_FILES=$(HEADER_FILES)
 	@echo SRC_FILES=$(SRC_FILES)
+	@echo SRC_FILES_T=$(SRC_FILES_T)
 	@echo OBJ_FILES=$(OBJ_FILES)
+	@echo OBJ_FILES_T=$(OBJ_FILES_T)
 #	@echo OPT_ALL=$(OPT_ALL)
 	@echo EXEC_FILES=$(EXEC_FILES)
+	@echo EXEC_FILES_T=$(EXEC_FILES_T)
 	@echo DOT_FILES=$(DOT_FILES)
 	@echo OPTIONS=$(OPTIONS)
 	@echo SVG_FILES=$(SVG_FILES)
@@ -151,9 +154,17 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE)
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
 	$(CXX) -o $@ -c $< $(CFLAGS)
 
+$(OBJ_DIR)/%.o: $(SRC_DIR_T)/%.cpp $(HEADER_FILES) $(THE_FILE)
+	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
+	$(CXX) -o $@ -c $< $(CFLAGS)
+
 # linking
 $(BIN_DIR)/%: $(OBJ_DIR)/%.o $(THE_FILE)
 	@echo $(COLOR_3) " - Link demo $@." $(COLOR_OFF)
 	$(CXX) -o $@ -s $(subst $(BIN_DIR)/,$(OBJ_DIR)/,$@).o  $(LDFLAGS)
+
+#$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(THE_FILE)
+#	@echo $(COLOR_3) " - Link demo $@." $(COLOR_OFF)
+#	$(CXX) -o $@ -s $(subst $(BIN_DIR)/,$(OBJ_DIR_T)/,$@).o  $(LDFLAGS)
 
 

@@ -55,7 +55,7 @@ int main( int, char* argv[] )
 
 	configureFSM( fsm )	;
 //	fsm.printConfig( std::cout );
-//	fsm.start();    // not needed here
+	fsm.start();
 	bool quit(false);
 	do
 	{
