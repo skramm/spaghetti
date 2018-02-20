@@ -21,9 +21,11 @@ The rationale behind this is that this loop may vary greatly depending on the re
 (need for timeout or not, need to acquire hardware external events,...).
 
 This library provides an easy way to specify states and events, and how and when it will switch from one state to another.
-It also has some additional facilities, such as logging and easy timeout handling.
+It also has some additional features, such as logging and easy timeout handling.
 
-It is currently in beta state: everything seems to work as expected, please post issue on Github in case of any problems.
+A lot of efforts has been put on safety: most of the potential errors are detected at build time, and everything is checked at runtime.
+
+Feedback welcome, please post issue on Github in case of any problems.
 
 ### Main features
 
