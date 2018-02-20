@@ -1,5 +1,6 @@
 /**
 \file bad_configs.cpp
+\brief some test case to check configuration
 */
 
 
@@ -23,11 +24,11 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st0, ev0, st1 );
 	fsm.assignTimeOut( st1, 4, st2 );
 
-	std::vector<std::pair<States,std::string>> str = {
+	std::map<States,std::string> mstr = {
 		{ st0, "init state" },
-		{ st1, "state_1" },
+		{ st2, "state_2" }
 	};
-	fsm.assignStrings2States( str );
+	fsm.assignStrings2States( mstr );
 
 }
 

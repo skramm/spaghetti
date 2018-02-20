@@ -13,9 +13,9 @@ For a reference manual, run ```make doc```, then open
 1. [Showcase 2: let's use a timer](#showcase2)
 1. [Showcase 3 : mixing timeout with hardware events](#showcase3)
 1. [Additional stuff](#additional_stuff)
- 1. Configuration
- 1. Checking configuration
- 1. FSM getters and other information
+   1. [Configuration](#config)
+   1. [Checking configuration](#checks)
+   1. [FSM getters and other information](#getters)
 1. [Build options](#build_options)
 1. [FAQ](#faq)
 
@@ -325,6 +325,7 @@ by running the  program ```bin/traffic_lights_client``` in another shell window
 <a name="additional_stuff"></a>
 ## 5 - Additional facilities
 
+<a name="config"></a>
 ### 5.1 - Configuration of the FSM
 For FSM configuration, you can proceed as described above but it can be tedious for larger situations.
 Instead, you can also assign directly a </b>transition matrix</b>, with the events in lines, the states in columns, and each table cell defining the state
@@ -379,10 +380,13 @@ You can also copy all the configuration from one instance of an FSM to another:
 // copy config of fsm_1 to fsm_2
 	fsm_2.assignConfig( fsm_1 );
 ```
+<a name="checks"></a>
 ### 5.2 - Checking configuration
 
 At startup (when calling ```fsm.start()```), a general checking is done to make sure nothing wrong will happen.
 This can either throw an error in case of an invalid situation, or just print out a warning.
+
+This function is public, so you may call it yourself, in case you need to make sure everything is correct before running.
 
 A warning is issued in the following situations:
 - a state is unreachable, that is it is referenced in the states enum but no transitions leads to it.
@@ -390,6 +394,7 @@ A warning is issued in the following situations:
 
 These latter situations will not disable running the FSM, because they may occur in developement phases, where everything is not finished but the user wants to test things anyway.
 
+<a name="getters"></a>
 ### 5.3 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
@@ -473,8 +478,8 @@ As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 4 - ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++
-	fsm.assignString2Event( std::make_pair(ev_MyEvent, "something happened" );
-	fsm.assignString2State( std::make_pair(st_Arizona, "Arizona state" );
+	fsm.assignString2Event( ev_MyEvent, "something happened" );
+	fsm.assignString2State( st_Arizona, "Arizona state" );
 ```
 or globally, by providing a vector of pairs(enum values, string). For example:
 ```C++
@@ -488,6 +493,8 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 (and similarly with ```assignStrings2States()``` for states.)
 <br>
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
+<br>
+Default values are also generated when this option is enabled, in the form "St-x" and "Ev-x".
 
 5 - ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
 In that case, the Timer class must not hold the timer.

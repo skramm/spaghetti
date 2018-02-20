@@ -30,6 +30,7 @@ This program is free software: you can redistribute it and/or modify
 #define SPAG_VERSION 0.1
 
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <functional>
 #include <cassert>
@@ -583,11 +584,25 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			for( const auto& p: v_str )
 				assignString2State( p.first, p.second );
 		}
+/// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled) - overload 1
+		void assignStrings2Events( std::map<EV,std::string>& m_str )
+		{
+			for( const auto& p: m_str )
+				assignString2Event( p.first, p.second );
+		}
+/// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled) - overload 1
+		void assignStrings2States( std::map<ST,std::string>& m_str )
+		{
+			for( const auto& p: m_str )
+				assignString2State( p.first, p.second );
+		}
 #else
 		void assignString2Event( EV, std::string ) {}
 		void assignString2State( ST, std::string ) {}
-		void assignStrings2Events( const std::vector<std::pair<ST,std::string>>& ) {}
+		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& ) {}
 		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& ) {}
+		void assignStrings2Events( const std::map<EV,std::string>& ) {}
+		void assignStrings2States( const std::map<ST,std::string>& ) {}
 #endif
 
 ///@}
@@ -660,6 +675,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /** \name Misc. helper functions */
 ///@{
+/// Does configuration checks
+		void doChecking() const;
 /// Return nb of states
 		constexpr size_t nbStates() const
 		{
@@ -784,7 +801,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 		void printMatrix( std::ostream& str ) const;
-		void doChecking() const;
 		bool isReachable( size_t ) const;
 
 /////////////////////////////
