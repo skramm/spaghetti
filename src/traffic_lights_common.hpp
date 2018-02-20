@@ -62,7 +62,7 @@ configureFSM( FSM& fsm )
 	fsm.assignCallbackValue( st_Init,     "Init" );
 
 	std::vector<std::pair<EN_Events,std::string>> v_str = {
-		{ ev_Reset,       "Reset" },
+//		{ ev_Reset,      "Reset" },
 		{ ev_WarningOn,  "Warning On" },
 		{ ev_WarningOff, "Warning Off" }
 	};

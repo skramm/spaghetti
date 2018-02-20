@@ -42,6 +42,7 @@
 		<Unit filename="src/turnstyle_1.cpp" />
 		<Unit filename="src/turnstyle_2.cpp" />
 		<Unit filename="src/udp_server.hpp" />
+		<Unit filename="tests/bad_configs.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />

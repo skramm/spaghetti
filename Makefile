@@ -86,11 +86,11 @@ help:
 	@echo " - doc (assumes doxygen installed)"
 	@echo " - install: copies single file to $(DEST_PATH)"
 
-demo: $(EXEC_FILES) $(EXEC_FILES_T)
+demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
 tests: $(EXEC_FILES_T)
-	@echo "- Done target $@"
+	for f in $(EXEC_FILES_T); do ./$$f; done;
 
 doc: html/index.html src/html/index.html
 	@echo "- Done target $@"

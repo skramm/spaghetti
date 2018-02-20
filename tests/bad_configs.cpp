@@ -22,6 +22,13 @@ void configureFSM( fsm_t& fsm )
 {
 	fsm.assignTransition( st0, ev0, st1 );
 	fsm.assignTimeOut( st1, 4, st2 );
+
+	std::vector<std::pair<States,std::string>> str = {
+		{ st0, "init state" },
+		{ st1, "state_1" },
+	};
+	fsm.assignStrings2States( str );
+
 }
 
 int main( int, char* argv[] )

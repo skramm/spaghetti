@@ -13,6 +13,9 @@ For a reference manual, run ```make doc```, then open
 1. [Showcase 2: let's use a timer](#showcase2)
 1. [Showcase 3 : mixing timeout with hardware events](#showcase3)
 1. [Additional stuff](#additional_stuff)
+ 1. Configuration
+ 1. Checking configuration
+ 1. FSM getters and other information
 1. [Build options](#build_options)
 1. [FAQ](#faq)
 
@@ -23,6 +26,7 @@ Then you can create a program.
 <a name="concepts"></a>
 ## 1 - Fundamental concepts
 
+Configuration of the state machine is a mix of static and dynamic: the number of states and hardware events is fixed at build time, but it is possible to add transitions at run-time.
 
 States and events are simply defined as enum values:
 ```C++
@@ -35,7 +39,7 @@ For the states, the first one (having value 0) will be the initial state.
 
 You can use either classical C++03 enums or C++11 scoped enums (```enum class { st1, st2,...```).
 The latter adds of course some type safety.
-But all these values are internally casted to integers, so **do not** assign values to the enumerators!
+But all these values are internally casted to integers, so you must not assign values to the enumerators.
 
 Events can be of two types:
 - "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
@@ -375,15 +379,26 @@ You can also copy all the configuration from one instance of an FSM to another:
 // copy config of fsm_1 to fsm_2
 	fsm_2.assignConfig( fsm_1 );
 ```
+### 5.2 - Checking configuration
 
-### 5.2 - FSM getters and other information
+At startup (when calling ```fsm.start()```), a general checking is done to make sure nothing wrong will happen.
+This can either throw an error in case of an invalid situation, or just print out a warning.
+
+A warning is issued in the following situations:
+- a state is unreachable, that is it is referenced in the states enum but no transitions leads to it.
+- a state is a "Dead-end": once in this state, there is no transition leading to another state: the FSM is "stuck".
+
+These latter situations will not disable running the FSM, because they may occur in developement phases, where everything is not finished but the user wants to test things anyway.
+
+### 5.3 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
- - ```nbStates()```
- - ```nbEvents()```
- - ```currentState()```
- - ```timeOutDuration( EN_States )```
+ - ```nbStates()```: returns nb of states
+ - ```nbEvents()```: returns nb of events (only "hardware" ones, not timeouts).
+ - ```currentState()```: returns current state
+ - ```timeOutDuration( EN_States )```: returns duration of timeout
 
+Other stuff:
 - Printing the configuration:
 The member function ```printConfig()``` will print the current configuration, for example:
 ```C++
