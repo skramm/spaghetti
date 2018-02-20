@@ -40,6 +40,7 @@ int main( int, char* argv[] )
 
 	configureFSM( fsm )	;
 	fsm.printConfig( std::cout );
+
 	try
 	{
 		fsm.start();

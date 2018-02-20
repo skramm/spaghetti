@@ -324,17 +324,15 @@ enum EN_ConfigError
 	CE_TimeOutAndPassState   ///< state has both timeout and pass-state flags active
 	,CE_IllegalPassState     ///< pass-state is followed by another pass-state
 	,CE_SamePassState        ///< pass state leads to same state
-//	,CE_DeadEndState         ///< state has no escape path - DEPRECATED !
 };
 
 //-----------------------------------------------------------------------------------
 /// Configuration error printing function
-template<typename ST>
 std::string
-getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
+getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 {
 	std::string msg( "Spaghetti: configuration error: state " );
-	msg += std::to_string( SPAG_P_CAST2IDX(st) );
+	msg += std::to_string( st );
 //#ifdef SPAG_ENUM_STRINGS
 //	msg += " '";
 //	msg += _str_states[st];
@@ -344,7 +342,7 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 
 	switch( ce )
 	{
-		case priv::CE_TimeOutAndPassState:
+		case CE_TimeOutAndPassState:
 			msg += "cannot have both a timeout and a pass-state flag";
 		break;
 		case CE_IllegalPassState:
@@ -353,9 +351,6 @@ getConfigErrorMessage( priv::EN_ConfigError ce, ST st )
 		case CE_SamePassState:
 			msg += "pass-state cannot lead to itself";
 		break;
-/*		case CE_DeadEndState:
-			msg += "has no escape path";
-		break; */
 		default: assert(0);
 	}
 	return msg;
@@ -612,8 +607,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// start FSM : run callback associated to initial state (if any), an run timer (if any)
 		void start() const
 		{
-			doChecking();
+			if( _isRunning )
+				throw std::runtime_error( std::string( _spag_name + ": attempt to start an already running FSM" ) );
 
+			doChecking();
+			_isRunning = true;
 			runAction();
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.incrementInitState();
@@ -627,6 +625,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer
 		void stop() const
 		{
+			if( !_isRunning )
+				throw std::runtime_error( std::string( _spag_name + ": attempt to stop an already stopped FSM" ) );
+
 			if( p_timer )
 			{
 				SPAG_LOG << "call timerCancel()\n";
@@ -634,6 +635,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				SPAG_LOG << "call timerKill()\n";
 				p_timer->timerKill();
 			}
+			_isRunning = false;
 		}
 
 /// User-code timer end function/callback should call this when the timer expires
@@ -808,10 +810,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /////////////////////////////
 
 	private:
+		const std::string                  _spag_name = "Spaghetti";
 #ifdef SPAG_ENABLE_LOGGING
 		mutable priv::RunTimeData<ST,EV>   _rtdata;
 #endif
 		mutable ST                         _current = static_cast<ST>(0);   ///< current state
+		mutable bool                       _isRunning = false;
+
 		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 
@@ -997,7 +1002,6 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 				<< " (" << _str_states[i] << ')'
 #endif
 				<< " is a dead-end\n";
-//					throw std::logic_error( priv::getConfigErrorMessage( priv::CE_DeadEndState, i ) );
 		}
 	}
 }
@@ -1048,7 +1052,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 {
 	std::ofstream f ( fname );
 	if( !f.is_open() )
-		throw std::runtime_error( std::string( "Spaghetti: error, unable to open file: " + fname ) );
+		throw std::runtime_error( std::string( _spag_name + ": error, unable to open file: " + fname ) );
 	f << "digraph G {\n";
 	f << "0 [label=\"S0\",shape=\"doublecircle\"];\n";
 	for( size_t j=1; j<nbStates(); j++ )

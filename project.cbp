@@ -24,6 +24,7 @@
 		</Compiler>
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
+		<Unit filename="docs/spaghetti_faq.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
