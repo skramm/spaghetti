@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.1
+#define SPAG_VERSION 0.2
 
 #include <vector>
 #include <map>
@@ -56,10 +56,10 @@ This program is free software: you can redistribute it and/or modify
 	{ \
 		if( (a) != (b) ) \
 		{ \
-			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
+			std::cerr << _spag_name << ": runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
 			<< " - "   << #a << " value=" << a \
 			<< "\n - " << #b << " value=" << b << "\nExiting...\n"; \
-			exit(1); \
+			throw std::logic_error( _spag_name + ": configuration error in call to " + __FUNCTION__ ); \
 		} \
 	}
 #else
@@ -70,10 +70,10 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_CHECK_LESS( a, b ) \
 		if( !( (a) < (b) ) )\
 		{ \
-			std::cerr << "Spaghetti: runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
+			std::cerr << _spag_name << ": runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
 			<< " - "   << #a << " value=" << a \
 			<< "\n - " << #b << " max value=" << b << "\nExiting...\n"; \
-			exit(1); \
+			throw std::logic_error( _spag_name + ": configuration error in call to " + __FUNCTION__ ); \
 		}
 #else
 	#define SPAG_CHECK_LESS( a, b ) assert( a < b )
@@ -89,10 +89,6 @@ typedef size_t Duration;
 
 /// Main library namespace
 namespace spag {
-
-// DEPRECATED
-// This is just to provide a dummy type for the callback argument, as \c void is not a valid type
-//struct DummyCbArg_t {};
 
 //------------------------------------------------------------------------------------
 /// Used in printLoggedData() as second argument
@@ -308,7 +304,7 @@ event stored as size_t because we may pass values other thant the ones in the en
 };
 #endif
 //-----------------------------------------------------------------------------------
-/// helper template function
+/// helper template function (unused if SPAG_USE_ARRAY defined)
 template<typename T>
 void
 resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t nb_cols )
@@ -392,10 +388,9 @@ class SpagFSM
 #endif
 		{
 			static_assert( SPAG_P_CAST2IDX(ST::NB_STATES) > 1, "Error, you need to provide at least two states" );
+#ifndef SPAG_USE_ARRAY
 			priv::resizemat( _transition_mat, nbEvents(), nbStates() );
 			priv::resizemat( _ignored_events, nbEvents(), nbStates() );
-
-#ifndef SPAG_USE_ARRAY
 			_stateInfo.resize( nbStates() );    // states information
 #endif
 			for( auto& e: _ignored_events )      // all events will be ignored at init
@@ -428,7 +423,7 @@ class SpagFSM
 /// Assigned ignored event matrix
 		void assignEventMatrix( const std::vector<std::vector<int>>& mat )
 		{
-			assert( mat.size() );
+			SPAG_CHECK_LESS( 0, mat.size() );
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
 			_ignored_events = mat;
@@ -436,7 +431,7 @@ class SpagFSM
 
 		void assignTransitionMat( const std::vector<std::vector<ST>>& mat )
 		{
-			assert( mat.size() );
+			SPAG_CHECK_LESS( 0, mat.size() );
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
 			_transition_mat = mat;
@@ -663,7 +658,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( _ignored_events[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX(_current) ] != 0 )
 			{
 				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )               // 1 - cancel the waiting timer, if any
+				{
+					assert( p_timer );
 					p_timer->timerCancel();
+				}
 				_current = _transition_mat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, ev );
@@ -817,8 +815,19 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		mutable ST                         _current = static_cast<ST>(0);   ///< current state
 		mutable bool                       _isRunning = false;
 
+#ifdef SPAG_USE_ARRAY
+		std::array<
+			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
+			static_cast<size_t>(EV::NB_EVENTS)
+		> _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+		std::array<
+			std::array<char, static_cast<size_t>(ST::NB_STATES)>,
+			static_cast<size_t>(EV::NB_EVENTS)
+		> _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
+#else
 		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
+#endif // SPAG_USE_ARRAY
 
 #ifdef SPAG_USE_ARRAY
 		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state the details
@@ -1161,9 +1170,13 @@ https://github.com/aantron/better-enums
 
 \todo in writeDotFile(), try to add the strings, if any.
 
-\todo enable the possibility to have two concurrent FSM working in parallel
-
 \todo integrate asio timer to library (v2)
 
 \todo fix issue with duration
+
+\todo Currently works using std::array as storage (see SPAG_USE_ARRAY).
+Shall we switch permanently ?
+If so, we will NOT be able to add states dynamically (not possible at present, but could be in future releases,
+if storage remains std::vector
+
 */
