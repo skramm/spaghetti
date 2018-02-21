@@ -68,7 +68,7 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
 Exiting...
 ```
 If this symbol is not defined, regular checking is done with the classical ```assert()```. As usual, this checking can be removed by defining the symbol ```NDEBUG```.
-1. ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
+* ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++
 	fsm.assignString2Event( ev_MyEvent, "something happened" );
