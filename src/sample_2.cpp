@@ -1,6 +1,7 @@
 /**
 \file sample_2.cpp
 \brief demo program of concurrent FSM, each with its own timeouts, using ASIO.
+Uses the same enum for events and states.
 Needs symbol SPAG_EXTERNAL_EVENT_LOOP
 
 

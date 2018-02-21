@@ -111,6 +111,10 @@ enum PrintFlags
 	,all        = 0x07
 };
 
+//#if defined (SPAG_USE_ASIO_TIMER)
+/// Timer units
+	enum class DurUnit { ms, sec, min };
+//#endif
 //-----------------------------------------------------------------------------------
 /// private namespace, so user code won't hit into this
 namespace priv {
@@ -121,8 +125,9 @@ template<typename ST>
 struct TimerEvent
 {
 	ST       _nextState = static_cast<ST>(0); ///< state to switch to
-	Duration _duration  = 0;                  ///< duration
+	size_t   _duration  = 0;                  ///< duration
 	bool     _enabled   = false;              ///< this state uses or not a timeout (default is no)
+	DurUnit  _durUnit   = DurUnit::sec;    ///< Duration unit, change this with
 
 	TimerEvent()
 		: _nextState(static_cast<ST>(0))
@@ -130,7 +135,7 @@ struct TimerEvent
 		, _enabled(false)
 	{
 	}
-	TimerEvent( ST st, Duration dur ): _nextState(st), _duration(dur)
+	TimerEvent( ST st, Duration dur, DurUnit unit ): _nextState(st), _duration(dur), _durUnit(unit)
 	{
 		_enabled = true;
 	}
@@ -373,9 +378,6 @@ struct NoTimer;
 /// Forward declaration
 	template<typename ST, typename EV, typename CBA>
 	struct AsioWrapper;
-
-/// Timer units
-	enum class DurUnit { ms, sec, min };
 #endif
 
 //-----------------------------------------------------------------------------------
@@ -489,13 +491,13 @@ class SpagFSM
 After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
 (where there may or may not be a timeout assigned)
 */
-		void assignGlobalTimeOut( ST st_final, Duration dur )
+		void assignGlobalTimeOut( ST st_final, Duration dur, DurUnit durUnit = DurUnit::sec )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_final), nbStates() );
 			for( size_t i=0; i<nbStates(); i++ )
 				if( i != SPAG_P_CAST2IDX(st_final) )
-					_stateInfo[ SPAG_P_CAST2IDX( st_final ) ]._timerEvent = priv::TimerEvent<ST>( st_final, dur );
+					_stateInfo[ SPAG_P_CAST2IDX( st_final ) ]._timerEvent = priv::TimerEvent<ST>( st_final, dur, durUnit );
 		}
 
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
@@ -504,7 +506,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
-			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur );
+			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, _defaultTimerUnit );
+		}
+
+/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next. With units
+		void assignTimeOut( ST st_curr, Duration dur, DurUnit unit, ST st_next )
+		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
+			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, unit );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
@@ -727,10 +738,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			return _current;
 		}
 /// Return duration of time out for state \c st, or 0 if none
-		Duration timeOutDuration( ST st ) const
+		std::pair<size_t,DurUnit> timeOutDuration( ST st ) const
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
-			return _stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent._duration;
+			return std::make_pair(
+				_stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent._duration,
+				_stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent._durUnit
+			);
 		}
 
 		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
@@ -744,15 +758,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 #endif
 
-#if defined (SPAG_USE_ASIO_TIMER)
-		void setTimerUnit( DurUnit unit ) const
+		void setTimerDefaultUnit( DurUnit unit ) const
 		{
-			if( !p_timer )
-				throw std::logic_error( _spag_name + ": error, unable to set timer units, no timer assigned" );
-			else
-				p_timer->setTimeUnit( unit );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+            _defaultTimerUnit = unit;
 		}
-#endif
 
 /// Returns the build options
 		static std::string buildOptions()
@@ -868,12 +878,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /////////////////////////////
 
 	private:
-		const std::string                  _spag_name = "Spaghetti";
+		const std::string                _spag_name = "Spaghetti";
 #ifdef SPAG_ENABLE_LOGGING
-		mutable priv::RunTimeData<ST,EV>   _rtdata;
+		mutable priv::RunTimeData<ST,EV> _rtdata;
 #endif
-		mutable ST                         _current = static_cast<ST>(0);   ///< current state
-		mutable bool                       _isRunning = false;
+		mutable ST                       _current = static_cast<ST>(0);   ///< current state
+		mutable bool                     _isRunning = false;
+		mutable DurUnit                  _defaultTimerUnit;   ///< default timer units
+		mutable TIM*                     p_timer = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
 		std::array<
@@ -899,11 +911,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::vector<std::string>           _str_events;      ///< holds events strings
 		std::vector<std::string>           _str_states;      ///< holds states strings
 #endif
-		mutable TIM*                        p_timer = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_EMBED_ASIO_TIMER
 		AsioWrapper<ST,EV,CBA>             _asioWrapper; ///< optional wrapper around boost::asio::io_service
 #endif
+
 };
 //-----------------------------------------------------------------------------------
 namespace priv
@@ -1195,7 +1207,7 @@ struct AsioWrapper
 	boost::asio::io_service::work _work;
 #endif
 
-	DurUnit _durationUnit = DurUnit::sec; ///< time unit for duration
+//	DurUnit _durationUnit = DurUnit::sec; ///< time unit for duration
 
 	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> steady_clock;
 
@@ -1221,12 +1233,13 @@ struct AsioWrapper
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
 
+#if 0
 /// Sets the time unit
 	void setTimeUnit( DurUnit unit )
 	{
 		_durationUnit = unit;
 	}
-
+#endif
 	boost::asio::io_service& get_io_service()
 	{
 		return _io_service;
@@ -1266,17 +1279,17 @@ struct AsioWrapper
 /// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-		int duration = fsm->timeOutDuration( fsm->currentState() );
-		switch( _durationUnit )
+		auto duration = fsm->timeOutDuration( fsm->currentState() );
+		switch( duration.second )
 		{
 			case DurUnit::ms:
-				ptimer->expires_from_now( std::chrono::milliseconds(duration) );
+				ptimer->expires_from_now( std::chrono::milliseconds(duration.first) );
 			break;
 			case DurUnit::sec:
-				ptimer->expires_from_now( std::chrono::seconds(duration) );
+				ptimer->expires_from_now( std::chrono::seconds(duration.first) );
 			break;
-			case DurUnit::mn:
-				ptimer->expires_from_now( std::chrono::minutes(duration) );
+			case DurUnit::min:
+				ptimer->expires_from_now( std::chrono::minutes(duration.first) );
 			break;
 			default: assert(0);
 		}

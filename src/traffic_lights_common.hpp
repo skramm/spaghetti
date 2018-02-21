@@ -40,7 +40,7 @@ template<typename FSM>
 void
 configureFSM( FSM& fsm )
 {
-	fsm.setTimerUnit( spag::DurUnit::ms );
+	fsm.setTimerDefaultUnit( spag::DurUnit::ms );
 	fsm.assignTimeOut( st_Init,      50, st_Red    ); // if state st_Init and time out of 5s occurs, then switch to state st_Red
 	fsm.assignTimeOut( st_Red,       500, st_Green  );
 	fsm.assignTimeOut( st_Green,     500, st_Orange );

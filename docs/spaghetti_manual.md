@@ -167,9 +167,11 @@ Lets consider another situation: a traffic light going automatically through the
 enum States { st_Red, st_Orange, st_Green, NB_STATES };
 enum Events { NB_EVENTS };
 ```
+<img align="center" src="LED_Traffic_Light.jpeg" alt="Traffic_light">
+
 You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and an event waiting loop.
 
-Oh, wait, we'll talk about this later, fortunately, Spaghetti provides an easy way to handle this. The only requirement is that you must have [Boost Asio](http://www.boost.org/doc/libs/release/libs/asio/) installed on your machine. As this is fairly common these days, lets assume this is okay. If not,
+Oh, wait, we'll talk about this later, fortunately Spaghetti provides an easy way to handle this. The only requirement is that you must have [Boost Asio](http://www.boost.org/doc/libs/release/libs/asio/) installed on your machine. As this is fairly common these days, lets assume this is okay. If not,
 [check here](https://duckduckgo.com/?q=installing+boost+asio).
 
 To use the provided Timer class, you need to pass an option to Spaghetti by defining the symbol ```SPAG_EMBED_ASIO_TIMER```
