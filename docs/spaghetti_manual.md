@@ -304,7 +304,7 @@ Let's say you want to be able to control the lights through a TCP/IP network. Th
 
 First, lets talk about the client. We skip the boring Asio stuff
 (that you can find in
-[src/traffic_light_client.cpp](https:/github.com/skramm/spaghetti/blob/master/src/traffic_lights_client.cpp)),
+[src/traffic_light_client.cpp](https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_client.cpp)),
 and get to the core part of the client:
 ```C++
 	std::cout << "Enter key: (a:warning on, b:warning off, c:reset): ";
@@ -381,7 +381,7 @@ int main()
 ```
 
 For details, check the source file:
-[src/traffic_light_3.cpp](https:/github.com/skramm/spaghetti/blob/master/src/traffic_lights_3.cpp).
+[src/traffic_light_3.cpp](https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_3.cpp).
 
 <a name="concurrent"></a>
 ## 6 - Running Concurrent FSM
@@ -389,7 +389,7 @@ For details, check the source file:
 TO BE CONTINUED
 
 For details, check the source file:
-[src/sample_2.cpp](https:/github.com/skramm/spaghetti/blob/master/src/sample_2.cpp).
+[src/sample_2.cpp](https://github.com/skramm/spaghetti/blob/master/src/sample_2.cpp).
 
 <a name="additional_stuff"></a>
 ## 7 - Additional facilities
@@ -497,9 +497,10 @@ This will print out, in a CSV style:
  - ```PrintFlags::all```: all of the above (default value)
 <br>
 These flags can be "OR-ed" to have several ones active.
-<br>
-Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see [Build options](spaghetti_options.md) is defined, the strings will appear in this data.
+
+Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
+
 
 
 --- Copyright S. Kramm - 2018 ---
