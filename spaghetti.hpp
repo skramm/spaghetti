@@ -48,7 +48,7 @@ This program is free software: you can redistribute it and/or modify
 	#include <boost/asio.hpp>
 #endif
 
-#ifdef SPAG_ENABLE_LOGGING
+#if defined (SPAG_USE_ASIO_TIMER) || defined (SPAG_ENABLE_LOGGING)
 	#include <chrono>
 #endif
 
@@ -373,6 +373,9 @@ struct NoTimer;
 /// Forward declaration
 	template<typename ST, typename EV, typename CBA>
 	struct AsioWrapper;
+
+/// Timer units
+	enum class DurUnit { ms, sec, min };
 #endif
 
 //-----------------------------------------------------------------------------------
@@ -554,11 +557,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			p_timer = t;
 		}
-/*		TIM* getTimer() const
-		{
-//			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			return p_timer;
-		}*/
 
 /// Assign configuration from other FSM
 		void assignConfig( const SpagFSM& fsm )
@@ -744,6 +742,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 #else
 		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
+#endif
+
+#if defined (SPAG_USE_ASIO_TIMER)
+		void setTimerUnit( DurUnit unit ) const
+		{
+			if( !p_timer )
+				throw std::logic_error( _spag_name + ": error, unable to set timer units, no timer assigned" );
+			else
+				p_timer->setTimeUnit( unit );
+		}
 #endif
 
 /// Returns the build options
@@ -1159,10 +1167,15 @@ struct NoTimer
 
 //-----------------------------------------------------------------------------------
 #if defined (SPAG_USE_ASIO_TIMER)
+
+//-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff to have an asynchronous timer easily available
 /**
 Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
 That last point isn't that obvious, has it also must have a lifespan not limited to some callback function.
+
+For timer duration, see
+http://en.cppreference.com/w/cpp/chrono/duration
 */
 template<typename ST, typename EV, typename CBA>
 struct AsioWrapper
@@ -1182,7 +1195,12 @@ struct AsioWrapper
 	boost::asio::io_service::work _work;
 #endif
 
-	std::unique_ptr<boost::asio::deadline_timer> ptimer; ///< pointer on timer, will be allocated int constructor
+	DurUnit _durationUnit = DurUnit::sec; ///< time unit for duration
+
+	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> steady_clock;
+
+//	std::unique_ptr<boost::asio::deadline_timer> ptimer; ///< pointer on timer, will be allocated int constructor
+	std::unique_ptr<steady_clock> ptimer; ///< pointer on timer, will be allocated int constructor
 
 	public:
 /// Constructor
@@ -1197,10 +1215,17 @@ struct AsioWrapper
 //		std::cout << "Boost >= 1.66, started executor_work_guard\n";
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
 #endif
-		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
+//		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
+		ptimer = std::unique_ptr<steady_clock>( new steady_clock(_io_service) );
 	}
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
+
+/// Sets the time unit
+	void setTimeUnit( DurUnit unit )
+	{
+		_durationUnit = unit;
+	}
 
 	boost::asio::io_service& get_io_service()
 	{
@@ -1241,8 +1266,21 @@ struct AsioWrapper
 /// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-		int nb_sec = fsm->timeOutDuration( fsm->currentState() );
-		ptimer->expires_from_now( boost::posix_time::seconds(nb_sec) );
+		int duration = fsm->timeOutDuration( fsm->currentState() );
+		switch( _durationUnit )
+		{
+			case DurUnit::ms:
+				ptimer->expires_from_now( std::chrono::milliseconds(duration) );
+			break;
+			case DurUnit::sec:
+				ptimer->expires_from_now( std::chrono::seconds(duration) );
+			break;
+			case DurUnit::mn:
+				ptimer->expires_from_now( std::chrono::minutes(duration) );
+			break;
+			default: assert(0);
+		}
+//		ptimer->expires_from_now( boost::posix_time::seconds(duration) );
 
 		ptimer->async_wait(
 			boost::bind(

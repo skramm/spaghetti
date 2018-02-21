@@ -4,7 +4,15 @@
  - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
 
 - Q: *What is the timer unit?*<br/>
-A: There are no timer units. Timing is stored as untyped integer value, it is up to the timer class you define to handle the considered unit.
+A: With the provided optional timer class (```AsioWrapper```), you can select between seconds, milliseconds, and minutes.
+The default value is "seconds".
+To change to ms. for example, do this:
+```C++
+	fsm.setTimerUnit( spag::DurUnit::ms );
+```
+Other possible values are ```sec```,```min```.<br>
+Internally, it is handled through the C++11 ```chrono``` library
+[duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
 - Q: *How does this library differ from the other ones?*<br/>
 A: Most of the other libraries define the states as C++ classes.
@@ -29,6 +37,11 @@ or a [```std::tuple```](http://en.cppreference.com/w/cpp/utility/tuple).
 
 - Q: *Can I use a callback function with a void parameter ( ```void my_callback()```)*<br/>
 A: No, unfortunately. This is because void is not a type, you can't pass it as template argument. But you can always use anything, say an integer, and ignore its value.
+
+- Q: *What version of Boost libraries does this require?*<br>
+A: None, if you do not intend to use the provided Asio Wrapper class.
+If you do, then this has been tested as successful against Boost 1.54.
+But it *should* be okay with todays current release (1.66 at the time of writing), please post issue in case of trouble so it can be fixed.
 
 - Q: *Can I use this for a hierarchical FSM?*<br/>
 A: at present, no, but this is considered for future releases

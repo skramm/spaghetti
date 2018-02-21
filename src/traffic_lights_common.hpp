@@ -40,10 +40,11 @@ template<typename FSM>
 void
 configureFSM( FSM& fsm )
 {
-	fsm.assignTimeOut( st_Init,      2, st_Red    ); // if state st_Init and time out of 5s occurs, then switch to state st_Red
-	fsm.assignTimeOut( st_Red,       4, st_Green  );
-	fsm.assignTimeOut( st_Green,     4, st_Orange );
-	fsm.assignTimeOut( st_Orange,    2, st_Red    );
+	fsm.setTimerUnit( spag::DurUnit::ms );
+	fsm.assignTimeOut( st_Init,      50, st_Red    ); // if state st_Init and time out of 5s occurs, then switch to state st_Red
+	fsm.assignTimeOut( st_Red,       500, st_Green  );
+	fsm.assignTimeOut( st_Green,     500, st_Orange );
+	fsm.assignTimeOut( st_Orange,    200, st_Red    );
 
 	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
 	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
