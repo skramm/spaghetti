@@ -4,6 +4,8 @@
 - 1 hardware (keyboard) event to switch from initial state to other state (handled from a thread)
 - 1 timeout event to switch from second state to initial state
 
+Uses the embedded boost::asio timer
+
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
 Homepage: https://github.com/skramm/spaghetti

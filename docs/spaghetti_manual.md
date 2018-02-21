@@ -499,7 +499,7 @@ Default values are also generated when this option is enabled, in the form "St-x
 
 5 - ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
 In that case, the Timer class must not hold the timer.
-If it does, then starting the FSM (```fsm.start()```) will be a blocking function, thus is would not possible to start a second FSM.
+If it does, then starting the FSM (```fsm.start()```) will be a blocking function, thus is would not be possible to start a second FSM.
 So you need to provide the event loop separately and define this symbol.
 The changes is that now the start function will not be blocking:
 you can start all the needed FSM, then eventually start the event loop.

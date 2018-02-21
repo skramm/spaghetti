@@ -10,7 +10,7 @@ Homepage: https://github.com/skramm/spaghetti
 
 #define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 enum En_States { st0, st1, st2, st3, st4, NB_STATES };
@@ -18,7 +18,7 @@ enum En_Events { ev_1, ev_2, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, En_States, En_Events, std::string );
 
-void cbfunc( std::string s )
+void cb_func( std::string s )
 {
 	std::cout << "callback: " << s << '\n';
 }
@@ -33,7 +33,7 @@ int main( int, char* argv[] )
 //	fsm.assignTimeOut( st0, 5 , st1 );  // a static assert, because we have no timer here
 
 
-	fsm.assignGlobalCallback( cbfunc );
+	fsm.assignGlobalCallback( cb_func );
 
 	fsm.assignCallbackValue( st0, "Init" );
 	fsm.assignCallbackValue( st1, "st1" );

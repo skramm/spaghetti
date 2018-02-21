@@ -10,19 +10,20 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-#include "udp_server.hpp"
 
+
+#define SPAG_EMBED_ASIO_TIMER
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 
 #include "spaghetti.hpp"
+#include "udp_server.hpp"
 
-#include "asio_wrapper.hpp"
 #include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, spag::AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -35,7 +36,7 @@ struct MyServer : public UdpServer<2048>
 		: UdpServer( io_service, port_no )
 	{}
 
-	std::vector<BYTE> GetResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const
+	std::vector<BYTE> getResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const
 	{
 		std::cout << "received " << nb_bytes << " bytes\n";
 		switch( buffer.at(0) )
@@ -53,7 +54,7 @@ struct MyServer : public UdpServer<2048>
 				std::cout << "Error: invalid message received !\n";
 				throw;
 		}
-		return std::vector<BYTE>(); // return empty vector at present...
+		return std::vector<BYTE>(); // return empty vector
 	}
 
 	fsm_t fsm;
@@ -66,14 +67,13 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		AsioWrapper<EN_States,EN_Events,std::string> asio;
-		std::cout << "io_service created\n";
+		spag::AsioWrapper<EN_States,EN_Events,std::string> asio;
+//		std::cout << "io_service created\n";
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 
 		std::cout << "-server created\n";
 
-		server.fsm.assignTimer( &asio );
 		configureFSM<fsm_t>( server.fsm );
 
 		server.fsm.printConfig( std::cout );

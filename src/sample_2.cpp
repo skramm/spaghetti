@@ -8,17 +8,19 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 
 Homepage: https://github.com/skramm/spaghetti
 */
+
+#define SPAG_USE_ASIO_TIMER
 #define SPAG_EXTERNAL_EVENT_LOOP
 #define SPAG_GENERATE_DOTFILE
 //#define SPAG_PRINT_STATES
 //#define SPAG_ENUM_STRINGS
 #include "spaghetti.hpp"
-#include "asio_wrapper.hpp"
+//#include "asio_wrapper.hpp"
 
 enum States { st_1, st_2, NB_STATES };
 enum Events { NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, spag::AsioWrapper, std::string );
 
 void cb( std::string s )
 {
@@ -49,8 +51,8 @@ int main( int, char* argv[] )
 	fsm_B.printConfig( std::cout );
 
 	boost::asio::io_service io_service;
-	AsioWrapper<States,Events,std::string> asio_A( io_service );
-	AsioWrapper<States,Events,std::string> asio_B( io_service );
+	spag::AsioWrapper<States,Events,std::string> asio_A( io_service );
+	spag::AsioWrapper<States,Events,std::string> asio_B( io_service );
 	fsm_A.assignTimer( &asio_A );
 	fsm_B.assignTimer( &asio_B );
 

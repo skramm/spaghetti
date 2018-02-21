@@ -9,17 +9,17 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+#define SPAG_EMBED_ASIO_TIMER
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
-#include "asio_wrapper.hpp"
 #include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, EN_States, EN_Events, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -34,9 +34,6 @@ int main( int, char* argv[] )
 	try
 	{
 		fsm_t fsm;
-		AsioWrapper<EN_States,EN_Events,std::string> asio;
-
-		fsm.assignTimer( &asio );
 		configureFSM<fsm_t>( fsm );
 
 		fsm.printConfig( std::cout );

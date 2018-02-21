@@ -46,7 +46,7 @@ int main( int argc, char* argv[] )
 		}
 		while(1);
 	}
-	catch (std::exception& e)
+	catch( const std::exception& e )
 	{
 		std::cerr << "catch error: " << e.what() << std::endl;
 	}

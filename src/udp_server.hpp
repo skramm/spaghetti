@@ -16,11 +16,12 @@ Homepage: https://github.com/skramm/spaghetti
 
 typedef unsigned char BYTE;
 //-----------------------------------------------------------------------------------
-/// A udp server based on boost::asio, templated by size of buffer
+/// A udp server based on boost::asio, templated by size of buffer.
+/// Does not hold the io_service, it must be provided separately
 /**
 Callback: upon each reception of data, a callback function is called
 
-The user of this class needs to provide a function GetResponse()
+The user of this class needs to provide a function getResponse()
 that will return the data thats needs to be send back.
 
 The boost::io_service is assumed to be started externally
@@ -53,17 +54,17 @@ class UdpServer
 		boost::asio::ip::udp::socket   _socket;
 		boost::asio::ip::udp::endpoint _remote_endpoint;
 
-	protected:
+//	protected:
 		Buffer_t _recv_buffer;
 
 /// This virtual function NEEDS to be implemented in inherited class
-		virtual std::vector<BYTE> GetResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const = 0;
+		virtual std::vector<BYTE> getResponse( const Buffer_t& buffer, std::size_t nb_bytes ) const = 0;
 
 /// Reception callback function. Inherited classes can access the received data and need to provide a GetResponse() function
 		void _rx_handler( const boost::system::error_code&, std::size_t nb_bytes )
 		{
-			std::vector<BYTE> v = GetResponse( _recv_buffer, nb_bytes );
-//			std::cout << "sending ack:" << std::string(v.begin(),v.end()) << "\n";
+			std::vector<BYTE> v = getResponse( _recv_buffer, nb_bytes );
+			std::cout << "sending ack:" << std::string(v.begin(),v.end()) << "\n";
 			_socket.send_to(                // synchronous send acknowledge
 				boost::asio::buffer( v ),
 				_remote_endpoint

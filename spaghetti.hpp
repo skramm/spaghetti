@@ -37,7 +37,13 @@ This program is free software: you can redistribute it and/or modify
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
 
-#ifdef SPAG_EMBED_ASIO_TIMER
+
+#if defined (SPAG_EMBED_ASIO_TIMER)
+	#define SPAG_USE_ASIO_TIMER
+#endif
+
+
+#if defined (SPAG_USE_ASIO_TIMER)
 	#include <boost/bind.hpp>
 	#include <boost/asio.hpp>
 #endif
@@ -361,10 +367,12 @@ getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 template<typename ST, typename EV,typename CBA=int>
 struct NoTimer;
 
+} // namespace priv
+
+/// Forward declaration
 template<typename ST, typename EV, typename CBA>
 struct AsioWrapper;
 
-} // namespace priv
 
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
@@ -545,6 +553,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			p_timer = t;
 		}
+/*		TIM* getTimer() const
+		{
+//			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			return p_timer;
+		}*/
 
 /// Assign configuration from other FSM
 		void assignConfig( const SpagFSM& fsm )
@@ -621,12 +634,21 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			doChecking();
 			_isRunning = true;
 			runAction();
+
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.incrementInitState();
 #endif
+
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
-			if( p_timer )                 // if timing is involved,
-				p_timer->timerInit();     // then it must be started
+			SPAG_LOG << "check timer!\n";
+			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
+			{
+				SPAG_LOG << "check timer!\n";
+				if( !p_timer )
+					throw std::logic_error(  _spag_name + ": Timer not allocated" );
+				else
+					p_timer->timerInit();   // blocking function !
+			}
 #endif
 		}
 
@@ -799,7 +821,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			if( stateInfo._timerEvent._enabled )
 			{
-				assert( p_timer );
+				if( !p_timer )
+					throw std::logic_error( _spag_name + ": Timer has not been allocated" );
 				assert( !stateInfo._isPassState );
 				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
 				p_timer->timerStart( this );
@@ -852,10 +875,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::vector<std::string>           _str_events;      ///< holds events strings
 		std::vector<std::string>           _str_states;      ///< holds states strings
 #endif
-		TIM*                               p_timer = nullptr;   ///< pointer on timer
+		mutable TIM*                        p_timer = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_EMBED_ASIO_TIMER
-		priv::AsioWrapper<ST,EV,CBA>       _asioWrapper;
+		AsioWrapper<ST,EV,CBA>             _asioWrapper; ///< optional wrapper around boost::asio::io_service
 #endif
 };
 //-----------------------------------------------------------------------------------
@@ -1116,8 +1139,11 @@ struct NoTimer
 	void timerInit() {}
 };
 
+} // namespace priv
+
 //-----------------------------------------------------------------------------------
-#ifdef SPAG_EMBED_ASIO_TIMER
+#if defined (SPAG_USE_ASIO_TIMER)
+//#if defined (SPAG_EXTERNAL_EVENT_LOOP) || defined (SPAG_EMBED_ASIO_TIMER) || defined (SPAG_USE_ASIO_TIMER)
 /// Wraps the boost::asio stuff to have an asynchronous timer easily available
 /**
 Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
@@ -1213,8 +1239,7 @@ struct AsioWrapper
 		);
 	}
 };
-#endif // SPAG_EMBED_ASIO_TIMER
-} // namespace priv
+#endif
 
 //-----------------------------------------------------------------------------------
 
@@ -1231,7 +1256,7 @@ struct AsioWrapper
 #ifdef SPAG_EMBED_ASIO_TIMER
 /// Shorthand for declaring the type of FSM with the Boost::asio timer
 	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
-		typedef spag::SpagFSM<st,ev,spag::priv::AsioWrapper<st,ev,cbarg>,cbarg> type
+		typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type
 #else
 	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
 		static_assert( 0, "Error, can't use this macro without symbol SPAG_EMBED_ASIO_TIMER defined" )
