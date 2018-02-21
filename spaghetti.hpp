@@ -127,7 +127,7 @@ struct TimerEvent
 	ST       _nextState = static_cast<ST>(0); ///< state to switch to
 	size_t   _duration  = 0;                  ///< duration
 	bool     _enabled   = false;              ///< this state uses or not a timeout (default is no)
-	DurUnit  _durUnit   = DurUnit::sec;    ///< Duration unit, change this with
+	DurUnit  _durUnit   = DurUnit::sec;       ///< Duration unit, change this with
 
 	TimerEvent()
 		: _nextState(static_cast<ST>(0))
@@ -884,7 +884,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 		mutable ST                       _current = static_cast<ST>(0);   ///< current state
 		mutable bool                     _isRunning = false;
-		mutable DurUnit                  _defaultTimerUnit;   ///< default timer units
+		mutable DurUnit                  _defaultTimerUnit = DurUnit::sec;   ///< default timer units
 		mutable TIM*                     p_timer = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
