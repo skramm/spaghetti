@@ -1,8 +1,7 @@
 /**
 \file traffic_lights_3.cpp
-\brief a simple traffic light example, build using boost::asio
-
-Similar to version 2, with an added udp server part, can receive data from
+\brief a simple traffic light example. Similar to version 2, with an added udp server part.
+Besides having a separate thread handling keyboard input, it can receive data from
 traffic_lights_client.cpp
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
@@ -12,7 +11,7 @@ Homepage: https://github.com/skramm/spaghetti
 
 
 
-#define SPAG_EMBED_ASIO_TIMER
+#define SPAG_USE_ASIO_TIMER
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
@@ -52,7 +51,6 @@ struct MyServer : public UdpServer<2048>
 			break;
 			default:
 				std::cout << "Error: invalid message received !\n";
-				throw;
 		}
 		return std::vector<BYTE>(); // return empty vector
 	}
@@ -67,7 +65,7 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		spag::AsioWrapper<EN_States,EN_Events,std::string> asio;
+		spag::AsioWrapper<EN_States,EN_Events,std::string> asio;  // create Timer class
 //		std::cout << "io_service created\n";
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
@@ -75,6 +73,7 @@ int main( int, char* argv[] )
 		std::cout << "-server created\n";
 
 		configureFSM<fsm_t>( server.fsm );
+		server.fsm.assignTimer( &asio );
 
 		server.fsm.printConfig( std::cout );
 

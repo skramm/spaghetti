@@ -748,38 +748,53 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Returns the build options
 		static std::string buildOptions()
 		{
+			std::string yes(" = yes\n"), no(" = no\n");
 			std::string out( "Spaghetti version " );
 			out += SPAG_STRINGIZE( SPAG_VERSION );
-			out += "\nBuild options:";
+			out += "\nBuild options:\n";
 
-			out += "\n - SPAG_ENABLE_LOGGING: ";
+			out += SPAG_P_STRINGIZE2( SPAG_USE_ASIO_TIMER );
+#ifdef SPAG_USE_ASIO_TIMER
+			out += yes;
+#else
+			out += no;
+#endif
+			out += SPAG_P_STRINGIZE2( SPAG_EMBED_ASIO_TIMER );
+#ifdef SPAG_EMBED_ASIO_TIMER
+			out += yes;
+#else
+			out += no;
+#endif
+			out += SPAG_P_STRINGIZE2( SPAG_EXTERNAL_EVENT_LOOP );
+#ifdef SPAG_EXTERNAL_EVENT_LOOP
+			out += yes;
+#else
+			out += no;
+#endif
+			out += SPAG_P_STRINGIZE2( SPAG_ENABLE_LOGGING );
 #ifdef SPAG_ENABLE_LOGGING
-			out += "yes";
+			out += yes;
 #else
-			out += "no";
+			out += no;
 #endif
-
-			out += "\n - SPAG_PRINT_STATES: ";
+			out += SPAG_P_STRINGIZE2( SPAG_PRINT_STATES );
 #ifdef SPAG_PRINT_STATES
-			out += "yes";
+			out += yes;
 #else
-			out += "no";
+			out += no;
 #endif
-
-			out += "\n - SPAG_FRIENDLY_CHECKING: ";
+			out += SPAG_P_STRINGIZE2( SPAG_FRIENDLY_CHECKING );
 #ifdef SPAG_FRIENDLY_CHECKING
-			out += "yes";
+			out += yes;
 #else
-			out += "no";
+			out += no;
 #endif
-
-			out += "\n - SPAG_ENUM_STRINGS: ";
+			out += SPAG_P_STRINGIZE2( SPAG_ENUM_STRINGS );
 #ifdef SPAG_ENUM_STRINGS
-			out += "yes";
+			out += yes;
 #else
-			out += "no";
+			out += no;
 #endif
-			out += "\n";
 			return out;
 		}
 
