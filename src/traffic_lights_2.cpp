@@ -19,7 +19,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, EN_States, EN_Events, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;

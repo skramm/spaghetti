@@ -35,7 +35,7 @@ A: at present, no, but this is considered for future releases
 
 - Q: *Can I have two concurrent FSM working at the same time?*<br/>
 A: Yes! See sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp) that demonstrates this.
-This need symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see above.
+This need symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see [build options](spaghetti_options.md).
 
 
 - Q: *Why that name? Where does that come from?*<br/>

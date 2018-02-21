@@ -14,9 +14,9 @@ Homepage: https://github.com/skramm/spaghetti
 
 //-----------------------------------------------------------------------------------
 enum States { st_Init, st_Red, st_Orange, st_Green, NB_STATES };
-enum EN_Events { NB_EVENTS };
+enum Events { NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, EN_Events, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
 //-----------------------------------------------------------------------------------
 void callback( std::string v )

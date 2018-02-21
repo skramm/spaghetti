@@ -30,8 +30,8 @@ Configuration of the state machine is a mix of static and dynamic: the number of
 
 States and events are simply defined as enum values:
 ```C++
-enum States { st_1, st_2, st_3, NB_STATES };
-enum Events { ev_1, ev_2, ev_3,  NB_EVENTS };
+enum States { st_1, st_2, st_3, NB_STATES }; // 3 states
+enum Events { ev_1, ev_2, ev_3,  NB_EVENTS }; // 3 events
 ```
 Naming is free except for the last value that
 **must** be ```NB_STATES``` and ```NB_EVENTS```, respectively.
@@ -43,13 +43,18 @@ But all these values are internally casted to integers, so you must not assign v
 
 Events can be of two types:
 - "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
-But you can have none ! Then the above enum will be defined as ```enum Events { NB_EVENTS }```.
+But you can have none ! In that case, just define the events enum as:
+```C++
+	enum Events { NB_EVENTS }
+```
 - "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
 
-For the latter case, you need to provide a special "timing" class, that will have some requirements (see below).
-You will need to "assign" the timer to the FSM in the configuration step.
+For the latter case, you need to provide a special "timing" class, that will have some requirements.
+You will need to instanciate an object of that class, then assign it to the FSM in the configuration step.
+Fortunately, this is made easy for the usual case, no worry.<br>
 For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
 
+====================================
 States can be of two types.
 Usually, the FSM will switch from one state to another when some transition becomes active.
 It can be a Timeout or a hardware event.
@@ -60,7 +65,7 @@ So this library provides a special state status, called "pass-state".
 A pass-state will have only **one** transition, that will always be active, which means that once we arrive on such a state, the FSM will immediately switch to the next state.
 
 Limitations: a pass-state cannot lead to another pass-state. However, it can have a associated callback function.
-
+====================================
 
 <a name="showcase1"></a>
 ## 2 - Showcase 1: Hello World for FSM
@@ -79,8 +84,7 @@ Then, create the FSM data type:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-This means you declare the type ```fsm_t```, using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
-(Alternatively, you could also use a ```typedef```, but lets say this is easier at present.)
+This means you create the type ```fsm_t``` (it's a typedef), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
 
 Now, you can instanciate the fsm:
 
@@ -90,7 +94,7 @@ int main()
 	fsm_t fsm;
 ```
 
-Next, you need to configure your FSM, that is define what event in what state will trigger switching to what state.
+Next, you need to configure your FSM, that is define what event in what state will trigger switching to what other state.
 With this simple example, you just do:
 ```C++
 	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
@@ -133,9 +137,8 @@ void cb_func( bool b )
 ```
 Done for configuration.
 Now, to run this you need to call ```start()```.
-(In this simple example, you could avoid this as there are no timeouts involved, but its recommended to do so as it also performs some configuration checks.)
 
-Here the events will be triggered by the keyboard, so lets do this:
+Here the events will be triggered by the keyboard, so our event loop will just be this:
 ```C++
 fsm.start();
 do
@@ -170,34 +173,20 @@ and/or just clone repo and enter
 ## 3 - Showcase 2: let's use a timer
 
 Lets consider another situation: a traffic light going automatically through the three states: Red, Green, Orange.
-You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and
-an event waiting loop.
-To be usable here, this class needs to provide these three functions:
-- ```timerInit()```: initialize the timer
-- ```timerStart()```: start a timeout
-- ```timerCancel()```: cancel the timer
+You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and an event waiting loop.
 
-Any timing class can be used, in the provided sample [```src/traffic_lights_1.cpp```](https://github.com/skramm/spaghetti/blob/master/src/traffic_lights_1.cpp)
- we demonstrate the use of [boost::asio](http://www.boost.org/doc/libs/release/libs/asio/):
-```C++
-template<typename ST, typename EV, typename CBA>
-struct AsioWrapper
-{
-	boost::asio::io_service io_service;
-	std::unique_ptr<boost::asio::deadline_timer> ptimer;
+Oh, wait, we'll talk about this later, fortunately, Spaghetti provides an easy way to handle this. The only requirement is that you must have [Boost Asio](http://www.boost.org/doc/libs/release/libs/asio/) installed on your machine. As this is fairly common these days, lets assume this is okay. If not,
+[check here](https://duckduckgo.com/?q=installing+boost+asio).
 
-	AsioWrapper()
-	{
-		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(io_service) );
-	}
-...
-```
-(see full code for details)
-The three type parameters are the states, the events, and the type of the argument of the callback function.
+To use the provided Timer class, you need to pass an option to Spaghetti by defining the symbol ```SPAG_EMBED_ASIO_TIMER```
+([see here details about the build options](spaghetti_options.md)).
 
+So now we use the second form of the type declaration macro:
 Once you have declared this class, the declaration of the data type of the FSM will be done with the second form of the macro:
 ```C++
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
+#define SPAG_EMBED_ASIO_TIMER
+#include "spaghetti.hpp"
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, EN_Events, std::string );
 ```
 The configuration step will go as follows (assuming the states are names st_Red, st_Green, st_Orange).
 As you can guess, we have here timeouts of 5, 5, and 1 seconds:

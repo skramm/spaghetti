@@ -39,8 +39,8 @@ In that case, the Timer class must **not** hold the timer
 So you need to provide the event loop separately and define this symbol.
 The change is that now the start function will not be blocking:
 you can start all the needed FSM, then eventually start the event loop.
-This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).
-
+This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
+**Note** : If you intend to use the provided ```AsioWrapper``` class with this symbol defined, be aware that this will make significant changes to that class: instead of embedding the boost::asio event loop structure (aka "io_service" or "io_context"), it is now up to you to provide it (see example above for details).
 
 ### 6.2 Behavioral symbols
 

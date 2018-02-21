@@ -22,7 +22,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE( fsm_t, EN_States, EN_Events, spag::AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, spag::AsioWrapper, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -65,7 +65,7 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		spag::AsioWrapper<EN_States,EN_Events,std::string> asio;  // create Timer class
+		spag::AsioWrapper<States,Events,std::string> asio;  // create Timer class
 //		std::cout << "io_service created\n";
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio

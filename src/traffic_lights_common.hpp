@@ -21,8 +21,8 @@ static std::mutex* getSingletonMutex()
 }
 //-----------------------------------------------------------------------------------
 /// traffic light states
-enum EN_States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
-enum EN_Events {
+enum States { st_Init=0, st_Red, st_Orange, st_Green, st_BlinkOn, st_BlinkOff, NB_STATES };
+enum Events {
 	ev_Reset=0,    ///< reset button
 	ev_WarningOn,  ///< blinking mode on
 	ev_WarningOff, ///< blinking mode off
@@ -61,7 +61,7 @@ configureFSM( FSM& fsm )
 	fsm.assignCallbackValue( st_BlinkOff, "BLINK-OFF" );
 	fsm.assignCallbackValue( st_Init,     "Init" );
 
-	std::vector<std::pair<EN_Events,std::string>> v_str = {
+	std::vector<std::pair<Events,std::string>> v_str = {
 //		{ ev_Reset,      "Reset" },
 		{ ev_WarningOn,  "Warning On" },
 		{ ev_WarningOff, "Warning Off" }

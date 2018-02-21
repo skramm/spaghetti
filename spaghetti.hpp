@@ -369,10 +369,11 @@ struct NoTimer;
 
 } // namespace priv
 
+#if defined (SPAG_USE_ASIO_TIMER)
 /// Forward declaration
-template<typename ST, typename EV, typename CBA>
-struct AsioWrapper;
-
+	template<typename ST, typename EV, typename CBA>
+	struct AsioWrapper;
+#endif
 
 //-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
@@ -799,7 +800,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 #ifdef SPAG_GENERATE_DOTFILE
-/// Generates in current folder a dot file corresponding to the FSM (EXPERIMENTAL)
+/// Generates in current folder a dot file corresponding to the FSM
 		void writeDotFile( std::string fn ) const;
 #else
 		void writeDotFile( std::string ) const {}
@@ -1158,7 +1159,6 @@ struct NoTimer
 
 //-----------------------------------------------------------------------------------
 #if defined (SPAG_USE_ASIO_TIMER)
-//#if defined (SPAG_EXTERNAL_EVENT_LOOP) || defined (SPAG_EMBED_ASIO_TIMER) || defined (SPAG_USE_ASIO_TIMER)
 /// Wraps the boost::asio stuff to have an asynchronous timer easily available
 /**
 Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
