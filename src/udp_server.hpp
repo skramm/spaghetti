@@ -63,7 +63,7 @@ class UdpServer
 		void _rx_handler( const boost::system::error_code&, std::size_t nb_bytes )
 		{
 			std::vector<BYTE> v = getResponse( _recv_buffer, nb_bytes );
-			std::cout << "sending ack:" << std::string(v.begin(),v.end()) << "\n";
+//			std::cout << "sending ack:" << std::string(v.begin(),v.end()) << "\n";
 			_socket.send_to(                // synchronous send acknowledge
 				boost::asio::buffer( v ),
 				_remote_endpoint

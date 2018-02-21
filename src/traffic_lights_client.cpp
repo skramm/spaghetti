@@ -33,11 +33,10 @@ int main( int argc, char* argv[] )
 		udp::socket socket( io_service );
 		socket.open( udp::v4() );
 
+		std::cout << "Enter key: (a:warning on, b:warning off, c:reset): ";
 		do
 		{
-			io_service.reset();
 			std::string str;
-			std::cout << "Enter key: (a:warning on, b:warning off, c:reset): ";
 			std::cin >> str;
 			socket.send_to(                 // blocking data send
 				boost::asio::buffer( str ),

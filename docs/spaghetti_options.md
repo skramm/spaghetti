@@ -1,5 +1,5 @@
 
-## 6 - Spaghetti: Build options
+## Spaghetti: Build options
 
 - Homepage: https://github.com/skramm/spaghetti
 - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
@@ -23,7 +23,7 @@ There are two types of symbols:
 * some add up some feature, but your program will compile anyway, whether the symbol is defined or not,
 * some change the inner structure of the classes: you need to define them based on what you need, your program won't compile if you do not have the right one.
 
-### 6.1 Structural changes symbols
+### 1 - Structural change symbols
 
 Theses options/symbols must be chosen carefully, depending on what you need:
 
@@ -42,7 +42,7 @@ you can start all the needed FSM, then eventually start the event loop.
 This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
 **Note** : If you intend to use the provided ```AsioWrapper``` class with this symbol defined, be aware that this will make significant changes to that class: instead of embedding the boost::asio event loop structure (aka "io_service" or "io_context"), it is now up to you to provide it (see example above for details).
 
-### 6.2 Behavioral symbols
+### 2 - Behavioral symbols
 
 Theses options/symbols will not impact correct build of your program:
 

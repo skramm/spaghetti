@@ -29,7 +29,7 @@ std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------
 /// concrete class, implements UdpServer and SpagFSM, and triggers event on the FSM
-struct MyServer : public UdpServer<2048>
+struct MyServer : public UdpServer<1024>
 {
 	MyServer( boost::asio::io_service& io_service, int port_no )
 		: UdpServer( io_service, port_no )
@@ -54,7 +54,6 @@ struct MyServer : public UdpServer<2048>
 		}
 		return std::vector<BYTE>(); // return empty vector
 	}
-
 	fsm_t fsm;
 };
 //-----------------------------------------------------------------------------------
@@ -66,7 +65,6 @@ int main( int, char* argv[] )
 	try
 	{
 		spag::AsioWrapper<States,Events,std::string> asio;  // create Timer class
-//		std::cout << "io_service created\n";
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 
