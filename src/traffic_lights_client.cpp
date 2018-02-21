@@ -9,6 +9,7 @@ Homepage: https://github.com/skramm/spaghetti
 */
 
 #include <string>
+#include <iostream>
 #include <boost/asio.hpp>
 
 using boost::asio::ip::udp;
