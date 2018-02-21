@@ -27,13 +27,15 @@ There are two types of symbols:
 
 Theses options/symbols must be chosen carefully, depending on what you need:
 
-1. ```SPAG_USE_ASIO_TIMER``` : this enables the usage of a included Timer class: ```AsioWrapper```, that fits nicely for timeout events.
+* ```SPAG_USE_ASIO_TIMER``` : this enables the usage of a included Timer class: ```AsioWrapper```, that fits nicely for timeout events.
 It is provided as an option as it brings in a dependency to the Boost libraries, which might not be wanted by end user.
 It is automatically activated if ```SPAG_EMBED_ASIO_TIMER``` (see below) is defined.
-1. ```SPAG_EMBED_ASIO_TIMER```: this option embeds the above boost::asio-based Timer class **inside** the Spaghetti FSM type.
+
+* ```SPAG_EMBED_ASIO_TIMER```: this option embeds the above boost::asio-based Timer class **inside** the Spaghetti FSM type.
 This is the easiest way to do if you need a timer, **and** you have Boost available.<br>
 However, it might not fit your needs in some special situations, even if you want to use the ```AsioWrapper``` class.
-1. ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
+
+* ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
 In that case, the Timer class must **not** hold the timer
 (*If it does, then starting the FSM with ```fsm.start()``` will be a blocking function, thus it would not be possible to start a second FSM*).<br>
 So you need to provide the event loop separately and define this symbol.
@@ -46,11 +48,11 @@ This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/s
 
 Theses options/symbols will not impact correct build of your program:
 
-1. ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM
+* ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM
 
-1. ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+* ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
 
-1. ```SPAG_FRIENDLY_CHECKING```: A lot of checking is done to ensure no nasty bug will crash your program.
+* ```SPAG_FRIENDLY_CHECKING```: A lot of checking is done to ensure no nasty bug will crash your program.
 However, in case of incorrect usage of the library by your client code (say, invalid index value),
 the default behavior is to spit a standard error message that can be difficult to understand.
 So if you define this symbol at build time, instead of getting this:
@@ -65,8 +67,7 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
  - EVENT::NB_EVENTS value=8
 Exiting...
 ```
-If this symbol is not defined, regular checking is done with the classical ```assert()```.
-As usual, this checking can be removed by defining the symbol ```NDEBUG```.
+If this symbol is not defined, regular checking is done with the classical ```assert()```. As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 1. ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++
@@ -87,7 +88,7 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 <br>
 Default values are also generated when this option is enabled, in the form "St-x" and "Ev-x".
-1. ```SPAG_GENERATE_DOTFILE``` : this enables the member function ```writeDotFile( std::string )```.
+* ```SPAG_GENERATE_DOTFILE``` : this enables the member function ```writeDotFile( std::string )```.
 When called, it will generate in current folder a .dot file of the current configuration that can be used to produce an image of the corresponding graph, using the well-know tool Graphviz.
 For example, with
 ```
