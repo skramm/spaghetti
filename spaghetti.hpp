@@ -111,13 +111,26 @@ enum PrintFlags
 	,all        = 0x07
 };
 
-//#if defined (SPAG_USE_ASIO_TIMER)
+
 /// Timer units
-	enum class DurUnit { ms, sec, min };
-//#endif
+enum class DurUnit { ms, sec, min };
+
 //-----------------------------------------------------------------------------------
 /// private namespace, so user code won't hit into this
 namespace priv {
+
+/// helper function
+std::pair<bool,DurUnit>
+timeUnitFromString( std::string str ) noexcept
+{
+	if( str == "ms" )
+		return std::make_pair( true, DurUnit::ms );
+	if( str == "sec" )
+		return std::make_pair( true, DurUnit::sec );
+	if( str == "min" )
+		return std::make_pair( true, DurUnit::min );
+	return std::make_pair( false, DurUnit::min );
+}
 
 //-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
@@ -526,6 +539,18 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, unit );
 		}
 
+/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next. With units as strings
+		void assignTimeOut( ST st_curr, Duration dur, std::string str, ST st_next )
+		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
+			auto tu = priv::timeUnitFromString( str );
+			if( !tu.first )
+				throw std::logic_error( _spag_name + ": error, invalid string value: " + str );
+			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, tu.second );
+		}
+
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
 		void assignTransitionAlways( EV ev, ST st )
 		{
@@ -768,6 +793,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
             _defaultTimerUnit = unit;
+		}
+/// Provided so that we can use this in a function templated with the FSM type, without having the type \c DurUnit available
+/// (see for example in src/traffic_lights_common.hpp)
+		void setTimerDefaultUnit( std::string str ) const
+		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			auto tu = priv::timeUnitFromString( str );
+			if( !tu.first )
+				throw std::logic_error( _spag_name + ": error, invalid string value: " + str );
+			_defaultTimerUnit = tu.second;
 		}
 
 /// Returns the build options
@@ -1213,11 +1248,8 @@ struct AsioWrapper
 	boost::asio::io_service::work _work;
 #endif
 
-//	DurUnit _durationUnit = DurUnit::sec; ///< time unit for duration
-
 	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> steady_clock;
 
-//	std::unique_ptr<boost::asio::deadline_timer> ptimer; ///< pointer on timer, will be allocated int constructor
 	std::unique_ptr<steady_clock> ptimer; ///< pointer on timer, will be allocated int constructor
 
 	public:
@@ -1233,7 +1265,6 @@ struct AsioWrapper
 //		std::cout << "Boost >= 1.66, started executor_work_guard\n";
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
 #endif
-//		ptimer = std::unique_ptr<boost::asio::deadline_timer>( new boost::asio::deadline_timer(_io_service) );
 		ptimer = std::unique_ptr<steady_clock>( new steady_clock(_io_service) );
 	}
 
@@ -1297,9 +1328,8 @@ struct AsioWrapper
 			case DurUnit::min:
 				ptimer->expires_from_now( std::chrono::minutes(duration.first) );
 			break;
-			default: assert(0);
+			default: assert(0); // this should not happen...
 		}
-//		ptimer->expires_from_now( boost::posix_time::seconds(duration) );
 
 		ptimer->async_wait(
 			boost::bind(
@@ -1321,14 +1351,21 @@ struct AsioWrapper
 #define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
 	typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type
 
-/// Shorthand for declaring the type of FSM
+/// Shorthand for declaring the type of FSM with an arbitrary timer class
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type
 
-#ifdef SPAG_EMBED_ASIO_TIMER
-/// Shorthand for declaring the type of FSM with the Boost::asio timer
-	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
-		typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type
+#ifdef SPAG_USE_ASIO_TIMER
+	#ifdef SPAG_EMBED_ASIO_TIMER
+/// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Does not create the \c AsioTimer type (user code doesn't need it)
+		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
+			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type
+	#else
+/// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Also creates the \c AsioTimer type
+		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
+			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type; \
+			typedef spag::AsioWrapper<st,ev,cbarg> AsioTimer
+	#endif
 #else
 	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
 		static_assert( 0, "Error, can't use this macro without symbol SPAG_EMBED_ASIO_TIMER defined" )

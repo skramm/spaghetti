@@ -327,7 +327,7 @@ and get to the core part of the client:
 	while(1);
 ```
 
-This will just loop over and over, and send the string to the server, using a UDP socket connect on port 12345..
+This will just loop over and over, and send the string to the server, using a UDP socket connected on port 12345.
 
 Now the server. The potential problem we need to deal with is that:
 - the server needs to hold the FSM, so that network-received commands can take action on it,
@@ -340,7 +340,7 @@ So here, we demonstrate another use-case: we will use the provided asio-based ti
 #define SPAG_USE_ASIO_TIMER
 #include "spaghetti.hpp"
 
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, spag::AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 ```
 
 The server will inherit from some generic UDP server (also included):
@@ -378,7 +378,7 @@ And the main() function will instanciate the timer class and **assign it** to th
 ```C++
 int main()
 {
-	spag::AsioWrapper<States,Events,std::string> asio;  // instanciate Timer class
+	AsioTimer asio;                                  // instanciate Timer
 	MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 	configureFSM<fsm_t>( server.fsm );
 	server.fsm.assignTimer( &asio );

@@ -14,14 +14,15 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 ## General information
 
 ### What is this ?
-This library provides a container and API functions to easily implement a FSM (see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine)).
-However, it does not provide the main event loop.
-This is up to the user code.
-The rationale behind this is that this loop may vary greatly depending on the requirements
-(need for timeout or not, need to acquire hardware external events,...).
+This library provides a container and API functions to easily implement a Finite State Machine
+(see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine)).
+It can be used for FSM requiring the handling of hardware events, or time out situations.
+It has been designed with good "Modern C++" practices, but provides an API as simple as possible to the developper.
 
 This library provides an easy way to specify states and events, and how and when it will switch from one state to another.
-It also has some additional features, such as logging and easy timeout handling.
+It also has some additional features, such as logging the execution history.
+
+The manual describes many uses cases, all of them are included in source tree and directly runnable for testing.
 
 A lot of efforts has been put on safety: most of the potential errors are detected at build time, and everything is checked at runtime.
 
@@ -44,4 +45,3 @@ Besides the main file ```spaghetti.hpp```, the repo also holds documentation, FA
 All of this comes with all that is needed to build these on a standard Linux machine (makefile, build folders, ...).
 If you clone the repo, just run  ```make demo``` to build the programs (assuming you have Boost installed, as some samples rely on it).
 You'll find the corresponding binaries in  the ```bin``` folder.
-

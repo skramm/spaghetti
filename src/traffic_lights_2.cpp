@@ -1,13 +1,16 @@
 /**
 \file traffic_lights_2.cpp
 \brief a simple traffic light example, build using boost::asio
-
 Similar to version 1, with an added keyboard user interface as a separate thread
+
+See companion file: traffic_lights_common.hpp
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
 Homepage: https://github.com/skramm/spaghetti
 */
+
+#include "traffic_lights_common.hpp"
 
 #define SPAG_EMBED_ASIO_TIMER
 //#define SPAG_PRINT_STATES
@@ -15,8 +18,6 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_ENUM_STRINGS
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
-
-#include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );

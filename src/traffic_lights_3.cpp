@@ -4,25 +4,25 @@
 Besides having a separate thread handling keyboard input, it can receive data from
 traffic_lights_client.cpp
 
+See companion file: traffic_lights_common.hpp
+
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
 Homepage: https://github.com/skramm/spaghetti
 */
 
-
+#include "udp_server.hpp"
+#include "traffic_lights_common.hpp"
 
 #define SPAG_USE_ASIO_TIMER
 //#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
-
+#define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
-#include "udp_server.hpp"
-
-#include "traffic_lights_common.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, spag::AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
@@ -64,7 +64,7 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		spag::AsioWrapper<States,Events,std::string> asio;  // create Timer class
+		AsioTimer asio;  // create Timer class
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 
