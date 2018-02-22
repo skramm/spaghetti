@@ -1391,10 +1391,6 @@ https://github.com/aantron/better-enums
 
 \todo in writeDotFile(), try to add the strings, if any.
 
-\todo integrate asio timer to library (v2)
-
-\todo fix issue with duration
-
 \todo Currently works using std::array as storage (see SPAG_USE_ARRAY).
 Shall we switch permanently ?
 If so, we will NOT be able to add states dynamically (not possible at present, but could be in future releases,

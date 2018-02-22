@@ -171,7 +171,12 @@ enum Events { NB_EVENTS };
 
 You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and an event waiting loop.
 
-Oh, wait, we'll talk about this later, fortunately Spaghetti provides an easy way to handle this. The only requirement is that you must have [Boost Asio](http://www.boost.org/doc/libs/release/libs/asio/) installed on your machine. As this is fairly common these days, lets assume this is okay. If not,
+Oh, wait, we'll talk about this later, fortunately Spaghetti provides an easy way to handle this.
+The only requirement is that you must have [Boost Asio](http://www.boost.org/doc/libs/release/libs/asio/) installed on your machine.
+As this is fairly common these days, lets assume this is okay.
+If not, if you are lucky enough to have a Debian-based OS (Ubuntu and other derivatives), just enter
+```sudo apt-get install  libboost-all-dev```.
+If not,
 [check here](https://duckduckgo.com/?q=installing+boost+asio).
 
 To use the provided Timer class, you need to pass an option to Spaghetti by defining the symbol ```SPAG_EMBED_ASIO_TIMER```
@@ -187,7 +192,7 @@ enum Events { NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 ```
-The configuration step will go as follows (assuming the states are names st_Red, st_Green, st_Orange).
+The configuration step will go as follows.
 As you can guess, we have here timeouts of 5, 5, and 1 seconds:
 
 ```C++

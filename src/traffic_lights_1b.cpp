@@ -1,6 +1,6 @@
 /**
 \file traffic_lights_1b.cpp
-\brief Same as traffic_lights_1b.cpp (traffic light), but with the boost.Asio Wrapper not embedded inside the FSM, provided separately
+\brief Same as traffic_lights_1.cpp (traffic light), but with the boost.Asio Wrapper not embedded inside the FSM, provided separately
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 

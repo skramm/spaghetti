@@ -3,15 +3,16 @@
  - Homepage: https://github.com/skramm/spaghetti
  - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
 
-- Q: *What is the timer unit?*<br/>
-A: With the provided optional timer class (```AsioWrapper```), you can select between seconds, milliseconds, and minutes, and this for each timeout value.
+- Q: *What is the timing unit?*<br/>
+A: The values are stored as integer values with an associated ```DurUnit``` enumeration value, so you can select between seconds, milliseconds, and minutes, and this for each timeout value.<br>
+It is up to the Timer class to handle these (the provided optional timer class ```AsioWrapper``` does).
 The default value is "seconds".<br>
 When you add the following configuration line, it will be considered as 5 seconds.
 ```C++
 	fsm.assignTimeOut( st_Red, 5, st_Green  );
 ```
 Actually, it uses the current default timer unit.
-This one can be changed any time, for example to milliseconds, with the following command (which **will not** change the settings of already assigned timeouts):
+This one can be changed any time, for example to milliseconds, with the following command (which will **not** change the settings of already assigned timeouts):
 ```C++
 	fsm.setTimerDefaultUnit( spag::DurUnit::ms );
 ```
@@ -59,7 +60,7 @@ A: at present, no, but this is considered for future releases
 
 - Q: *Can I have two concurrent FSM working at the same time?*<br/>
 A: Yes! See sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp) that demonstrates this.
-This need symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see [build options](spaghetti_options.md).
+This requires defining the symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see [build options](spaghetti_options.md).
 
 
 - Q: *Why that name? Where does that come from?*<br/>
