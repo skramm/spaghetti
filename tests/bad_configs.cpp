@@ -4,19 +4,17 @@
 */
 
 
+#define SPAG_EMBED_ASIO_TIMER
 #define SPAG_ENUM_STRINGS
 #define SPAG_ENABLE_LOGGING
-//#define SPAG_PRINT_STATES
+#define SPAG_PRINT_STATES
 
 #include "spaghetti.hpp"
-
-#include "../src/asio_wrapper.hpp"
 
 enum States { st0, st1, st2, NB_STATES };
 enum Events { ev0, ev1, ev2, NB_EVENTS };
 
-
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, AsioWrapper, bool );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, bool );
 
 //-----------------------------------------------------------------------------------
 void configureFSM( fsm_t& fsm )

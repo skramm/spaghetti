@@ -26,9 +26,9 @@
 		<Unit filename="README.md" />
 		<Unit filename="docs/spaghetti_faq.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
+		<Unit filename="docs/spaghetti_options.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
-		<Unit filename="src/asio_wrapper.hpp" />
 		<Unit filename="src/doxyfile" />
 		<Unit filename="src/sample1.dot" />
 		<Unit filename="src/sample_0.cpp" />
@@ -36,6 +36,7 @@
 		<Unit filename="src/sample_2.cpp" />
 		<Unit filename="src/spaghetti.css" />
 		<Unit filename="src/traffic_lights_1.cpp" />
+		<Unit filename="src/traffic_lights_1b.cpp" />
 		<Unit filename="src/traffic_lights_2.cpp" />
 		<Unit filename="src/traffic_lights_3.cpp" />
 		<Unit filename="src/traffic_lights_client.cpp" />

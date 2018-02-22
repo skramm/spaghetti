@@ -125,7 +125,7 @@ template<typename ST>
 struct TimerEvent
 {
 	ST       _nextState = static_cast<ST>(0); ///< state to switch to
-	size_t   _duration  = 0;                  ///< duration
+	Duration _duration  = 0;                  ///< duration
 	bool     _enabled   = false;              ///< this state uses or not a timeout (default is no)
 	DurUnit  _durUnit   = DurUnit::sec;       ///< Duration unit, change this with
 
@@ -486,12 +486,20 @@ class SpagFSM
 			_stateInfo[st1]._isPassState = 1;
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final:
+/// Assigns an timeout event on \b all states except \c st_final, using default timer units
+/**
+calls assignGlobalTimeOut( ST, Duration, DurUnit )
+*/
+		void assignGlobalTimeOut( ST st_final, Duration dur )
+		{
+			assignGlobalTimeOut( st_final, dur, _defaultTimerUnit );
+		}
+/// Assigns an timeout event on \b all states except \c st_final
 /**
 After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
 (where there may or may not be a timeout assigned)
 */
-		void assignGlobalTimeOut( ST st_final, Duration dur, DurUnit durUnit = DurUnit::sec )
+		void assignGlobalTimeOut( ST st_final, Duration dur, DurUnit durUnit )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_final), nbStates() );
@@ -650,10 +658,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
-			SPAG_LOG << "check timer!\n";
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
 			{
-				SPAG_LOG << "check timer!\n";
 				if( !p_timer )
 					throw std::logic_error(  _spag_name + ": Timer not allocated" );
 				else
@@ -738,7 +744,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			return _current;
 		}
 /// Return duration of time out for state \c st, or 0 if none
-		std::pair<size_t,DurUnit> timeOutDuration( ST st ) const
+		std::pair<Duration,DurUnit> timeOutDuration( ST st ) const
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			return std::make_pair(

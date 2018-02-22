@@ -4,13 +4,22 @@
  - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
 
 - Q: *What is the timer unit?*<br/>
-A: With the provided optional timer class (```AsioWrapper```), you can select between seconds, milliseconds, and minutes.
-The default value is "seconds".
-To change to ms. for example, do this:
+A: With the provided optional timer class (```AsioWrapper```), you can select between seconds, milliseconds, and minutes, and this for each timeout value.
+The default value is "seconds".<br>
+When you add the following configuration line, it will be considered as 5 seconds.
 ```C++
-	fsm.setTimerUnit( spag::DurUnit::ms );
+	fsm.assignTimeOut( st_Red, 5, st_Green  );
 ```
-Other possible values are ```sec```,```min```.<br>
+Actually, it uses the current default timer unit.
+This one can be changed any time, for example to milliseconds, with the following command (which **will not** change the settings of already assigned timeouts):
+```C++
+	fsm.setTimerDefaultUnit( spag::DurUnit::ms );
+```
+Other possible values are ```sec```,```min```.
+Alternatively, you can also give the units when defining Timeouts. This will for example define a 5 minutes Timeout:
+```C++
+	fsm.assignTimeOut( st_Red, 5, DurUnit::min, st_Green  );
+```
 Internally, it is handled through the C++11 ```chrono``` library
 [duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
@@ -20,7 +29,9 @@ While this can have some advantages, it requires you to create a class for each 
 With Spaghetti, you just add an enumerator value.
 
 - Q: *How are runtime errors handled?*<br/>
-A: Using exceptions. Configuration errors will throw a
+A: A lot of stuff is checked at build time but some errors can only be detected at runtime.
+These are handled using exceptions.
+Configuration errors will throw a
 [```std::logic_error```](http://en.cppreference.com/w/cpp/error/logic_error)
 and runtime errors (in the sense: "FSM runtime") will throw a
 [```std::runtime_error```](http://en.cppreference.com/w/cpp/error/runtime_error)
