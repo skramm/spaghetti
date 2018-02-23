@@ -1195,6 +1195,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 	if( !f.is_open() )
 		SPAG_P_THROW_ERROR_RT( "error, unable to open file: " + fname );
 	f << "digraph G {\n";
+	f << "rankdir=LR;\n";
 	f << "0 [label=\"S0\",shape=\"doublecircle\"];\n";
 	for( size_t j=1; j<nbStates(); j++ )
 		f << j << " [label=\"S" << j << "\"];\n";
@@ -1209,11 +1210,21 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 			f << j << " -> " << _transition_mat[0][j] << " [label=\"AA\"];\n";
 		else
 		{
-			if( _stateInfo[j]._timerEvent._enabled )
-				f << j << " -> " << _stateInfo[j]._timerEvent._nextState
+			const auto& te = _stateInfo[j]._timerEvent;
+			if( te._enabled )
+			{
+				f << j << " -> " << te._nextState
 					<< " [label=\"TO:"
-					<< _stateInfo[j]._timerEvent._duration
-					<< "\"];\n";
+					<< te._duration;
+				switch( te._durUnit )
+				{
+					case DurUnit::sec: f << "s";  break;
+					case DurUnit::min: f << "mn"; break;
+					case DurUnit::ms:  f << "ms"; break;
+					default: assert(0);
+				}
+				f << "\"];\n";
+			}
 		}
 	f << "}\n";
 }
