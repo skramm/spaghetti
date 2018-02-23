@@ -682,6 +682,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			for( const auto& p: m_str )
 				assignString2State( p.first, p.second );
 		}
+		void assignCBValuesStrings()
+		{
+			if( std::is_same<CBA,std::string>::value )
+				for( size_t i=0; i<nbStates(); i++ )
+					assignCallbackValue( static_cast<ST>(i), _str_states[i] );
+			else
+				std::cout << priv::getSpagName() << ": warning, unable to assign strings to callback values, type is not std::string\n";
+
+		}
+
 #else
 		void assignString2Event( EV, std::string ) {}
 		void assignString2State( ST, std::string ) {}
@@ -689,6 +699,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& ) {}
 		void assignStrings2Events( const std::map<EV,std::string>& ) {}
 		void assignStrings2States( const std::map<ST,std::string>& ) {}
+		void assignCBValuesStrings() const {}
 #endif
 
 ///@}
@@ -916,7 +927,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, nbEvents()+1 );
 #endif
-//				runAction_DoJob( stateInfo ); // BUG !
 				runAction_DoJob( _stateInfo[ SPAG_P_CAST2IDX(_current) ] );
 			}
 		}
