@@ -19,13 +19,13 @@ This one can be changed any time, for example to milliseconds, with the followin
 Other possible values are ```sec```,```min```.
 Alternatively, you can also give the units when defining Timeouts. This will for example define a 5 minutes Timeout:
 ```C++
-	fsm.assignTimeOut( st_Red, 5, DurUnit::min, st_Green  );
+	fsm.assignTimeOut( st_Red, 5, spag::DurUnit::min, st_Green  );
 ```
 Oh, and if for some reason (templated function in a header, as in ```src/traffic_lights_common.hpp```) you don't have access to the ```DurUnit``` type, you can also use string values:
 ```C++
 	fsm.assignTimeOut( st_Red, 5, "min", st_Green  );
 ```
-Internally, it is handled through the C++11 ```chrono``` library
+Internally, the timing is handled through the C++11 ```chrono``` library
 [duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
 - Q: *How does this library differ from the other ones?*<br/>

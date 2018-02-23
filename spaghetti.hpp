@@ -24,7 +24,7 @@ This program is free software: you can redistribute it and/or modify
 #ifndef HG_SPAGHETTI_FSM_HPP
 #define HG_SPAGHETTI_FSM_HPP
 
-/// \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
+/// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
 #define SPAG_VERSION 0.3
@@ -62,15 +62,21 @@ This program is free software: you can redistribute it and/or modify
 			std::cout
 #endif
 
+#define SPAG_P_THROW_ERROR_RT( msg ) \
+	throw std::runtime_error( spag::priv::getSpagName() + ": runtime error in " + __FUNCTION__ + "(): " + msg )
+
+#define SPAG_P_THROW_ERROR_CFG( msg ) \
+	throw std::logic_error( spag::priv::getSpagName() + ": configuration error in " + __FUNCTION__ + "(): " + msg )
+
 #ifdef SPAG_FRIENDLY_CHECKING
 	#define SPAG_CHECK_EQUAL( a, b ) \
 	{ \
 		if( (a) != (b) ) \
 		{ \
-			std::cerr << _spag_name << ": runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
-			<< " - "   << #a << " value=" << a \
-			<< "\n - " << #b << " value=" << b << "\nExiting...\n"; \
-			throw std::logic_error( _spag_name + ": configuration error in call to " + __FUNCTION__ ); \
+			std::cerr << spag::priv::getSpagName() << ": runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
+				<< " - "   << #a << " value=" << a \
+				<< "\n - " << #b << " value=" << b << '\n'; \
+			SPAG_P_THROW_ERROR_CFG( "values are not equal" ); \
 		} \
 	}
 #else
@@ -81,10 +87,10 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_CHECK_LESS( a, b ) \
 		if( !( (a) < (b) ) )\
 		{ \
-			std::cerr << _spag_name << ": runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
-			<< " - "   << #a << " value=" << a \
-			<< "\n - " << #b << " max value=" << b << "\nExiting...\n"; \
-			throw std::logic_error( _spag_name + ": configuration error in call to " + __FUNCTION__ ); \
+			std::cerr << spag::priv::getSpagName() << ": runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
+				<< " - "   << #a << " value=" << a \
+				<< "\n - " << #b << " max value=" << b << '\n'; \
+			SPAG_P_THROW_ERROR_CFG( "incorrect values" ); \
 		}
 #else
 	#define SPAG_CHECK_LESS( a, b ) assert( a < b )
@@ -94,6 +100,7 @@ This program is free software: you can redistribute it and/or modify
 #define SPAG_STRINGIZE( a ) SPAG_P_STRINGIZE2( a )
 
 #define SPAG_P_CAST2IDX( a ) static_cast<size_t>(a)
+
 
 // TEMP
 typedef size_t Duration;
@@ -132,6 +139,13 @@ timeUnitFromString( std::string str ) noexcept
 	return std::make_pair( false, DurUnit::min );
 }
 
+static std::string&
+getSpagName()
+{
+	static std::string str{"Spaghetti"};
+	return str;
+}
+
 //-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
 template<typename ST>
@@ -154,6 +168,7 @@ struct TimerEvent
 	}
 };
 //-----------------------------------------------------------------------------------
+/// Private class, holds information about a state
 template<typename ST,typename CBA>
 struct StateInfo
 {
@@ -163,6 +178,7 @@ struct StateInfo
 	bool                     _isPassState = false;  ///< true if this is a "pass state", that is a state with only one transition and no timeout
 };
 //-----------------------------------------------------------------------------------
+/// Private, helper function
 void
 PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 {
@@ -381,7 +397,7 @@ getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 	return msg;
 }
 
-/// Forward declaration
+/// Dummy struct, useful in case there is no need for a timer
 template<typename ST, typename EV,typename CBA=int>
 struct NoTimer;
 
@@ -463,7 +479,6 @@ class SpagFSM
 /// Assigned ignored event matrix
 		void assignEventMatrix( const std::vector<std::vector<int>>& mat )
 		{
-			SPAG_CHECK_LESS( 0, mat.size() );
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
 			_ignored_events = mat;
@@ -471,7 +486,6 @@ class SpagFSM
 
 		void assignTransitionMat( const std::vector<std::vector<ST>>& mat )
 		{
-			SPAG_CHECK_LESS( 0, mat.size() );
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
 			_transition_mat = mat;
@@ -547,7 +561,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
 			auto tu = priv::timeUnitFromString( str );
 			if( !tu.first )
-				throw std::logic_error( _spag_name + ": error, invalid string value: " + str );
+				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + str );
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, tu.second );
 		}
 
@@ -672,7 +686,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void start() const
 		{
 			if( _isRunning )
-				throw std::runtime_error( std::string( _spag_name + ": attempt to start an already running FSM" ) );
+				SPAG_P_THROW_ERROR_RT( "attempt to start an already running FSM" );
 
 			doChecking();
 			_isRunning = true;
@@ -686,7 +700,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
 			{
 				if( !p_timer )
-					throw std::logic_error(  _spag_name + ": Timer not allocated" );
+					SPAG_P_THROW_ERROR_CFG( "Timer not allocated" );
 				else
 					p_timer->timerInit();   // blocking function !
 			}
@@ -697,7 +711,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void stop() const
 		{
 			if( !_isRunning )
-				throw std::runtime_error( std::string( _spag_name + ": attempt to stop an already stopped FSM" ) );
+				SPAG_P_THROW_ERROR_RT( ": attempt to stop an already stopped FSM" );
 
 			if( p_timer )
 			{
@@ -771,7 +785,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// Return duration of time out for state \c st, or 0 if none
 		std::pair<Duration,DurUnit> timeOutDuration( ST st ) const
 		{
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
+			assert( SPAG_P_CAST2IDX(st) < nbStates() );
 			return std::make_pair(
 				_stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent._duration,
 				_stateInfo[ SPAG_P_CAST2IDX(st) ]._timerEvent._durUnit
@@ -801,7 +815,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			auto tu = priv::timeUnitFromString( str );
 			if( !tu.first )
-				throw std::logic_error( _spag_name + ": error, invalid string value: " + str );
+				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + str );
 			_defaultTimerUnit = tu.second;
 		}
 
@@ -897,7 +911,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( stateInfo._timerEvent._enabled )
 			{
 				if( !p_timer )
-					throw std::logic_error( _spag_name + ": Timer has not been allocated" );
+					SPAG_P_THROW_ERROR_CFG( "Timer has not been allocated" );
 				assert( !stateInfo._isPassState );
 				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
 				p_timer->timerStart( this );
@@ -919,7 +933,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /////////////////////////////
 
 	private:
-		const std::string                _spag_name = "Spaghetti";
 #ifdef SPAG_ENABLE_LOGGING
 		mutable priv::RunTimeData<ST,EV> _rtdata;
 #endif
@@ -1081,11 +1094,13 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		{
 			size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
 			if( nextState == i )
-				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
+				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
+
 			if( _stateInfo[ nextState ]._isPassState )
-				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
+				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
+
 			if( state._timerEvent._enabled )
-				throw std::logic_error( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
+				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
 		}
 	}
 
@@ -1178,7 +1193,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 {
 	std::ofstream f ( fname );
 	if( !f.is_open() )
-		throw std::runtime_error( std::string( _spag_name + ": error, unable to open file: " + fname ) );
+		SPAG_P_THROW_ERROR_RT( "error, unable to open file: " + fname );
 	f << "digraph G {\n";
 	f << "0 [label=\"S0\",shape=\"doublecircle\"];\n";
 	for( size_t j=1; j<nbStates(); j++ )
@@ -1207,7 +1222,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 
 //-----------------------------------------------------------------------------------
 namespace priv {
-/// dummy struct, useful in case there is no need for a timer
+
 template<typename ST, typename EV,typename CBA>
 struct NoTimer
 {
@@ -1304,7 +1319,8 @@ struct AsioWrapper
 			break;
 			default:                                         // all other values
 				std::cerr << "unexpected error code, message=" << err_code.message() << "\n";
-				throw std::runtime_error( "boost::asio timer unexpected error: " + err_code.message() );
+				SPAG_P_THROW_ERROR_RT( "boost::asio timer unexpected error: " + err_code.message() );
+//				throw std::runtime_error( "boost::asio timer unexpected error: " + err_code.message() );
 		}
 	}
 /// Mandatory function for SpagFSM. Cancel the pending async timer

@@ -15,6 +15,7 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_GENERATE_DOTFILE
 //#define SPAG_PRINT_STATES
 //#define SPAG_ENUM_STRINGS
+//#define SPAG_FRIENDLY_CHECKING
 #include "spaghetti.hpp"
 //#include "asio_wrapper.hpp"
 
@@ -34,7 +35,7 @@ int main( int, char* argv[] )
 
 	fsm_t fsm_A, fsm_B;
 
-	fsm_A.assignTimeOut( st_1, 2, st_2 );
+	fsm_A.assignTimeOut( (States)0, 2, (States)3 );
 	fsm_A.assignTimeOut( st_2, 2, st_1 );
 	fsm_A.assignGlobalCallback( cb );
 
@@ -60,6 +61,7 @@ int main( int, char* argv[] )
 	try
 	{
 		fsm_A.start();  // non-blocking: external event loop !
+		fsm_B.start();
 		fsm_B.start();
 		io_service.run();
 	}

@@ -478,7 +478,7 @@ Some self-explaining member function that can be useful in user code:
  - ```nbStates()```: returns nb of states
  - ```nbEvents()```: returns nb of events (only "hardware" ones, not timeouts).
  - ```currentState()```: returns current state
- - ```timeOutDuration( EN_States )```: returns duration of timeout
+ - ```timeOutDuration( EN_States )```: returns duration of timeout, as a std::pair (Duration, DurUnit)
 
 Other stuff:
 - Printing the configuration:
