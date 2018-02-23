@@ -128,10 +128,10 @@ show:
 	@echo OPTIONS=$(OPTIONS)
 	@echo SVG_FILES=$(SVG_FILES)
 
+# special target, for dev use only
 diff:
-	git diff | colordiff | aha > diff.html
-	xdg-open diff.html
-#	rm diff.html
+	git diff | colordiff | aha > /tmp/diff.html
+	xdg-open /tmp/diff.html
 
 clean:
 	-rm $(OBJ_DIR)/*

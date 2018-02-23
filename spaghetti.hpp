@@ -1380,7 +1380,9 @@ struct AsioWrapper
 /// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Also creates the \c AsioTimer type
 		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
 			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type; \
-			typedef spag::AsioWrapper<st,ev,cbarg> AsioTimer
+			namespace spag { \
+				typedef AsioWrapper<st,ev,cbarg> AsioTimer; \
+			}
 	#endif
 #else
 	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \

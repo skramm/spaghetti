@@ -17,12 +17,11 @@ Homepage: https://github.com/skramm/spaghetti
 //#define SPAG_ENUM_STRINGS
 //#define SPAG_FRIENDLY_CHECKING
 #include "spaghetti.hpp"
-//#include "asio_wrapper.hpp"
 
 enum States { st_1, st_2, NB_STATES };
 enum Events { NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE( fsm_t, States, Events, spag::AsioWrapper, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
 void cb( std::string s )
 {
@@ -35,14 +34,14 @@ int main( int, char* argv[] )
 
 	fsm_t fsm_A, fsm_B;
 
-	fsm_A.assignTimeOut( (States)0, 2, (States)3 );
+	fsm_A.assignTimeOut( st_1, 2, st_2 );
 	fsm_A.assignTimeOut( st_2, 2, st_1 );
 	fsm_A.assignGlobalCallback( cb );
 
 	fsm_B.assignConfig( fsm_A );
 
-	fsm_B.assignTimeOut( st_1, 3, st_2 );
-	fsm_B.assignTimeOut( st_2, 3, st_1 );
+	fsm_B.assignTimeOut( st_1, 800, "ms", st_2 );
+	fsm_B.assignTimeOut( st_2, 500, "ms", st_1 );
 
 	fsm_A.assignCallbackValue( st_1, "st1-A" );
 	fsm_A.assignCallbackValue( st_2, "st2-A" );
@@ -53,8 +52,8 @@ int main( int, char* argv[] )
 	fsm_B.printConfig( std::cout );
 
 	boost::asio::io_service io_service;
-	spag::AsioWrapper<States,Events,std::string> asio_A( io_service );
-	spag::AsioWrapper<States,Events,std::string> asio_B( io_service );
+	spag::AsioTimer asio_A( io_service );
+	spag::AsioTimer asio_B( io_service );
 	fsm_A.assignTimer( &asio_A );
 	fsm_B.assignTimer( &asio_B );
 
@@ -62,16 +61,11 @@ int main( int, char* argv[] )
 	{
 		fsm_A.start();  // non-blocking: external event loop !
 		fsm_B.start();
-		fsm_B.start();
 		io_service.run();
 	}
 	catch( std::exception& e )
 	{
 		std::cerr << "catch: error: " << e.what() << std::endl;
-	}
-	catch( ... )
-	{
-		std::cerr << "catch: unknown error\n";
 	}
 }
 //-----------------------------------------------------------------------------------

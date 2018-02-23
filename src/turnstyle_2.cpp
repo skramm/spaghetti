@@ -13,8 +13,6 @@ Homepage: https://github.com/skramm/spaghetti
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
-//#include "asio_wrapper.hpp"
-
 #include <thread>
 #include <mutex>
 

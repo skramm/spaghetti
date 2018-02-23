@@ -17,11 +17,8 @@ Homepage: https://github.com/skramm/spaghetti
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
-//#include "asio_wrapper.hpp"
-
 #include <thread>
 #include <mutex>
-
 
 enum En_States { st_init, st_one, NB_STATES };
 enum En_Events { ev_1, NB_EVENTS };
@@ -93,10 +90,6 @@ int main( int, char* argv[] )
 	catch( std::exception& e )
 	{
 		std::cerr << "catch: error: " << e.what() << std::endl;
-	}
-	catch( ... )
-	{
-		std::cerr << "catch: unknown error\n";
 	}
 	fsm.printLoggedData( std::cout, spag::PrintFlags::stateCount );
 }
