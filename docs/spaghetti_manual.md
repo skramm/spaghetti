@@ -404,7 +404,7 @@ You can then start all the needed FSM, then eventually start the event loop, usu
 This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
 
 <a name="additional_stuff"></a>
-## 7 - Additional facilities
+## 7 - Additional features
 
 <a name="config"></a>
 ### 7.1 - Configuration of the FSM

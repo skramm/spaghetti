@@ -25,20 +25,9 @@ enum Events { ev_1, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
-/// global pointer on mutex, will get initialized in getSingletonMutex()
-std::mutex* g_mutex;
-
-//-----------------------------------------------------------------------------------
-/// initialization of mutex pointer (classical static initialization pattern)
-static std::mutex* getSingletonMutex()
-{
-    static std::mutex instance;
-    return &instance;
-}
 //-----------------------------------------------------------------------------------
 template<typename FSM>
-void
-UI_thread( const FSM* fsm )
+void UI_thread( const FSM* fsm )
 {
 	bool quit(false);
     do
@@ -71,8 +60,6 @@ int main( int, char* argv[] )
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	std::cout << "enter 'a' for event, 'q' to quit\n";
-
-	g_mutex = getSingletonMutex();
 
 	fsm_t fsm;
 	try

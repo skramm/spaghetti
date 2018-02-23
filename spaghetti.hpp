@@ -479,7 +479,7 @@ class SpagFSM
 				[](){ static int idx; std::string s = "Ev-"; s += std::to_string(idx++); return s; } // lambda
 			);
 			_str_events[ nbEvents()   ] = "*Timeout*";
-			_str_events[ nbEvents()+1 ] = "*  AA   *"; // Always Active Transition
+			_str_events[ nbEvents()+1 ] = "*  AAT  *"; // Always Active Transition
 #endif
 
 #ifdef SPAG_EMBED_ASIO_TIMER
@@ -916,7 +916,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, nbEvents()+1 );
 #endif
-				runAction_DoJob( stateInfo );
+//				runAction_DoJob( stateInfo ); // BUG !
+				runAction_DoJob( _stateInfo[ SPAG_P_CAST2IDX(_current) ] );
 			}
 		}
 
@@ -1236,7 +1237,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 
 	for( size_t j=0; j<nbStates(); j++ )
 		if( _stateInfo[j]._isPassState )
-			f << j << " -> " << _transition_mat[0][j] << " [label=\"AA\"];\n";
+			f << j << " -> " << _transition_mat[0][j] << " [label=\"AAT\"];\n";
 		else
 		{
 			const auto& te = _stateInfo[j]._timerEvent;
@@ -1319,13 +1320,6 @@ struct AsioWrapper
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
 
-#if 0
-/// Sets the time unit
-	void setTimeUnit( DurUnit unit )
-	{
-		_durationUnit = unit;
-	}
-#endif
 	boost::asio::io_service& get_io_service()
 	{
 		return _io_service;
@@ -1334,15 +1328,18 @@ struct AsioWrapper
 /// Mandatory function for SpagFSM. Called only once, when FSM is started
 	void timerInit()
 	{
+		SPAG_LOG << '\n';
 		_io_service.run();          // blocking call !!!
 	}
 	void timerKill()
 	{
+		SPAG_LOG << '\n';
 		_io_service.stop();
 	}
 /// Timer callback function, called when timer expires.
 	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
+		SPAG_LOG << '\n';
 		switch( err_code.value() ) // check if called because of timeout, or because of canceling timeout operation
 		{
 			case boost::system::errc::operation_canceled:    // do nothing
@@ -1359,13 +1356,15 @@ struct AsioWrapper
 /// Mandatory function for SpagFSM. Cancel the pending async timer
 	void timerCancel()
 	{
-//		SPAG_LOG << "Canceling timer, expiry in " << ptimer->expires_from_now().total_milliseconds() << " ms.\n";
+		SPAG_LOG << "Canceling timer, expiry in \n";
 		ptimer->cancel_one();
 	}
 /// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
+
 		auto duration = fsm->timeOutDuration( fsm->currentState() );
+		SPAG_LOG << "Starting timer with duration=" << duration.first << '\n';
 		switch( duration.second )
 		{
 			case DurUnit::ms:
