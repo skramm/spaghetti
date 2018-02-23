@@ -139,6 +139,19 @@ timeUnitFromString( std::string str ) noexcept
 	return std::make_pair( false, DurUnit::min );
 }
 
+/// helper function
+std::string
+stringFromTimeUnit( DurUnit du )
+{
+	switch( du )
+	{
+		case DurUnit::ms:  return "ms";  break;
+		case DurUnit::sec: return "sec"; break;
+		case DurUnit::min: return "min"; break;
+	}
+	return std::string(); // to avoid a warning
+}
+
 static std::string&
 getSpagName()
 {
@@ -739,6 +752,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processEvent( EV ev ) const
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
+			if( !_isRunning )
+				SPAG_P_THROW_ERROR_RT( "FSM is not started" );
 
 #ifdef SPAG_ENUM_STRINGS
 			SPAG_LOG << "processing event " << ev << ": \"" << _str_events[ev] << "\"\n";
@@ -1152,36 +1167,50 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 {
-	out << "---------------------\nFSM config:";
+	out << "---------------------\nTransition table: ";
 	if( msg )
 		out << "msg=" << msg;
 	out << '\n';
-//	out << "\n - Nb States=" << nbStates() << "\n - Nb events=" << nbEvents();
-
-//	out << "\n - Transition matrix: (.:ignored event)\n";
 	printMatrix( out );
-
-#if 0
-	out << "\n - States with timeout (.:no timeout, o: timeout enabled)\n";
-	out << "       STATES:\n   ";
-	for( size_t i=0; i<_stateInfo.size(); i++ )
-		out << i << "  ";
-//	out << "\n   ";
 
 #ifdef SPAG_ENUM_STRINGS
 	size_t maxlength = priv::getMaxLength( _str_states );
 #endif
-
-	for( size_t i=0; i<_stateInfo.size(); i++ )
+	out << "\nState info:\n";
+	for( size_t i=0; i<nbStates(); i++ )
 	{
+		const auto& te = _stateInfo[i]._timerEvent;
 		out << i;
 #ifdef SPAG_ENUM_STRINGS
 		out << ':';
 		priv::PrintEnumString( out, _str_states[i], maxlength );
 #endif
-		out << '|' << (_stateInfo[i]._timerEvent._enabled?'o':'.') << '\n';
-	}
+		out << "| ";
+		if( te._enabled )
+		{
+			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << " => " << te._nextState;
+#ifdef SPAG_ENUM_STRINGS
+			out << " (";
+			priv::PrintEnumString( out, _str_states[te._nextState], maxlength );
+			out << ')';
 #endif
+		}
+		else
+		{
+			if( _stateInfo[i]._isPassState )
+			{
+				out << "AAT => " << _transition_mat[0][i];
+#ifdef SPAG_ENUM_STRINGS
+				out << " (";
+				priv::PrintEnumString( out, _str_states[_transition_mat[0][i]], maxlength );
+				out << ')';
+#endif
+			}
+			else
+				out << '-';
+		}
+		out << '\n';
+	}
 	out << "---------------------\n";
 }
 //-----------------------------------------------------------------------------------
@@ -1215,15 +1244,9 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 			{
 				f << j << " -> " << te._nextState
 					<< " [label=\"TO:"
-					<< te._duration;
-				switch( te._durUnit )
-				{
-					case DurUnit::sec: f << "s";  break;
-					case DurUnit::min: f << "mn"; break;
-					case DurUnit::ms:  f << "ms"; break;
-					default: assert(0);
-				}
-				f << "\"];\n";
+					<< te._duration
+					<< priv::stringFromTimeUnit( te._durUnit )
+					<< "\"];\n";
 			}
 		}
 	f << "}\n";
@@ -1331,7 +1354,6 @@ struct AsioWrapper
 			default:                                         // all other values
 				std::cerr << "unexpected error code, message=" << err_code.message() << "\n";
 				SPAG_P_THROW_ERROR_RT( "boost::asio timer unexpected error: " + err_code.message() );
-//				throw std::runtime_error( "boost::asio timer unexpected error: " + err_code.message() );
 		}
 	}
 /// Mandatory function for SpagFSM. Cancel the pending async timer
@@ -1375,9 +1397,13 @@ struct AsioWrapper
 } // namespace spag
 
 /// Shorthand for declaring the type of FSM, without a timer
-#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
-	typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type
-
+#ifdef SPAG_USE_ASIO_TIMER
+	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
+		static_assert( 0, "Error, can't use this macro with symbol SPAG_USE_ASIO_TIMER defined" )
+#else
+	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
+		typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type
+#endif
 /// Shorthand for declaring the type of FSM with an arbitrary timer class
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type

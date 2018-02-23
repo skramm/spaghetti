@@ -22,12 +22,16 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st0, ev0, st1 );
 	fsm.assignTimeOut( st1, 4, st2 );
 
-	std::map<States,std::string> mstr = {
+	std::map<States,std::string> mstr_st = {
 		{ st0, "init state" },
 		{ st2, "state_2" }
 	};
-	fsm.assignStrings2States( mstr );
+	fsm.assignStrings2States( mstr_st );
 
+	std::map<Events,std::string> mstr_ev = {
+		{ ev0, "eveeeeent" }
+	};
+	fsm.assignStrings2Events( mstr_ev );
 }
 
 int main( int, char* argv[] )

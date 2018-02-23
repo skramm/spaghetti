@@ -1,7 +1,7 @@
 /**
 \file sample_3.cpp
-\brief Demo program of a simple FSM
-\image html sample1.svg
+\brief Demo program of a simple FSM: 5 states with 1 ms between each
+\image html sample_3.svg
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
@@ -14,10 +14,10 @@ Homepage: https://github.com/skramm/spaghetti
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
-enum En_States { st0, st1, st2, st3, st4, NB_STATES };
-enum En_Events { NB_EVENTS };
+enum States { st0, st1, st2, st3, st4, NB_STATES };
+enum Events { NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, En_States, En_Events, int );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
 void cb_func( int )
 {
@@ -42,6 +42,6 @@ int main( int, char* argv[] )
 	fsm.assignTimeOut( st4, 1 , st0 );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample3.dot" );
+	fsm.writeDotFile( "sample_3.dot" );
 	fsm.start();
 }

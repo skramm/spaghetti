@@ -489,7 +489,7 @@ Other stuff:
 - Printing the configuration:
 The member function ```printConfig()``` will print the current configuration, for example:
 ```C++
-fsm.printConfig( stsd::cout );
+fsm.printConfig( std::cout );
 ```
 
 - Printing runtime data:

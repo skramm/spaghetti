@@ -36,6 +36,7 @@ int main( int, char* argv[] )
 	{
 		fsm_t fsm;
 		configureFSM<fsm_t>( fsm );
+		fsm.assignString2State( st_Red, "Red" );
 
 		fsm.printConfig( std::cout );
 		fsm.writeDotFile( "traffic_lights_2.dot" );

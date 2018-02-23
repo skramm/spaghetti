@@ -20,10 +20,10 @@ Homepage: https://github.com/skramm/spaghetti
 #include <thread>
 #include <mutex>
 
-enum En_States { st_init, st_one, NB_STATES };
-enum En_Events { ev_1, NB_EVENTS };
+enum States { st_init, st_one, NB_STATES };
+enum Events { ev_1, NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, En_States, En_Events, std::string );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
