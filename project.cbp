@@ -33,6 +33,7 @@
 		<Unit filename="src/sample1.dot" />
 		<Unit filename="src/sample_0.cpp" />
 		<Unit filename="src/sample_1.cpp" />
+		<Unit filename="src/sample_1b.cpp" />
 		<Unit filename="src/sample_2.cpp" />
 		<Unit filename="src/sample_3.cpp" />
 		<Unit filename="src/spaghetti.css" />

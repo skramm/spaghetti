@@ -240,7 +240,7 @@ Oh, and also a "Warning off" button (to return to regular cycle), and a "Reset" 
 
 So we have the following states and events:
 ```C++
-enum EN_States {
+enum States {
 	st_Init,
 	st_Red,
 	st_Orange,
@@ -249,7 +249,7 @@ enum EN_States {
 	st_BlinkOff,
 	NB_STATES
 };
-enum EN_Events {
+enum Events {
 	ev_Reset,      ///< reset button
 	ev_WarningOn,  ///< blinking mode on
 	ev_WarningOff, ///< blinking mode off
@@ -326,7 +326,7 @@ and get to the core part of the client:
 	while(1);
 ```
 
-This will just loop over and over, and send the string to the server, using a UDP socket connected on port 12345.
+This will just loop over and over and send the string to the server, using a UDP socket connected on port 12345.
 
 Now the server. The potential problem we need to deal with is that:
 - the server needs to hold the FSM, so that network-received commands can take action on it,

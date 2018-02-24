@@ -385,7 +385,7 @@ enum EN_ConfigError
 std::string
 getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 {
-	std::string msg( "Spaghetti: configuration error: state " );
+	std::string msg( getSpagName() + ": configuration error: state " );
 	msg += std::to_string( st );
 //#ifdef SPAG_ENUM_STRINGS
 //	msg += " '";
@@ -934,8 +934,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// sub-function of runAction(), needed for pass-states
 		void runAction_DoJob( const priv::StateInfo<ST,CBA>& stateInfo ) const
 		{
+			SPAG_LOG << '\n';
 			if( stateInfo._timerEvent._enabled )
 			{
+				SPAG_LOG << "Timer event! p_timer=" << p_timer << "\n";
 				if( !p_timer )
 					SPAG_P_THROW_ERROR_CFG( "Timer has not been allocated" );
 				assert( !stateInfo._isPassState );
@@ -1137,7 +1139,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 			unreachableStates.push_back( i );
 	for( const auto& st: unreachableStates )
 	{
-		std::cout << "Spaghetti: Warning, state " << st
+		std::cout << priv::getSpagName() << ": Warning, state " << st
 #ifdef SPAG_ENUM_STRINGS
 			<< " (" << _str_states[st] << ')'
 #endif
@@ -1164,7 +1166,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 				i
 			) == unreachableStates.end() )     // AND it is not in the unreachable states list
 		{
-			std::cout << "Spaghetti: Warning, state " << i
+			std::cout << priv::getSpagName() << ": Warning, state " << i
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _str_states[i] << ')'
 #endif
