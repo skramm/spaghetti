@@ -34,12 +34,16 @@ While this can have some advantages, it requires you to create a class for each 
 With Spaghetti, you just add an enumerator value.
 
 - Q: *How are runtime errors handled?*<br/>
-A: A lot of stuff is checked at build time but some errors can only be detected at runtime.
-These are handled using exceptions.
-Configuration errors will throw a
-[```std::logic_error```](http://en.cppreference.com/w/cpp/error/logic_error)
-and runtime errors (in the sense: "FSM runtime") will throw a
-[```std::runtime_error```](http://en.cppreference.com/w/cpp/error/runtime_error)
+A: A lot of stuff is checked at build time but some errors in user code can only be detected at runtime.
+Configuration basic errors are handled using exceptions and will throw a
+[```std::logic_error```](http://en.cppreference.com/w/cpp/error/logic_error).<br>
+For runtime errors (in the sense: "FSM runtime"), due to the inherent nature of the threading mechanism, critical errors are handled through custom assertions.
+This is because throwing an exception from a thread will have other threads call std::terminate, thus breaking the exception handling procedure:
+exception cannot be catched and the user only gets some obscure message
+( usually "*terminate called without an active exception*" ).
+Thus it is clearer to trigger an assert that will cleanly exit the program with an appropriate error message written to ```std::cerr```.<br>
+Other non critical errors will throw a
+[```std::runtime_error```](http://en.cppreference.com/w/cpp/error/runtime_error).
 
 - Q: *Why are certain functions (for example: ```writeDotFile()```) not always enabled? Why do I have to pass a build option to "activate" them?*<br/>
 A: The rationale is that this doesn't require editing your source code between "building up and testing" and "production" phases.

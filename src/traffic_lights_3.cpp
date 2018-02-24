@@ -21,6 +21,8 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
+#include <future>
+
 // states and events are declared in file traffic_lights_common.hpp
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
@@ -56,6 +58,7 @@ struct MyServer : public UdpServer<1024>
 	}
 	fsm_t fsm;
 };
+
 //-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
@@ -78,11 +81,13 @@ int main( int, char* argv[] )
 		std::cout << "- server start\n";
 		server.start_receive();
 
+		std::cout << "- thread start\n";
 		std::thread thread_ui( UI_thread<fsm_t>, &server.fsm );
 
 		std::cout << "- start fsm\n";
 		server.fsm.start();  // blocking !
 		thread_ui.join();
+
 		server.fsm.printLoggedData( std::cout );
 	}
 	catch( std::exception& e )

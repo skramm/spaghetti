@@ -83,6 +83,18 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_CHECK_EQUAL( a, b ) assert( a == b )
 #endif
 
+#ifdef NDEBUG
+	#define SPAG_P_ASSERT( a, msg ) {}
+#else
+	#define SPAG_P_ASSERT( a, msg ) \
+		if(!(a) ) \
+		{ \
+			std::cerr << priv::getSpagName() << ": assert failure in function " << __FUNCTION__ \
+				<< "(): condition \"" << #a << "\" is false, " << msg << '\n'; \
+				std::exit(1); \
+		}
+#endif
+
 #ifdef SPAG_FRIENDLY_CHECKING
 	#define SPAG_CHECK_LESS( a, b ) \
 		if( !( (a) < (b) ) )\
@@ -709,8 +721,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// start FSM : run callback associated to initial state (if any), an run timer (if any)
 		void start() const
 		{
-			if( _isRunning )
-				SPAG_P_THROW_ERROR_RT( "attempt to start an already running FSM" );
+			SPAG_P_ASSERT( !_isRunning, "attempt to start an already running FSM" );
 
 			doChecking();
 			_isRunning = true;
@@ -723,10 +734,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
 			{
-				if( !p_timer )
-					SPAG_P_THROW_ERROR_CFG( "Timer not allocated" );
-				else
-					p_timer->timerInit();   // blocking function !
+				SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
+				p_timer->timerInit();   // blocking function !
 			}
 #endif
 		}
@@ -734,8 +743,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 /// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer
 		void stop() const
 		{
-			if( !_isRunning )
-				SPAG_P_THROW_ERROR_RT( ": attempt to stop an already stopped FSM" );
+			SPAG_P_ASSERT( _isRunning, "attempt to stop an already stopped FSM" );
 
 			if( p_timer )
 			{
@@ -763,8 +771,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processEvent( EV ev ) const
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			if( !_isRunning )
-				SPAG_P_THROW_ERROR_RT( "FSM is not started" );
+			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
 
 #ifdef SPAG_ENUM_STRINGS
 			SPAG_LOG << "processing event " << ev << ": \"" << _str_events[ev] << "\"\n";
@@ -775,7 +782,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			{
 				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )               // 1 - cancel the waiting timer, if any
 				{
-					assert( p_timer );
+					SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
 					p_timer->timerCancel();
 				}
 				_current = _transition_mat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
@@ -937,9 +944,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_LOG << '\n';
 			if( stateInfo._timerEvent._enabled )
 			{
-				SPAG_LOG << "Timer event! p_timer=" << p_timer << "\n";
-				if( !p_timer )
-					SPAG_P_THROW_ERROR_CFG( "Timer has not been allocated" );
+				SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
 				assert( !stateInfo._isPassState );
 				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
 				p_timer->timerStart( this );
@@ -1362,7 +1367,7 @@ struct AsioWrapper
 			break;
 			default:                                         // all other values
 				std::cerr << "unexpected error code, message=" << err_code.message() << "\n";
-				SPAG_P_THROW_ERROR_RT( "boost::asio timer unexpected error: " + err_code.message() );
+				SPAG_P_ASSERT( false, "boost::asio timer unexpected error: " + err_code.message() );
 		}
 	}
 /// Mandatory function for SpagFSM. Cancel the pending async timer
