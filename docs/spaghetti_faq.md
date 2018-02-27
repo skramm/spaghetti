@@ -58,6 +58,10 @@ or a [```std::tuple```](http://en.cppreference.com/w/cpp/utility/tuple).
 - **Q**: *Can I use a callback function with a void parameter ( ```void my_callback()```)*<br/>
 **A**: No, unfortunately. This is because void is not a type, you can't pass it as template argument. But you can always use anything, say an integer, and ignore its value.
 
+- **Q**: *Can I pass the FSM object itself as callback argument?*<br/>
+**A**: No, as the callback argument is a template parameter of the FSM. You would get into some infinite recursion...
+But you can then make the FSM object global, so the callbacks can access it.
+
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
 If you do, then this has been tested as successful against Boost 1.54.

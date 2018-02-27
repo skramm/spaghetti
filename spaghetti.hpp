@@ -466,11 +466,11 @@ class SpagFSM
 		{
 			static_assert( SPAG_P_CAST2IDX(ST::NB_STATES) > 1, "Error, you need to provide at least two states" );
 #ifndef SPAG_USE_ARRAY
-			priv::resizemat( _transition_mat, nbEvents(), nbStates() );
-			priv::resizemat( _ignored_events, nbEvents(), nbStates() );
+			priv::resizemat( _transitionMat, nbEvents(), nbStates() );
+			priv::resizemat( _allowedMat, nbEvents(), nbStates() );
 			_stateInfo.resize( nbStates() );    // states information
 #endif
-			for( auto& e: _ignored_events )      // all events will be ignored at init
+			for( auto& e: _allowedMat )      // all events will be ignored at init
 				std::fill( e.begin(), e.end(), 0 );
 
 #ifdef SPAG_ENABLE_LOGGING
@@ -506,14 +506,14 @@ class SpagFSM
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
-			_ignored_events = mat;
+			_allowedMat = mat;
 		}
 
 		void assignTransitionMat( const std::vector<std::vector<ST>>& mat )
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
-			_transition_mat = mat;
+			_transitionMat = mat;
 		}
 
 /// Assigns an external transition event \c ev to switch from state \c st1 to state \c st2
@@ -522,8 +522,8 @@ class SpagFSM
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev),  nbEvents() );
-			_transition_mat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = st2;
-			_ignored_events[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = 1;
+			_transitionMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = st2;
+			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = 1;
 		}
 
 /// Assigns a transition to a "pass state": once on state \c st1, the FSM will switch right away to \c st2
@@ -531,9 +531,9 @@ class SpagFSM
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
-			for( auto& line: _transition_mat )
+			for( auto& line: _transitionMat )
 				line[ SPAG_P_CAST2IDX( st1 ) ] = st2;
-			for( auto& line: _ignored_events )
+			for( auto& line: _allowedMat )
 				line[ SPAG_P_CAST2IDX( st1 ) ] = 1;
 			_stateInfo[st1]._isPassState = 1;
 		}
@@ -595,15 +595,15 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			for( auto& e: _transition_mat[ ev ] )
+			for( auto& e: _transitionMat[ ev ] )
 				e = st;
-			for( auto& e: _ignored_events[ ev ] )
+			for( auto& e: _allowedMat[ ev ] )
 				e = 1;
 		}
 /// Allow all events of the transition matrix
 		void allowAllEvents()
 		{
-			for( auto& line: _ignored_events )
+			for( auto& line: _allowedMat )
 				for( auto& e: line )
 					e = 1;
 		}
@@ -612,7 +612,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			_ignored_events[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = (what?1:0);
+			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = (what?1:0);
 		}
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )
@@ -646,8 +646,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_CHECK_EQUAL( nbEvents(), fsm.nbEvents() );
 			SPAG_CHECK_EQUAL( nbStates(), fsm.nbStates() );
-			_transition_mat = fsm._transition_mat;
-			_ignored_events = fsm._ignored_events;
+			_transitionMat = fsm._transitionMat;
+			_allowedMat = fsm._allowedMat;
 			_stateInfo      = fsm._stateInfo;
 #ifdef SPAG_ENUM_STRINGS
 			_str_events     = fsm._str_events;
@@ -778,14 +778,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #else
 			SPAG_LOG << "processing event " << ev << '\n';
 #endif
-			if( _ignored_events[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX(_current) ] != 0 )
+			if( _allowedMat[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX(_current) ] != 0 )
 			{
 				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )               // 1 - cancel the waiting timer, if any
 				{
 					SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
 					p_timer->timerCancel();
 				}
-				_current = _transition_mat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
+				_current = _transitionMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, ev );
 #endif
@@ -929,8 +929,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( stateInfo._isPassState )
 			{
 				assert( !stateInfo._timerEvent._enabled );
-				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transition_mat[0][ SPAG_P_CAST2IDX(_current) ]) << '\n';
-				_current =  _transition_mat[0][ SPAG_P_CAST2IDX(_current) ];
+				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transitionMat[0][ SPAG_P_CAST2IDX(_current) ]) << '\n';
+				_current =  _transitionMat[0][ SPAG_P_CAST2IDX(_current) ];
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, nbEvents()+1 );
 #endif
@@ -978,14 +978,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::array<
 			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)
-		> _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 		std::array<
 			std::array<char, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)
-		> _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
+		> _allowedMat;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 #else
-		std::vector<std::vector<ST>>       _transition_mat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
-		std::vector<std::vector<char>>     _ignored_events;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
+		std::vector<std::vector<ST>>       _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+		std::vector<std::vector<char>>     _allowedMat;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
 #endif // SPAG_USE_ARRAY
 
 #ifdef SPAG_USE_ARRAY
@@ -1060,8 +1060,8 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			out << ' ' << i << " | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
-				if( _ignored_events[i][j] )
-					out << _transition_mat[i][j];
+				if( _allowedMat[i][j] )
+					out << _transitionMat[i][j];
 				else
 					out << '.';
 				out << "  ";
@@ -1084,7 +1084,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._isPassState )
-					out << _transition_mat[0][j] << " ";
+					out << _transitionMat[0][j] << " ";
 				else
 					out << ".  ";
 			}
@@ -1093,7 +1093,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	}
 }
 //-----------------------------------------------------------------------------------
-/// Helper function, returns true if state \c st is referenced in \c _transition_mat (and that the transition is allowed)
+/// Helper function, returns true if state \c st is referenced in \c _transitionMat (and that the transition is allowed)
 /// or it has a Timeout or pass-state transition
 template<typename ST, typename EV,typename T,typename CBA>
 bool
@@ -1103,8 +1103,8 @@ SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
 		if( i != st )
 		{
 			for( size_t k=0; k<nbEvents(); k++ )
-				if( SPAG_P_CAST2IDX( _transition_mat[k][i] ) == st )
-					if( _ignored_events[k][i] == 1 )
+				if( SPAG_P_CAST2IDX( _transitionMat[k][i] ) == st )
+					if( _allowedMat[k][i] == 1 )
 						return true;
 
 			if( _stateInfo[i]._timerEvent._enabled )
@@ -1125,7 +1125,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		auto state = _stateInfo[i];
 		if( state._isPassState )
 		{
-			size_t nextState = SPAG_P_CAST2IDX( _transition_mat[0][i] );
+			size_t nextState = SPAG_P_CAST2IDX( _transitionMat[0][i] );
 			if( nextState == i )
 				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
 
@@ -1159,8 +1159,8 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		else
 		{
 			for( size_t j=0; j<nbEvents(); j++ )
-				if( SPAG_P_CAST2IDX( _transition_mat[j][i] ) != i )   // if the transition leads to another state
-					if( _ignored_events[j][i] == 1 )                  // AND it is allowed
+				if( SPAG_P_CAST2IDX( _transitionMat[j][i] ) != i )   // if the transition leads to another state
+					if( _allowedMat[j][i] == 1 )                  // AND it is allowed
 						foundValid = true;
 		}
 
@@ -1217,10 +1217,10 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		{
 			if( _stateInfo[i]._isPassState )
 			{
-				out << "AAT => " << _transition_mat[0][i];
+				out << "AAT => " << _transitionMat[0][i];
 #ifdef SPAG_ENUM_STRINGS
 				out << " (";
-				priv::PrintEnumString( out, _str_states[_transition_mat[0][i]], maxlength );
+				priv::PrintEnumString( out, _str_states[_transitionMat[0][i]], maxlength );
 				out << ')';
 #endif
 			}
@@ -1248,13 +1248,13 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 		f << j << " [label=\"S" << j << "\"];\n";
 	for( size_t i=0; i<nbEvents(); i++ )
 		for( size_t j=0; j<nbStates(); j++ )
-			if( _ignored_events[i][j] )
+			if( _allowedMat[i][j] )
 				if( !_stateInfo[j]._isPassState )
-					f << j << " -> " << _transition_mat[i][j] << " [label=\"E" << i << "\"];\n";
+					f << j << " -> " << _transitionMat[i][j] << " [label=\"E" << i << "\"];\n";
 
 	for( size_t j=0; j<nbStates(); j++ )
 		if( _stateInfo[j]._isPassState )
-			f << j << " -> " << _transition_mat[0][j] << " [label=\"AAT\"];\n";
+			f << j << " -> " << _transitionMat[0][j] << " [label=\"AAT\"];\n";
 		else
 		{
 			const auto& te = _stateInfo[j]._timerEvent;
@@ -1485,8 +1485,6 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 
 \subsection ssec_todos TODOS
 
-
-\todo add serialisation capability
 
 \todo for enum to string automatic conversion, maybe use this ? :
 https://github.com/aantron/better-enums
