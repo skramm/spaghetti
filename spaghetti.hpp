@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.3
+#define SPAG_VERSION 0.4
 
 #include <vector>
 #include <map>
@@ -138,6 +138,7 @@ enum class DurUnit { ms, sec, min };
 /// private namespace, so user code won't hit into this
 namespace priv {
 
+//-----------------------------------------------------------------------------------
 /// helper function
 std::pair<bool,DurUnit>
 timeUnitFromString( std::string str ) noexcept
@@ -150,27 +151,28 @@ timeUnitFromString( std::string str ) noexcept
 		return std::make_pair( true, DurUnit::min );
 	return std::make_pair( false, DurUnit::min );
 }
-
+//-----------------------------------------------------------------------------------
 /// helper function
 std::string
 stringFromTimeUnit( DurUnit du )
 {
+	std::string out;
 	switch( du )
 	{
-		case DurUnit::ms:  return "ms";  break;
-		case DurUnit::sec: return "sec"; break;
-		case DurUnit::min: return "min"; break;
+		case DurUnit::ms:  out = "ms";  break;
+		case DurUnit::sec: out = "sec"; break;
+		case DurUnit::min: out = "min"; break;
 	}
-	return std::string(); // to avoid a warning
+	return out;
 }
-
+//-----------------------------------------------------------------------------------
+/// returns name of lib as static string, to save space
 static std::string&
 getSpagName()
 {
 	static std::string str{"Spaghetti"};
 	return str;
 }
-
 //-----------------------------------------------------------------------------------
 /// Container holding information on timeout events. Each state will have one, event if it does not use it
 template<typename ST>
@@ -179,7 +181,7 @@ struct TimerEvent
 	ST       _nextState = static_cast<ST>(0); ///< state to switch to
 	Duration _duration  = 0;                  ///< duration
 	bool     _enabled   = false;              ///< this state uses or not a timeout (default is no)
-	DurUnit  _durUnit   = DurUnit::sec;       ///< Duration unit, change this with
+	DurUnit  _durUnit   = DurUnit::sec;       ///< Duration unit
 
 	TimerEvent()
 		: _nextState(static_cast<ST>(0))
@@ -242,7 +244,7 @@ struct RunTimeData
 	public:
 #ifdef SPAG_ENUM_STRINGS
 		RunTimeData( const std::vector<std::string>& str_events, const std::vector<std::string>& str_states )
-			: _str_events(str_events), _str_states( str_states )
+			: _strEvents(str_events), _strStates( str_states )
 #else
 		RunTimeData()
 #endif
@@ -289,8 +291,8 @@ struct RunTimeData
 	void printData( std::ostream& out, PrintFlags pflags ) const
 	{
 #ifdef SPAG_ENUM_STRINGS
-		size_t maxlength_e = priv::getMaxLength( _str_events );
-		size_t maxlength_s = priv::getMaxLength( _str_states );
+		size_t maxlength_e = priv::getMaxLength( _strEvents );
+		size_t maxlength_s = priv::getMaxLength( _strStates );
 #endif
 		char sep(';');
 
@@ -301,7 +303,7 @@ struct RunTimeData
 			{
 				out << i << sep,
 #ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _str_states[i], maxlength_s );
+				priv::PrintEnumString( out, _strStates[i], maxlength_s );
 				out << sep;
 #endif
 				out << _stateCounter[i] << '\n';
@@ -315,7 +317,7 @@ struct RunTimeData
 			{
 				out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _str_events[i], maxlength_e );
+				priv::PrintEnumString( out, _strEvents[i], maxlength_e );
 				out << sep;
 #endif
 				out << _eventCounter[i] << '\n';
@@ -336,12 +338,12 @@ struct RunTimeData
 				size_t st = SPAG_P_CAST2IDX(_history[i]._state);
 				out << _history[i]._elapsed.count() << sep << ev << sep;
 #ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _str_events[ev], maxlength_e );
+				priv::PrintEnumString( out, _strEvents[ev], maxlength_e );
 				out << sep;
 #endif
 				out << st << sep;
 #ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _str_states[ev], maxlength_s );
+				priv::PrintEnumString( out, _strStates[ev], maxlength_s );
 #endif
 				out << '\n';
 			}
@@ -368,8 +370,8 @@ event stored as size_t because we may pass values other thant the ones in the en
 		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
 
 #ifdef SPAG_ENUM_STRINGS
-		const std::vector<std::string>& _str_events; ///< reference on vector of strings of events
-		const std::vector<std::string>& _str_states; ///< reference on vector of strings of states
+		const std::vector<std::string>& _strEvents; ///< reference on vector of strings of events
+		const std::vector<std::string>& _strStates; ///< reference on vector of strings of states
 #endif
 };
 #endif
@@ -401,7 +403,7 @@ getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 	msg += std::to_string( st );
 //#ifdef SPAG_ENUM_STRINGS
 //	msg += " '";
-//	msg += _str_states[st];
+//	msg += _strStates[st];
 //	msg += "'";
 //#endif
 	msg += ' ';
@@ -459,7 +461,7 @@ class SpagFSM
 /// Constructor
 
 #if (defined SPAG_ENABLE_LOGGING) && (defined SPAG_ENUM_STRINGS)
-		SpagFSM() : _rtdata( _str_events, _str_states )
+		SpagFSM() : _rtdata( _strEvents, _strStates )
 #else
 		SpagFSM()
 #endif
@@ -478,20 +480,20 @@ class SpagFSM
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
-			_str_events.resize( nbEvents()+2 );
-			_str_states.resize( nbStates() );
+			_strEvents.resize( nbEvents()+2 );
+			_strStates.resize( nbStates() );
 			std::generate(                          // assign default strings, so it doesn't stay empty
-				_str_states.begin(),
-				_str_states.end(),
+				_strStates.begin(),
+				_strStates.end(),
 				[](){ static int idx; std::string s = "St-"; s += std::to_string(idx++); return s; } // lambda
 			);
 			std::generate(                          // assign default strings, so it doesn't stay empty
-				_str_events.begin(),
-				_str_events.end(),
+				_strEvents.begin(),
+				_strEvents.end(),
 				[](){ static int idx; std::string s = "Ev-"; s += std::to_string(idx++); return s; } // lambda
 			);
-			_str_events[ nbEvents()   ] = "*Timeout*";
-			_str_events[ nbEvents()+1 ] = "*  AAT  *"; // Always Active Transition
+			_strEvents[ nbEvents()   ] = "*Timeout*";
+			_strEvents[ nbEvents()+1 ] = "*  AAT  *"; // Always Active Transition
 #endif
 
 #ifdef SPAG_EMBED_ASIO_TIMER
@@ -650,8 +652,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			_allowedMat = fsm._allowedMat;
 			_stateInfo      = fsm._stateInfo;
 #ifdef SPAG_ENUM_STRINGS
-			_str_events     = fsm._str_events;
-			_str_states     = fsm._str_states;
+			_strEvents     = fsm._strEvents;
+			_strStates     = fsm._strStates;
 #endif
 		}
 
@@ -660,13 +662,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void assignString2Event( EV ev, std::string str )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			_str_events[ SPAG_P_CAST2IDX(ev) ] = str;
+			_strEvents[ SPAG_P_CAST2IDX(ev) ] = str;
 		}
 /// Assign a string to an enum state value (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignString2State( ST st, std::string str )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
-			_str_states[ SPAG_P_CAST2IDX(st) ] = str;
+			_strStates[ SPAG_P_CAST2IDX(st) ] = str;
 		}
 /// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& v_str )
@@ -698,7 +700,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			if( std::is_same<CBA,std::string>::value )
 				for( size_t i=0; i<nbStates(); i++ )
-					assignCallbackValue( static_cast<ST>(i), _str_states[i] );
+					assignCallbackValue( static_cast<ST>(i), _strStates[i] );
 			else
 				std::cout << priv::getSpagName() << ": warning, unable to assign strings to callback values, type is not std::string\n";
 
@@ -774,7 +776,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
 
 #ifdef SPAG_ENUM_STRINGS
-			SPAG_LOG << "processing event " << ev << ": \"" << _str_events[ev] << "\"\n";
+			SPAG_LOG << "processing event " << ev << ": \"" << _strEvents[ev] << "\"\n";
 #else
 			SPAG_LOG << "processing event " << ev << '\n';
 #endif
@@ -995,8 +997,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
-		std::vector<std::string>           _str_events;      ///< holds events strings
-		std::vector<std::string>           _str_states;      ///< holds states strings
+		std::vector<std::string>           _strEvents;      ///< holds events strings
+		std::vector<std::string>           _strStates;      ///< holds states strings
 #endif
 
 #ifdef SPAG_EMBED_ASIO_TIMER
@@ -1025,7 +1027,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 {
 	size_t maxlength(0);
 #ifdef SPAG_ENUM_STRINGS
-	maxlength = priv::getMaxLength( _str_events );
+	maxlength = priv::getMaxLength( _strEvents );
 #endif
 
 	std::string capt( "EVENTS" );
@@ -1045,7 +1047,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	for( size_t i=0; i<nbEvents()+2; i++ )
 	{
 		if( maxlength )
-			priv::PrintEnumString( out, _str_events[i], maxlength );
+			priv::PrintEnumString( out, _strEvents[i], maxlength );
 #else
 	for( size_t i=0; i<std::max( capt.size(), nbEvents()+2 ); i++ )
 	{
@@ -1146,7 +1148,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 	{
 		std::cout << priv::getSpagName() << ": Warning, state " << st
 #ifdef SPAG_ENUM_STRINGS
-			<< " (" << _str_states[st] << ')'
+			<< " (" << _strStates[st] << ')'
 #endif
 			<< " is unreachable\n";
 	}
@@ -1173,7 +1175,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		{
 			std::cout << priv::getSpagName() << ": Warning, state " << i
 #ifdef SPAG_ENUM_STRINGS
-				<< " (" << _str_states[i] << ')'
+				<< " (" << _strStates[i] << ')'
 #endif
 				<< " is a dead-end\n";
 		}
@@ -1192,7 +1194,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 	printMatrix( out );
 
 #ifdef SPAG_ENUM_STRINGS
-	size_t maxlength = priv::getMaxLength( _str_states );
+	size_t maxlength = priv::getMaxLength( _strStates );
 #endif
 	out << "\nState info:\n";
 	for( size_t i=0; i<nbStates(); i++ )
@@ -1201,7 +1203,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		out << i;
 #ifdef SPAG_ENUM_STRINGS
 		out << ':';
-		priv::PrintEnumString( out, _str_states[i], maxlength );
+		priv::PrintEnumString( out, _strStates[i], maxlength );
 #endif
 		out << "| ";
 		if( te._enabled )
@@ -1209,7 +1211,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << " => " << te._nextState;
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
-			priv::PrintEnumString( out, _str_states[te._nextState], maxlength );
+			priv::PrintEnumString( out, _strStates[te._nextState], maxlength );
 			out << ')';
 #endif
 		}
@@ -1220,7 +1222,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 				out << "AAT => " << _transitionMat[0][i];
 #ifdef SPAG_ENUM_STRINGS
 				out << " (";
-				priv::PrintEnumString( out, _str_states[_transitionMat[0][i]], maxlength );
+				priv::PrintEnumString( out, _strStates[_transitionMat[0][i]], maxlength );
 				out << ')';
 #endif
 			}
@@ -1275,6 +1277,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
 //-----------------------------------------------------------------------------------
 namespace priv {
 
+/// Dummy type, used if no timer requested by user
 template<typename ST, typename EV,typename CBA>
 struct NoTimer
 {
@@ -1490,12 +1493,7 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
 https://github.com/aantron/better-enums
 
 
-\todo enable passing the FSM itself to the callback, to enable dynamic behavior
-(either editing the config at run-time, or generating events when certain situation is met).
-
 \todo add some tests, and write a sample to evaluation performance
-
-\todo in writeDotFile(), try to add the strings, if any.
 
 \todo Currently works using std::array as storage (see SPAG_USE_ARRAY).
 Shall we switch permanently ?
