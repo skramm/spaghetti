@@ -27,12 +27,13 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.4
+#define SPAG_VERSION 0.41
 
 #include <vector>
 #include <map>
 #include <algorithm>
 #include <functional>
+#include <memory>
 #include <cassert>
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
@@ -51,6 +52,8 @@ This program is free software: you can redistribute it and/or modify
 #if defined (SPAG_USE_ASIO_TIMER) || defined (SPAG_ENABLE_LOGGING)
 	#include <chrono>
 #endif
+
+
 
 #ifdef SPAG_PRINT_STATES
 	#define SPAG_LOG \
@@ -497,7 +500,7 @@ class SpagFSM
 #endif
 
 #ifdef SPAG_EMBED_ASIO_TIMER
-			p_timer = &_asioWrapper;
+			_timer = &_asioWrapper;
 #endif
 		}
 
@@ -637,11 +640,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callbackArg = cb_arg;
 		}
 
+#ifndef SPAG_EMBED_ASIO_TIMER
 		void assignTimer( TIM* t )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			p_timer = t;
+			_timer = t;
 		}
+#endif
 
 /// Assign configuration from other FSM
 		void assignConfig( const SpagFSM& fsm )
@@ -736,8 +741,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
 			{
-				SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
-				p_timer->timerInit();   // blocking function !
+				SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
+				_timer->timerInit();   // blocking function !
 			}
 #endif
 		}
@@ -747,12 +752,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_P_ASSERT( _isRunning, "attempt to stop an already stopped FSM" );
 
-			if( p_timer )
+			if( _timer )
 			{
 				SPAG_LOG << "call timerCancel()\n";
-				p_timer->timerCancel();
+				_timer->timerCancel();
 				SPAG_LOG << "call timerKill()\n";
-				p_timer->timerKill();
+				_timer->timerKill();
 			}
 			_isRunning = false;
 		}
@@ -784,8 +789,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			{
 				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )               // 1 - cancel the waiting timer, if any
 				{
-					SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
-					p_timer->timerCancel();
+					SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
+					_timer->timerCancel();
 				}
 				_current = _transitionMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
@@ -946,10 +951,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_LOG << '\n';
 			if( stateInfo._timerEvent._enabled )
 			{
-				SPAG_P_ASSERT( p_timer, "Timer has not been allocated" );
+				SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
 				assert( !stateInfo._isPassState );
 				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
-				p_timer->timerStart( this );
+				_timer->timerStart( this );
 			}
 			if( stateInfo._callback ) // if there is a callback stored, then call it
 			{
@@ -974,7 +979,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		mutable ST                       _current = static_cast<ST>(0);   ///< current state
 		mutable bool                     _isRunning = false;
 		mutable DurUnit                  _defaultTimerUnit = DurUnit::sec;   ///< default timer units
-		mutable TIM*                     p_timer = nullptr;   ///< pointer on timer
+
+		mutable TIM*                     _timer = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
 		std::array<
@@ -1318,9 +1324,9 @@ struct AsioWrapper
 	boost::asio::io_service::work _work;
 #endif
 
-	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> steady_clock;
+	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> SteadyClock;
 
-	std::unique_ptr<steady_clock> ptimer; ///< pointer on timer, will be allocated int constructor
+	std::unique_ptr<SteadyClock> _asioTimer; ///< pointer on timer, will be allocated in constructor
 
 	public:
 /// Constructor
@@ -1335,7 +1341,7 @@ struct AsioWrapper
 //		std::cout << "Boost >= 1.66, started executor_work_guard\n";
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
 #endif
-		ptimer = std::unique_ptr<steady_clock>( new steady_clock(_io_service) );
+		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_io_service) );
 	}
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
@@ -1377,7 +1383,7 @@ struct AsioWrapper
 	void timerCancel()
 	{
 		SPAG_LOG << "Canceling timer, expiry in \n";
-		ptimer->cancel_one();
+		_asioTimer->cancel_one();
 	}
 /// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
@@ -1388,18 +1394,18 @@ struct AsioWrapper
 		switch( duration.second )
 		{
 			case DurUnit::ms:
-				ptimer->expires_from_now( std::chrono::milliseconds(duration.first) );
+				_asioTimer->expires_from_now( std::chrono::milliseconds(duration.first) );
 			break;
 			case DurUnit::sec:
-				ptimer->expires_from_now( std::chrono::seconds(duration.first) );
+				_asioTimer->expires_from_now( std::chrono::seconds(duration.first) );
 			break;
 			case DurUnit::min:
-				ptimer->expires_from_now( std::chrono::minutes(duration.first) );
+				_asioTimer->expires_from_now( std::chrono::minutes(duration.first) );
 			break;
 			default: assert(0); // this should not happen...
 		}
 
-		ptimer->async_wait(
+		_asioTimer->async_wait(
 			boost::bind(
 				&AsioWrapper<ST,EV,CBA>::timerCallback,
 				this,

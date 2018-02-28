@@ -60,7 +60,8 @@ or a [```std::tuple```](http://en.cppreference.com/w/cpp/utility/tuple).
 
 - **Q**: *Can I pass the FSM object itself as callback argument?*<br/>
 **A**: No, as the callback argument is a template parameter of the FSM. You would get into some infinite recursion...
-But you can then make the FSM object global, so the callbacks can access it.
+But you can then make the FSM object global, so the callbacks can access it.<br>
+But **be careful**, because in that case, no checking will be done on what you will change on the configuration of the FSM structure. You could make the FSM run into some invalid configuration, leading to undefined behavior.
 
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
