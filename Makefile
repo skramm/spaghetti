@@ -110,8 +110,8 @@ dot: $(SVG_FILES)
 	@echo "- Done target $@"
 
 # dot, circo, ...
-#GRAPHIZ_APP = dot
-GRAPHIZ_APP = circo
+GRAPHIZ_APP = dot
+#GRAPHIZ_APP = circo
 
 %.svg: %.dot Makefile
 	$(GRAPHIZ_APP) -Tsvg $< >$@
