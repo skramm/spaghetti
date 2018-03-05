@@ -30,7 +30,7 @@ int main( int, char* argv[] )
 
 	fsm_t fsm;
 
-	fsm.assignGlobalCallback( cb_func );
+	fsm.assignCallback( cb_func );
 
 	fsm.assignCallbackValue( st0, "Init" );
 	fsm.assignCallbackValue( st1, "st1" );

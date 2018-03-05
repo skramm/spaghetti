@@ -1,6 +1,6 @@
 /**
 \file sample_3.cpp
-\brief Demo program of a simple FSM: 5 states with 1 ms between each
+\brief Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global
 \image html sample_3.svg
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
@@ -19,29 +19,35 @@ enum Events { NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
+fsm_t fsm;
+
 void cb_func( int )
 {
 	static int c;
+	if( c < 5 )
+		fsm.writeDotFile( "sample_3_" + std::to_string(c) + ".dot" );
 	c++;
 	if( !(c%100) )
 		std::cout << "c=" << c << '\n';
+	if( c>1000 )
+		fsm.stop();
 }
 
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
-	fsm_t fsm;
 	fsm.setTimerDefaultUnit( "ms" );
 
-	fsm.assignCallback( st0, cb_func );
+	fsm.assignCallback( cb_func );
 	fsm.assignTimeOut( st0, 1 , st1 );
-	fsm.assignTimeOut( st1, 1 , st2 );
-	fsm.assignTimeOut( st2, 1 , st3 );
-	fsm.assignTimeOut( st3, 1 , st4 );
-	fsm.assignTimeOut( st4, 1 , st0 );
+	fsm.assignTimeOut( st1, 2 , st2 );
+	fsm.assignTimeOut( st2, 3 , st3 );
+	fsm.assignTimeOut( st3, 4 , st4 );
+	fsm.assignTimeOut( st4, 5 , st0 );
 
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "sample_3.dot" );
 	fsm.start();
+	std::cout << "FSM Stopped by callback action\n";
 }

@@ -61,7 +61,7 @@ configureFSM( FSM& fsm )
 	fsm.assignTransition(       st_BlinkOff,  ev_WarningOff, st_Red );
 	fsm.assignTransition(       st_BlinkOn,   ev_WarningOff, st_Red );
 
-	fsm.assignGlobalCallback( cb_func );
+	fsm.assignCallback( cb_func );
 	fsm.assignCallbackValue( st_Red,      "RED" );
 	fsm.assignCallbackValue( st_Green,    "GREEN" );
 	fsm.assignCallbackValue( st_Orange,   "ORANGE" );

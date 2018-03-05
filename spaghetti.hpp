@@ -27,13 +27,12 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.41
+#define SPAG_VERSION 0.5
 
 #include <vector>
 #include <map>
 #include <algorithm>
 #include <functional>
-#include <memory>
 #include <cassert>
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
@@ -114,6 +113,7 @@ This program is free software: you can redistribute it and/or modify
 #define SPAG_P_STRINGIZE2( a ) #a
 #define SPAG_STRINGIZE( a ) SPAG_P_STRINGIZE2( a )
 
+/// Private macro, used to convert a 'state' type into an integer
 #define SPAG_P_CAST2IDX( a ) static_cast<size_t>(a)
 
 
@@ -440,6 +440,13 @@ struct NoTimer;
 #endif
 
 //-----------------------------------------------------------------------------------
+/// Options for printing the dotfile, see SpagFSM::writeDotFile()
+struct DotFileOptions
+{
+	bool showActiveState = true;
+};
+
+//-----------------------------------------------------------------------------------
 /// A class holding data for a FSM, without the event loop
 /**
 types:
@@ -628,7 +635,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 /// Assigns a callback function to all the states, will be called each time the state is activated
-		void assignGlobalCallback( Callback_t func )
+		void assignCallback( Callback_t func )
 		{
 			for( size_t i=0; i<nbStates(); i++ )
 				_stateInfo[ SPAG_P_CAST2IDX(i) ]._callback = func;
@@ -703,12 +710,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 		void assignCBValuesStrings()
 		{
-			if( std::is_same<CBA,std::string>::value )
-				for( size_t i=0; i<nbStates(); i++ )
-					assignCallbackValue( static_cast<ST>(i), _strStates[i] );
-			else
-				std::cout << priv::getSpagName() << ": warning, unable to assign strings to callback values, type is not std::string\n";
-
+			static_assert( std::is_same<CBA,std::string>::value, "Error, unable to assign strings to callback values, callback type is not std::string\n" );
+			for( size_t i=0; i<nbStates(); i++ )
+				assignCallbackValue( static_cast<ST>(i), _strStates[i] );
 		}
 
 #else
@@ -914,9 +918,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 #ifdef SPAG_GENERATE_DOTFILE
 /// Generates in current folder a dot file corresponding to the FSM
-		void writeDotFile( std::string fn ) const;
+		void writeDotFile( std::string fn, DotFileOptions opt=DotFileOptions() ) const;
 #else
-		void writeDotFile( std::string ) const {}
+		void writeDotFile( std::string, DotFileOptions ) const {}
 #endif
 ///@}
 
@@ -1244,16 +1248,23 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 /// Saves in current folder a .dot file of the FSM, to be rendered with Graphviz
 template<typename ST, typename EV,typename T,typename CBA>
 void
-SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname ) const
+SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) const
 {
 	std::ofstream f ( fname );
 	if( !f.is_open() )
 		SPAG_P_THROW_ERROR_RT( "error, unable to open file: " + fname );
 	f << "digraph G {\n";
 	f << "rankdir=LR;\n";
-	f << "0 [label=\"S0\",shape=\"doublecircle\"];\n";
-	for( size_t j=1; j<nbStates(); j++ )
-		f << j << " [label=\"S" << j << "\"];\n";
+	for( size_t j=0; j<nbStates(); j++ )
+	{
+		f << j << " [label=\"S" << j << "\"";
+		if( j == 0 )                                // initial state
+			f << ",shape=doublecircle";
+		if( opt.showActiveState )
+			if( SPAG_P_CAST2IDX( currentState() ) == j )
+				f << ",style=filled,fillcolor=black,fontcolor=white";
+		f << "];\n";
+	}
 	for( size_t i=0; i<nbEvents(); i++ )
 		for( size_t j=0; j<nbStates(); j++ )
 			if( _allowedMat[i][j] )

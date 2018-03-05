@@ -109,7 +109,7 @@ The only constraint is that they must have the same signature.
 Alternatively (and that is useful if you have a lot of states), you can provide the callback function for all the states, and separately set the argument value:
 
 ```C++
-	fsm.assignGlobalCallback( cb_func );
+	fsm.assignCallback( cb_func );
 	fsm.assignCallbackValue( st_Unlocked, false );
 	fsm.assignCallbackValue( st_Locked,   true );
 ```
@@ -212,7 +212,7 @@ void myCallback( std::string v )
 ```
 And the configuration will include this:
 ```C++
-	fsm.assignGlobalCallback( myCallback );
+	fsm.assignCallback( myCallback );
 	fsm.assignCallbackValue( st_Red,    "red" );
 	fsm.assignCallbackValue( st_Orange, "Orange" );
 	fsm.assignCallbackValue( st_Green,  "Green" );

@@ -52,7 +52,7 @@ void UI_thread( const FSM* fsm )
 
 void configureFSM( fsm_t& fsm )
 {
-	fsm.assignGlobalCallback( cb_func );
+	fsm.assignCallback( cb_func );
 
 	std::map<States,std::string> mstr = {
 		{ st0, "START"  },
