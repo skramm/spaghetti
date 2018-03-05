@@ -11,6 +11,8 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 - OS: any one, as long as you have a C++11 compiler
 - Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018.
 
+![FSM gif](https://github.com/skramm/spaghetti/blob/master/docs/out.gif)
+
 ## General information
 
 ### What is this ?
