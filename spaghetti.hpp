@@ -558,18 +558,18 @@ class SpagFSM
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
-		void assignTimeOut( Duration dur, ST st_final )
+		void assignGlobalTimeOut( Duration dur, ST st_final )
 		{
-			assignTimeOut( dur, _defaultTimerUnit, st_final );
+			assignGlobalTimeOut( dur, _defaultTimerUnit, st_final );
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final, using unit \c durUnit
-		void assignTimeOut( Duration dur, ST st_final, std::string durUnit )
+		void assignGlobalTimeOut( Duration dur, std::string durUnit, ST st_final )
 		{
 			auto tu = priv::timeUnitFromString( durUnit );
 			if( !tu.first )
 				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + durUnit );
-			assignTimeOut( dur, tu.second, st_final );
+			assignGlobalTimeOut( dur, tu.second, st_final );
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final, using unit \c durUnit
@@ -577,7 +577,7 @@ class SpagFSM
 After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
 (where there may or may not be a timeout assigned)
 */
-		void assignTimeOut( Duration dur, DurUnit durUnit, ST st_final )
+		void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			for( size_t i=0; i<nbStates(); i++ )

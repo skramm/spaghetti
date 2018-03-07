@@ -45,7 +45,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st_Locked,   ev_Push, st_Locked );
 	fsm.assignTransition( st_Unlocked, ev_Coin, st_Unlocked );
 
-	fsm.assignTimeOut( 6, st_error );
+	fsm.assignGlobalTimeOut( 6, "sec", st_error );
 //	fsm.assignTimeOut( st_Locked,   1, st_Locked ); // this works !
 	fsm.assignTimeOut( st_Unlocked, 3, st_Locked );
 
