@@ -65,17 +65,17 @@ This program is free software: you can redistribute it and/or modify
 #endif
 
 #define SPAG_P_THROW_ERROR_RT( msg ) \
-	throw std::runtime_error( spag::priv::getSpagName() + ": runtime error in " + __FUNCTION__ + "(): " + msg )
+	throw std::runtime_error( spag::priv::getSpagName() + "runtime error in " + __FUNCTION__ + "(): " + msg )
 
 #define SPAG_P_THROW_ERROR_CFG( msg ) \
-	throw std::logic_error( spag::priv::getSpagName() + ": configuration error in " + __FUNCTION__ + "(): " + msg )
+	throw std::logic_error( spag::priv::getSpagName() + "configuration error in " + __FUNCTION__ + "(): " + msg )
 
 #ifdef SPAG_FRIENDLY_CHECKING
 	#define SPAG_CHECK_EQUAL( a, b ) \
 	{ \
 		if( (a) != (b) ) \
 		{ \
-			std::cerr << spag::priv::getSpagName() << ": runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
+			std::cerr << spag::priv::getSpagName() << "runtime error in func: " << __FUNCTION__ << "(), values are not equal:\n" \
 				<< " - "   << #a << " value=" << a \
 				<< "\n - " << #b << " value=" << b << '\n'; \
 			SPAG_P_THROW_ERROR_CFG( "values are not equal" ); \
@@ -91,7 +91,7 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_P_ASSERT( a, msg ) \
 		if(!(a) ) \
 		{ \
-			std::cerr << priv::getSpagName() << ": assert failure in function " << __FUNCTION__ \
+			std::cerr << priv::getSpagName() << "assert failure in function " << __FUNCTION__ \
 				<< "(): condition \"" << #a << "\" is false, " << msg << '\n'; \
 				std::exit(1); \
 		}
@@ -101,7 +101,7 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_CHECK_LESS( a, b ) \
 		if( !( (a) < (b) ) )\
 		{ \
-			std::cerr << spag::priv::getSpagName() << ": runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
+			std::cerr << spag::priv::getSpagName() << "runtime error in func: " << __FUNCTION__ << "(), value is incorrect:\n" \
 				<< " - "   << #a << " value=" << a \
 				<< "\n - " << #b << " max value=" << b << '\n'; \
 			SPAG_P_THROW_ERROR_CFG( "incorrect values" ); \
@@ -175,7 +175,7 @@ stringFromTimeUnit( DurUnit du )
 static std::string&
 getSpagName()
 {
-	static std::string str{"Spaghetti"};
+	static std::string str{"Spaghetti: "};
 	return str;
 }
 //-----------------------------------------------------------------------------------
@@ -402,11 +402,14 @@ enum EN_ConfigError
 
 //-----------------------------------------------------------------------------------
 /// Configuration error printing function
+/**
+\todo transform into member function so it can printout strings
+*/
 inline
 std::string
 getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 {
-	std::string msg( getSpagName() + ": configuration error: state " );
+	std::string msg( getSpagName() + "configuration error: state " );
 	msg += std::to_string( st );
 //#ifdef SPAG_ENUM_STRINGS
 //	msg += " '";
@@ -555,34 +558,41 @@ class SpagFSM
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
-/**
-calls assignGlobalTimeOut( ST, Duration, DurUnit )
-*/
-		void assignGlobalTimeOut( ST st_final, Duration dur )
+		void assignTimeOut( Duration dur, ST st_final )
 		{
-			assignGlobalTimeOut( st_final, dur, _defaultTimerUnit );
+			assignTimeOut( dur, _defaultTimerUnit, st_final );
 		}
+
 /// Assigns an timeout event on \b all states except \c st_final
 /**
 After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
 (where there may or may not be a timeout assigned)
 */
-		void assignGlobalTimeOut( ST st_final, Duration dur, DurUnit durUnit )
+		void assignTimeOut( Duration dur, DurUnit durUnit, ST st_final )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_final), nbStates() );
 			for( size_t i=0; i<nbStates(); i++ )
 				if( i != SPAG_P_CAST2IDX(st_final) )
-					_stateInfo[ SPAG_P_CAST2IDX( st_final ) ]._timerEvent = priv::TimerEvent<ST>( st_final, dur, durUnit );
+				{
+					auto te = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;
+					if( te._enabled )
+					{
+						std::string err_msg = "assign global timeout of " + std::to_string( dur ) + " " + priv::stringFromTimeUnit( durUnit );
+						err_msg += ": removal of previously assigned timeout on state '" + std::to_string( i ) + "' ";
+#ifdef SPAG_ENUM_STRINGS
+						err_msg += " (" + _strStates[i] + ") ";
+#endif
+						err_msg += "of value " + std::to_string( te._duration ) + " " + priv::stringFromTimeUnit( te._durUnit );
+						SPAG_P_THROW_ERROR_CFG( err_msg );
+					}
+					assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
+				}
 		}
 
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
 		void assignTimeOut( ST st_curr, Duration dur, ST st_next )
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
-			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, _defaultTimerUnit );
+			assignTimeOut( st_curr, dur, _defaultTimerUnit, st_next );
 		}
 
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next. With units
@@ -595,15 +605,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next. With units as strings
-		void assignTimeOut( ST st_curr, Duration dur, std::string str, ST st_next )
+		void assignTimeOut( ST st_curr, Duration dur, std::string unit, ST st_next )
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
-			auto tu = priv::timeUnitFromString( str );
+			auto tu = priv::timeUnitFromString( unit );
 			if( !tu.first )
-				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + str );
-			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, tu.second );
+				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + unit );
+			assignTimeOut( st_curr, dur, tu.second, st_next );
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
@@ -1162,7 +1169,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 			unreachableStates.push_back( i );
 	for( const auto& st: unreachableStates )
 	{
-		std::cout << priv::getSpagName() << ": Warning, state " << st
+		std::cout << priv::getSpagName() << "Warning, state " << st
 #ifdef SPAG_ENUM_STRINGS
 			<< " (" << _strStates[st] << ')'
 #endif
@@ -1189,7 +1196,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 				i
 			) == unreachableStates.end() )     // AND it is not in the unreachable states list
 		{
-			std::cout << priv::getSpagName() << ": Warning, state " << i
+			std::cout << priv::getSpagName() << "Warning, state " << i
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[i] << ')'
 #endif

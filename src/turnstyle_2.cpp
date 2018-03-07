@@ -10,13 +10,14 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_EMBED_ASIO_TIMER
 #define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
+#define SPAG_ENUM_STRINGS
 //#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include <thread>
 #include <mutex>
 
-enum States { st_Locked, st_Unlocked, NB_STATES };
+enum States { st_Locked, st_Unlocked, st_error, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 
 /// callback function
@@ -26,6 +27,11 @@ void cb_func( bool b )
 		std::cout << "State: Locked\n";
 	else
 		std::cout << "State: Unlocked\n";
+}
+
+void cb_error( bool )
+{
+	std::cout << "Nobody showed up in 6 seconds, system blocked !\n";
 }
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, bool );
@@ -39,10 +45,13 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st_Locked,   ev_Push, st_Locked );
 	fsm.assignTransition( st_Unlocked, ev_Coin, st_Unlocked );
 
+	fsm.assignTimeOut( 6, st_error );
+//	fsm.assignTimeOut( st_Locked,   1, st_Locked ); // this works !
 	fsm.assignTimeOut( st_Unlocked, 3, st_Locked );
 
 	fsm.assignCallback( st_Locked,   cb_func, true );
 	fsm.assignCallback( st_Unlocked, cb_func, false );
+	fsm.assignCallback( st_error, cb_error );
 }
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
