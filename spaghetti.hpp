@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.5
+#define SPAG_VERSION 0.51
 
 #include <vector>
 #include <map>
@@ -143,6 +143,7 @@ namespace priv {
 
 //-----------------------------------------------------------------------------------
 /// helper function
+inline
 std::pair<bool,DurUnit>
 timeUnitFromString( std::string str ) noexcept
 {
@@ -156,6 +157,7 @@ timeUnitFromString( std::string str ) noexcept
 }
 //-----------------------------------------------------------------------------------
 /// helper function
+inline
 std::string
 stringFromTimeUnit( DurUnit du )
 {
@@ -209,6 +211,7 @@ struct StateInfo
 };
 //-----------------------------------------------------------------------------------
 /// Private, helper function
+inline
 void
 PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 {
@@ -399,6 +402,7 @@ enum EN_ConfigError
 
 //-----------------------------------------------------------------------------------
 /// Configuration error printing function
+inline
 std::string
 getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
 {
@@ -1020,7 +1024,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 namespace priv
 {
 //-----------------------------------------------------------------------------------
-void printChars( std::ostream& out, size_t n, char c )
+inline
+void
+printChars( std::ostream& out, size_t n, char c )
 {
 	for( size_t i=0; i<n; i++ )
 		out << c;
