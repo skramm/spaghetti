@@ -66,6 +66,13 @@ This is demonstrated in sample program ```src/sample_3.cpp```<br>
 But **be careful**, because in that case, no checking will be done on what you will change on the configuration of the FSM structure.
 You could make the FSM run into some invalid configuration, leading to undefined behavior.
 
+- **Q**: *Can I have as callback function a class member function?*<br>
+**A**: Sure! This is of course useful so that the callback can handle some data. The only technical issue is that you cannot store a non-static function into a ```std::function``` object. So the workaround is that you will need to use a *binding* trick. This is demonstrated in
+[src/traffic_lights_1c.cpp](../../../tree/master/src/traffic_lights_1c.cpp):
+```C++
+   fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )
+```
+
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
 If you do, then this has been tested as successful against Boost 1.54.
