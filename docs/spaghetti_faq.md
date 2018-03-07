@@ -62,16 +62,19 @@ But you can always use anything, say an integer, and ignore its value.
 - **Q**: *Can I pass the FSM object itself as callback argument?*<br/>
 **A**: No, as the callback argument is a template parameter of the FSM. You would get into some infinite recursion...
 But you can then make the FSM object global, so the callbacks can access it.s
-This is demonstrated in sample program ```src/sample_3.cpp```<br>
+This is demonstrated in sample program
+[```src/sample_3.cpp```](../../../tree/master/src/sample_3.cpp).<br>
 But **be careful**, because in that case, no checking will be done on what you will change on the configuration of the FSM structure.
 You could make the FSM run into some invalid configuration, leading to undefined behavior.
 
 - **Q**: *Can I have as callback function a class member function?*<br>
 **A**: Sure! This is of course useful so that the callback can handle some data. The only technical issue is that you cannot store a non-static function into a ```std::function``` object. So the workaround is that you will need to use a *binding* trick. This is demonstrated in
-[src/traffic_lights_1c.cpp](../../../tree/master/src/traffic_lights_1c.cpp):
+[```src/traffic_lights_1c.cpp```](../../../tree/master/src/traffic_lights_1c.cpp):
 ```C++
    fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )
 ```
+Of course, you will need to include the header
+[```<functional>```](http://en.cppreference.com/w/cpp/utility/functional).
 
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
@@ -82,7 +85,7 @@ But it *should* be okay with todays current release (1.66 at the time of writing
 **A**: at present, no, but this is considered for future releases
 
 - **Q**: *Can I have two concurrent FSM working at the same time?*<br/>
-**A**: Yes! See sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp) that demonstrates this.
+**A**: Yes! See sample program [```src/sample_2.cpp```](../../../tree/master/src/sample_2.cpp) that demonstrates this.
 This requires defining the symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see [build options](spaghetti_options.md).
 
 - **Q**: *Does this library provide serialization of the configuration of the FSM, so i can easily save it to a file?*<br/>
