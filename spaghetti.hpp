@@ -563,7 +563,16 @@ class SpagFSM
 			assignTimeOut( dur, _defaultTimerUnit, st_final );
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final
+/// Assigns an timeout event on \b all states except \c st_final, using unit \c durUnit
+		void assignTimeOut( Duration dur, ST st_final, std::string durUnit )
+		{
+			auto tu = priv::timeUnitFromString( durUnit );
+			if( !tu.first )
+				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + durUnit );
+			assignTimeOut( dur, tu.second, st_final );
+		}
+
+/// Assigns an timeout event on \b all states except \c st_final, using unit \c durUnit
 /**
 After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
 (where there may or may not be a timeout assigned)
@@ -580,9 +589,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 						std::string err_msg = "assign global timeout of " + std::to_string( dur ) + " " + priv::stringFromTimeUnit( durUnit );
 						err_msg += ": removal of previously assigned timeout on state '" + std::to_string( i ) + "' ";
 #ifdef SPAG_ENUM_STRINGS
-						err_msg += " (" + _strStates[i] + ") ";
+						err_msg += "(" + _strStates[i] + ") ";
 #endif
-						err_msg += "of value " + std::to_string( te._duration ) + " " + priv::stringFromTimeUnit( te._durUnit );
+						err_msg += ", value " + std::to_string( te._duration ) + " " + priv::stringFromTimeUnit( te._durUnit );
 						SPAG_P_THROW_ERROR_CFG( err_msg );
 					}
 					assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
@@ -611,6 +620,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( !tu.first )
 				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + unit );
 			assignTimeOut( st_curr, dur, tu.second, st_next );
+		}
+/// removes all the timeouts
+		void clearTimeOut( )
+		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			for( size_t i=0; i<nbStates(); i++ )
+				_stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent._enabled = false;
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
