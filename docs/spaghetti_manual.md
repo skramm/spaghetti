@@ -3,7 +3,7 @@
 Homepage: https://github.com/skramm/spaghetti
 
 This page demonstrates usage of the library through several showcases, and gives additional details.
-All the example are included an runnable in the src folder, just ```make demo```, then run ```bin/program_name```.
+All the example are included and runnable in the src folder, just ```make demo```, then run ```bin/program_name```.
 
 For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
