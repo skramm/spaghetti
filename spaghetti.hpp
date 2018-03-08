@@ -82,7 +82,7 @@ This program is free software: you can redistribute it and/or modify
 		} \
 	}
 #else
-	#define SPAG_CHECK_EQUAL( a, b ) assert( a == b )
+	#define SPAG_CHECK_EQUAL( a, b ) assert( (a) == (b) )
 #endif
 
 #ifdef NDEBUG
@@ -107,7 +107,7 @@ This program is free software: you can redistribute it and/or modify
 			SPAG_P_THROW_ERROR_CFG( "incorrect values" ); \
 		}
 #else
-	#define SPAG_CHECK_LESS( a, b ) assert( a < b )
+	#define SPAG_CHECK_LESS( a, b ) assert( (a) < (b) )
 #endif
 
 #define SPAG_P_STRINGIZE2( a ) #a
@@ -357,11 +357,11 @@ struct RunTimeData
 	}
 /// Logs a transition from current state to state \c st, that was produced by event \c ev
 /**
-event stored as size_t because we may pass values other thant the ones in the enum (timeout and Always Active transitions)
+event stored as size_t because we may pass values other than the ones in the enum (timeout and Always Active transitions)
 */
 	void logTransition( ST st, size_t ev )
 	{
-		assert( ev < EV::NB_EVENTS+2 );
+		assert( ev < SPAG_P_CAST2IDX( EV::NB_EVENTS ) + 2 );
 		assert( st < ST::NB_STATES );
 		_eventCounter[ ev ]++;
 		_stateCounter[ SPAG_P_CAST2IDX(st) ]++;
@@ -820,24 +820,24 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
-
+			auto ev_idx = SPAG_P_CAST2IDX( ev );
 #ifdef SPAG_ENUM_STRINGS
-			SPAG_LOG << "processing event " << ev << ": \"" << _strEvents[ev] << "\"\n";
+			SPAG_LOG << "processing event " << ev_idx << ": \"" << _strEvents[ev_idx] << "\"\n";
 #else
-			SPAG_LOG << "processing event " << ev << '\n';
+			SPAG_LOG << "processing event " << ev_idx << '\n';
 #endif
-			if( _allowedMat[ SPAG_P_CAST2IDX( ev ) ][ SPAG_P_CAST2IDX(_current) ] != 0 )
+			if( _allowedMat[ ev_idx ][ SPAG_P_CAST2IDX(_current) ] != 0 )
 			{
-				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )               // 1 - cancel the waiting timer, if any
+				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )  // 1 - cancel the waiting timer, if any
 				{
 					SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
 					_timer->timerCancel();
 				}
-				_current = _transitionMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(_current) ];      // 2 - switch to next state
+				_current = _transitionMat[ ev_idx ][ SPAG_P_CAST2IDX(_current) ];     // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
-				_rtdata.logTransition( _current, ev );
+				_rtdata.logTransition( _current, ev_idx );
 #endif
-				runAction();                                        // 3 - call the callback function
+				runAction();                                                          // 3 - call the callback function
 			}
 			else
 				SPAG_LOG << "event is ignored\n";
@@ -1071,9 +1071,6 @@ printChars( std::ostream& out, size_t n, char c )
 
 //-----------------------------------------------------------------------------------
 /// Configuration error printing function
-/**
-\todo transform into member function so it can printout strings
-*/
 template<typename ST, typename EV,typename T,typename CBA>
 std::string
 SpagFSM<ST,EV,T,CBA>::getConfigErrorMessage( priv::EN_ConfigError ce, size_t st ) const
