@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.52
+#define SPAG_VERSION 0.53
 
 #include <vector>
 #include <map>
