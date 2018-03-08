@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.53
+#define SPAG_VERSION 0.54
 
 #include <vector>
 #include <map>
@@ -615,12 +615,28 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + unit );
 			assignTimeOut( st_curr, dur, tu.second, st_next );
 		}
-/// removes all the timeouts
-		void clearTimeOut( )
+/// Removes all the timeouts
+		void clearTimeOuts()
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
 			for( size_t i=0; i<nbStates(); i++ )
 				_stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent._enabled = false;
+		}
+/// Removes the timeout on state \c ct
+		void clearTimeOut( ST st )
+		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			auto st_idx = SPAG_P_CAST2IDX( st );
+			SPAG_CHECK_LESS( st_idx, nbStates() );
+			if( !_stateInfo[ st_idx ]._timerEvent._enabled )
+			{
+				std::cerr << priv::getSpagName() << "warning: asking for removal of timeout on state " << st_idx
+#ifdef SPAG_ENUM_STRINGS
+					<< " (" << _strStates[st_idx]  << ')'
+#endif
+					<< " but state has no timeout assigned...\n";
+			}
+			_stateInfo[ st_idx ]._timerEvent._enabled = false;
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
