@@ -401,39 +401,6 @@ enum EN_ConfigError
 };
 
 //-----------------------------------------------------------------------------------
-/// Configuration error printing function
-/**
-\todo transform into member function so it can printout strings
-*/
-inline
-std::string
-getConfigErrorMessage( priv::EN_ConfigError ce, size_t st )
-{
-	std::string msg( getSpagName() + "configuration error: state " );
-	msg += std::to_string( st );
-//#ifdef SPAG_ENUM_STRINGS
-//	msg += " '";
-//	msg += _strStates[st];
-//	msg += "'";
-//#endif
-	msg += ' ';
-
-	switch( ce )
-	{
-		case CE_TimeOutAndPassState:
-			msg += "cannot have both a timeout and a pass-state flag";
-		break;
-		case CE_IllegalPassState:
-			msg += "cannot be followed by another pass-state";
-		break;
-		case CE_SamePassState:
-			msg += "pass-state cannot lead to itself";
-		break;
-		default: assert(0);
-	}
-	return msg;
-}
-
 /// Dummy struct, useful in case there is no need for a timer
 template<typename ST, typename EV,typename CBA=int>
 struct NoTimer;
@@ -541,11 +508,26 @@ class SpagFSM
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev),  nbEvents() );
-			_transitionMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = st2;
-			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX( st1 ) ] = 1;
+			auto st1_idx = SPAG_P_CAST2IDX(st1);
+			if( _stateInfo[st1_idx]._isPassState )
+			{
+				std::string err_msg{ "error, attempting to assign a transition to state" };
+				err_msg += std::to_string( st1_idx );
+#ifdef SPAG_ENUM_STRINGS
+				err_msg += " (" + _strStates[ st1_idx ] + ")";
+#endif
+				err_msg += ", was previously declared as pass-state";
+				SPAG_P_THROW_ERROR_CFG( err_msg );
+			}
+
+			_transitionMat[ SPAG_P_CAST2IDX(ev) ][ st1_idx ] = st2;
+			_allowedMat[    SPAG_P_CAST2IDX(ev) ][ st1_idx ] = 1;
 		}
 
 /// Assigns a transition to a "pass state": once on state \c st1, the FSM will switch right away to \c st2
+/**
+\warning If a time out has previously been assigned to state \c st1, it will be removed
+*/
 		void assignTransition( ST st1, ST st2 )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
@@ -555,6 +537,18 @@ class SpagFSM
 			for( auto& line: _allowedMat )
 				line[ SPAG_P_CAST2IDX( st1 ) ] = 1;
 			_stateInfo[st1]._isPassState = 1;
+			auto& te = _stateInfo[st1]._timerEvent;
+			if( te._enabled )
+			{
+				std::cerr << priv::getSpagName() << "warning, removal of timeout of "
+					<< te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
+					<< " on state " << SPAG_P_CAST2IDX(st1)
+#ifdef SPAG_ENUM_STRINGS
+					<< " (" << _strStates[st1] << ')'
+#endif
+					<< '\n';
+				te._enabled = false;
+			}
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
@@ -586,8 +580,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 					auto te = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;
 					if( te._enabled )
 					{
-						std::string err_msg = "assign global timeout of " + std::to_string( dur ) + " " + priv::stringFromTimeUnit( durUnit );
-						err_msg += ": removal of previously assigned timeout on state '" + std::to_string( i ) + "' ";
+						std::string err_msg = "error, assigning global timeout of " + std::to_string( dur ) + " " + priv::stringFromTimeUnit( durUnit );
+						err_msg += ": unable because of previously assigned timeout on state '" + std::to_string( i ) + "' ";
 #ifdef SPAG_ENUM_STRINGS
 						err_msg += "(" + _strStates[i] + ") ";
 #endif
@@ -998,6 +992,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 		void printMatrix( std::ostream& str ) const;
 		bool isReachable( size_t ) const;
+		std::string getConfigErrorMessage( priv::EN_ConfigError ce, size_t st ) const;
 
 /////////////////////////////
 // private data section
@@ -1059,6 +1054,40 @@ printChars( std::ostream& out, size_t n, char c )
 } // namespace priv
 
 //-----------------------------------------------------------------------------------
+/// Configuration error printing function
+/**
+\todo transform into member function so it can printout strings
+*/
+template<typename ST, typename EV,typename T,typename CBA>
+std::string
+SpagFSM<ST,EV,T,CBA>::getConfigErrorMessage( priv::EN_ConfigError ce, size_t st ) const
+{
+	std::string msg( priv::getSpagName() + "configuration error: state " );
+	msg += std::to_string( st );
+#ifdef SPAG_ENUM_STRINGS
+	msg += " '";
+	msg += _strStates[st];
+	msg += "'";
+#endif
+	msg += ' ';
+
+	switch( ce )
+	{
+		case priv::CE_TimeOutAndPassState:
+			msg += "cannot have both a timeout and a pass-state flag";
+		break;
+		case priv::CE_IllegalPassState:
+			msg += "cannot be followed by another pass-state";
+		break;
+		case priv::CE_SamePassState:
+			msg += "pass-state cannot lead to itself";
+		break;
+		default: assert(0);
+	}
+	return msg;
+}
+
+//-----------------------------------------------------------------------------------
 /// helper function template for printConfig()
 template<typename ST, typename EV,typename T,typename CBA>
 void
@@ -1082,14 +1111,17 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		out << "---";
 	out << '\n';
 
-#ifdef SPAG_ENUM_STRINGS
-	for( size_t i=0; i<nbEvents()+2; i++ )
+	auto nbLines = nbEvents()+2;
+#ifndef SPAG_ENUM_STRINGS
+	nbLines = std::max( capt.size(), nbEvents()+2 );
+#endif
+
+	for( size_t i=0; i<nbLines; i++ )
 	{
+#ifdef SPAG_ENUM_STRINGS
 		if( maxlength )
 			priv::PrintEnumString( out, _strEvents[i], maxlength );
 #else
-	for( size_t i=0; i<std::max( capt.size(), nbEvents()+2 ); i++ )
-	{
 		if( i<capt.size() )
 			out << capt[i];
 		else
@@ -1101,7 +1133,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			out << ' ' << i << " | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
-				if( _allowedMat[i][j] )
+				if( _allowedMat[i][j] && !_stateInfo[j]._isPassState )
 					out << _transitionMat[i][j];
 				else
 					out << '.';
@@ -1110,7 +1142,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		}
 		if( i == nbEvents() ) // TimeOut
 		{
-			out << " TO| ";
+			out << "   | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._timerEvent._enabled )
@@ -1121,11 +1153,11 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		}
 		if( i == nbEvents()+1 ) // Pass-state
 		{
-			out << " PS| ";
+			out << "   | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._isPassState )
-					out << _transitionMat[0][j] << " ";
+					out << _transitionMat[0][j] << "  ";
 				else
 					out << ".  ";
 			}
@@ -1168,13 +1200,13 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		{
 			size_t nextState = SPAG_P_CAST2IDX( _transitionMat[0][i] );
 			if( nextState == i )
-				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_SamePassState, i ) );
+				SPAG_P_THROW_ERROR_CFG( getConfigErrorMessage( priv::CE_SamePassState, i ) );
 
 			if( _stateInfo[ nextState ]._isPassState )
-				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
+				SPAG_P_THROW_ERROR_CFG( getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
 
 			if( state._timerEvent._enabled )
-				SPAG_P_THROW_ERROR_CFG( priv::getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
+				SPAG_P_THROW_ERROR_CFG( getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
 		}
 	}
 
@@ -1247,7 +1279,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		out << "| ";
 		if( te._enabled )
 		{
-			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << " => " << te._nextState;
+			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << " => St." << te._nextState;
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
 			priv::PrintEnumString( out, _strStates[te._nextState], maxlength );
@@ -1258,7 +1290,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		{
 			if( _stateInfo[i]._isPassState )
 			{
-				out << "AAT => " << _transitionMat[0][i];
+				out << "AAT => St." << _transitionMat[0][i];
 #ifdef SPAG_ENUM_STRINGS
 				out << " (";
 				priv::PrintEnumString( out, _strStates[_transitionMat[0][i]], maxlength );
