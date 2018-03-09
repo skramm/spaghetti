@@ -207,7 +207,11 @@ struct StateInfo
 	TimerEvent<ST>           _timerEvent;   ///< Holds for each state the information on timeout
 	std::function<void(CBA)> _callback;     ///< callback function
 	CBA                      _callbackArg;  ///< value of argument of callback function
-	bool                     _isPassState = false;  ///< true if this is a "pass state", that is a state with only one transition and no timeout
+/// True if this is a "pass state", that is a state with only one transition and no timeout.
+/// Destination state is stored in transition matrix
+	bool                     _isPassState = false;
+	bool*                    _condition;  ///< pointer on condition that will be evaluated when state is activated
+	ST                       _condDestState;
 };
 //-----------------------------------------------------------------------------------
 /// Private, helper function
@@ -551,6 +555,13 @@ class SpagFSM
 			}
 		}
 
+		void assignTransition( ST st1, bool& condition, ST st2 )
+		{
+			auto st1_idx = SPAG_P_CAST2IDX(st1);
+			_stateInfo[ st1_idx ]._condition = &condition;
+			_stateInfo[ st1_idx ]._condDestState = st2;
+		}
+
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
 		void assignGlobalTimeOut( Duration dur, ST st_final )
 		{
@@ -698,8 +709,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_EQUAL( nbEvents(), fsm.nbEvents() );
 			SPAG_CHECK_EQUAL( nbStates(), fsm.nbStates() );
 			_transitionMat = fsm._transitionMat;
-			_allowedMat = fsm._allowedMat;
-			_stateInfo      = fsm._stateInfo;
+			_allowedMat    = fsm._allowedMat;
+			_stateInfo     = fsm._stateInfo;
 #ifdef SPAG_ENUM_STRINGS
 			_strEvents     = fsm._strEvents;
 			_strStates     = fsm._strStates;
@@ -773,11 +784,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 			doChecking();
 			_isRunning = true;
-			runAction();
 
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.incrementInitState();
 #endif
+			runAction();
 
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
@@ -807,7 +818,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void processTimeOut() const
 		{
 			SPAG_LOG << "processing timeout event, delay was " << _stateInfo[ _current ]._timerEvent._duration << "\n";
-			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent._enabled ); // or else, the timer shoudn't have been started, and thus we shouldn't be here...
+			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent._enabled ); // or else, the timer shouldn't have been started, and thus we shouldn't be here...
 			_current = _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._nextState;
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.logTransition( _current, nbEvents() );
@@ -970,23 +981,32 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void runAction() const
 		{
 			SPAG_LOG << "switching to state " << SPAG_P_CAST2IDX(_current) << ", starting action\n";
-
-			auto stateInfo = _stateInfo[ SPAG_P_CAST2IDX(_current) ];
+			auto curr_idx = SPAG_P_CAST2IDX(_current);
+			auto stateInfo = _stateInfo[ curr_idx ];
 			runAction_DoJob( stateInfo );
+
+			if( *stateInfo._condition )
+			{
+/// \todo !
+			}
 
 			if( stateInfo._isPassState )
 			{
 				assert( !stateInfo._timerEvent._enabled );
-				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transitionMat[0][ SPAG_P_CAST2IDX(_current) ]) << '\n';
-				_current =  _transitionMat[0][ SPAG_P_CAST2IDX(_current) ];
+				SPAG_LOG << "is pass-state, switching to state " << SPAG_P_CAST2IDX(_transitionMat[0][ curr_idx ]) << '\n';
+				_current =  _transitionMat[0][ curr_idx ];
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, nbEvents()+1 );
 #endif
-				runAction_DoJob( _stateInfo[ SPAG_P_CAST2IDX(_current) ] );
+				runAction_DoJob( _stateInfo[ curr_idx ] );
 			}
 		}
 
 /// sub-function of runAction(), needed for pass-states
+/**
+#- starts timer, if needed
+#- calls callback function, if any
+*/
 		void runAction_DoJob( const priv::StateInfo<ST,CBA>& stateInfo ) const
 		{
 			SPAG_LOG << '\n';
