@@ -220,7 +220,7 @@ struct StateInfo
 /// True if this is a "pass state", that is a state with only one transition and no timeout.
 /// Destination state is stored in transition matrix
 	bool                      _isPassState = false;
-	InnerTransition<ST,EV>    _internTrans;
+	InnerTransition<ST,EV>    _innerTrans;
 };
 //-----------------------------------------------------------------------------------
 /// Private, helper function
@@ -564,11 +564,12 @@ class SpagFSM
 			}
 		}
 
-		void assignTransition_2( ST st1, EV ev, ST st2 )
+		void assignInnerTransition( ST st1, EV ev, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
-			_stateInfo[ st1_idx ]._internalTransition._hasOne = true;
-			_stateInfo[ st1_idx ]._internalTransition._innerEvent = ev;
+			_stateInfo[ st1_idx ]._innerTrans._hasOne = true;
+			_stateInfo[ st1_idx ]._innerTrans._innerEvent = ev;
+			_stateInfo[ st1_idx ]._innerTrans._destState  = st2;
 			_eventInfo[ ev ] = std::make_pair( st1, st2 );
 		}
 
@@ -864,8 +865,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				SPAG_LOG << "event is ignored\n";
 		}
 
-/// Process defered event: raise a signal that will be handled after current event / callback is finished
-		void processEvent_def( EV ev )
+/// Process defered event: set the inner signal to true, so that a signal will be raised when we are on that state. It will be handled after current event / callback is finished
+		void processInnerEvent( EV ev )
 		{
 			SPAG_LOG << "\n";
 
@@ -873,8 +874,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( _eventInfo.find( ev ) == _eventInfo.end() )
 				throw std::runtime_error( "request for processing inner event but has not been configured" );
 			ST st1 = _eventInfo[ev].first;
-			assert( _stateInfo[ SPAG_P_CAST2IDX(st1) ]._internTransition._hasOne );
-			_stateInfo[ SPAG_P_CAST2IDX(st1) ]._internTransition._flag = true;
+
+			assert( _stateInfo[ SPAG_P_CAST2IDX(st1) ]._innerTrans._hasOne );
+			_stateInfo[ SPAG_P_CAST2IDX(st1) ]._innerTrans._flag = true;
 		}
 ///@}
 
@@ -1048,11 +1050,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			else
 				SPAG_LOG << "no callback provided\n";
 
-			if( stateInfo._internalTransition._hasOne )
+			if( stateInfo._innerTrans._hasOne )
 			{
 				assert( !stateInfo._isPassState );
 				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
-				if( stateInfo._internalTransition._flag )
+				if( stateInfo._innerTrans._flag )
 					_timer->raiseSignal();
 			}
 		}
@@ -1578,7 +1580,8 @@ struct AsioWrapper
 		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
 		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
 		auto stateInfo = fsm->getStateInfo( st_idx );
-//		assert( stateInfo.)
+
+//		fsm->ProcessInne
 
 
 		_signals.async_wait(                                   // re-initialize signal handler
@@ -1593,9 +1596,7 @@ struct AsioWrapper
 	}
 	void raiseSignal()
 	{
-//		std::cout << "raiseSignal() BEFORE!\n";
 		std::raise( SIGUSR1 );
-//		std::cout << "raiseSignal() AFTER!\n";
 	}
 #endif
 };

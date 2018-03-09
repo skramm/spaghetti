@@ -38,7 +38,7 @@ struct TestClass
 //			surprise = true;
 			std::cout << "process special !\n";
 			redCounter =0;
-			fsm.processEvent_def( ev_special );
+			fsm.processInnerEvent( ev_special );
 		}
 		std::cout << "callback end\n";
 	}
@@ -51,7 +51,7 @@ struct TestClass
 		fsm.assignTimeOut( st_Green,  600, st_Orange );
 		fsm.assignTimeOut( st_Orange, 300, st_Red   );
 
-		fsm.assignTransition_2( st_Red, ev_special, st_All );
+		fsm.assignInnerTransition( st_Red, ev_special, st_All );
 
 		fsm.assignCallback( std::bind( &TestClass::callback, this, std::placeholders::_1 ) );
 		fsm.assignCallbackValue( st_Red,    "RED" );
