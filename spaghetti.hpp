@@ -200,8 +200,18 @@ struct TimerEvent
 	}
 };
 //-----------------------------------------------------------------------------------
+template<typename ST,typename EV>
+struct InnerTransition
+{
+	bool _hasOne = false;
+	bool _flag = false;
+
+	ST           _destState;
+	EV           _innerEvent;
+};
+//-----------------------------------------------------------------------------------
 /// Private class, holds information about a state
-template<typename ST,typename CBA>
+template<typename ST,typename EV,typename CBA>
 struct StateInfo
 {
 	TimerEvent<ST>           _timerEvent;   ///< Holds for each state the information on timeout
@@ -209,9 +219,8 @@ struct StateInfo
 	CBA                      _callbackArg;  ///< value of argument of callback function
 /// True if this is a "pass state", that is a state with only one transition and no timeout.
 /// Destination state is stored in transition matrix
-	bool                     _isPassState = false;
-	bool*                    _condition;  ///< pointer on condition that will be evaluated when state is activated
-	ST                       _condDestState;
+	bool                      _isPassState = false;
+	InnerTransition<ST,EV>    _internTrans;
 };
 //-----------------------------------------------------------------------------------
 /// Private, helper function
@@ -555,11 +564,12 @@ class SpagFSM
 			}
 		}
 
-		void assignTransition( ST st1, bool& condition, ST st2 )
+		void assignTransition_2( ST st1, EV ev, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
-			_stateInfo[ st1_idx ]._condition = &condition;
-			_stateInfo[ st1_idx ]._condDestState = st2;
+			_stateInfo[ st1_idx ]._internalTransition._hasOne = true;
+			_stateInfo[ st1_idx ]._internalTransition._innerEvent = ev;
+			_eventInfo[ ev ] = std::make_pair( st1, st2 );
 		}
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
@@ -794,7 +804,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
 			{
 				SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
-				_timer->timerInit();   // blocking function !
+				_timer->timerInit( this );   // blocking function !
 			}
 #endif
 		}
@@ -853,6 +863,19 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			else
 				SPAG_LOG << "event is ignored\n";
 		}
+
+/// Process defered event: raise a signal that will be handled after current event / callback is finished
+		void processEvent_def( EV ev )
+		{
+			SPAG_LOG << "\n";
+
+/// \todo provide more details in error message
+			if( _eventInfo.find( ev ) == _eventInfo.end() )
+				throw std::runtime_error( "request for processing inner event but has not been configured" );
+			ST st1 = _eventInfo[ev].first;
+			assert( _stateInfo[ SPAG_P_CAST2IDX(st1) ]._internTransition._hasOne );
+			_stateInfo[ SPAG_P_CAST2IDX(st1) ]._internTransition._flag = true;
+		}
 ///@}
 
 /** \name Misc. helper functions */
@@ -873,6 +896,11 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		ST currentState() const
 		{
 			return _current;
+		}
+		priv::StateInfo<ST,EV,CBA> getStateInfo( size_t idx ) const
+		{
+			assert( idx < nbStates() );
+			return _stateInfo[idx];
 		}
 /// Return duration of time out for state \c st, or 0 if none
 		std::pair<Duration,DurUnit> timeOutDuration( ST st ) const
@@ -985,11 +1013,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			auto stateInfo = _stateInfo[ curr_idx ];
 			runAction_DoJob( stateInfo );
 
-			if( *stateInfo._condition )
-			{
-/// \todo !
-			}
-
 			if( stateInfo._isPassState )
 			{
 				assert( !stateInfo._timerEvent._enabled );
@@ -1004,10 +1027,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /// sub-function of runAction(), needed for pass-states
 /**
-#- starts timer, if needed
-#- calls callback function, if any
+#- first, starts timer, if needed (first, because running callback can take some time)
+#- second, calls callback function, if any.
 */
-		void runAction_DoJob( const priv::StateInfo<ST,CBA>& stateInfo ) const
+		void runAction_DoJob( const priv::StateInfo<ST,EV,CBA>& stateInfo ) const
 		{
 			SPAG_LOG << '\n';
 			if( stateInfo._timerEvent._enabled )
@@ -1024,6 +1047,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			}
 			else
 				SPAG_LOG << "no callback provided\n";
+
+			if( stateInfo._internalTransition._hasOne )
+			{
+				assert( !stateInfo._isPassState );
+				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
+				if( stateInfo._internalTransition._flag )
+					_timer->raiseSignal();
+			}
 		}
 
 		void printMatrix( std::ostream& str ) const;
@@ -1059,10 +1090,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif // SPAG_USE_ARRAY
 
 #ifdef SPAG_USE_ARRAY
-		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state the details
+		std::array<priv::StateInfo<ST,EV,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state the details
 #else
-		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state the details
+		std::vector<priv::StateInfo<ST,EV,CBA>>  _stateInfo;         ///< Holds for each state the details
 #endif
+
+		std::map<EV,std::pair<ST,ST>> _eventInfo; ///< holds information about inner events
 
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _strEvents;      ///< holds events strings
@@ -1393,13 +1426,15 @@ template<typename ST, typename EV,typename CBA>
 struct NoTimer
 {
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
+	void timerInit(  const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
 	void timerCancel() {}
-	void timerInit() {}
+	void raiseSignal() {}
 };
 
 } // namespace priv
 
 //-----------------------------------------------------------------------------------
+
 #if defined (SPAG_USE_ASIO_TIMER)
 
 //-----------------------------------------------------------------------------------
@@ -1432,13 +1467,14 @@ struct AsioWrapper
 	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> SteadyClock;
 
 	std::unique_ptr<SteadyClock> _asioTimer; ///< pointer on timer, will be allocated in constructor
+	boost::asio::signal_set      _signals;
 
 	public:
 /// Constructor
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
-	AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
+	AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service ), _signals( _io_service )
 #else
-	AsioWrapper() : _work( _io_service )
+	AsioWrapper() : _work( _io_service ), _signals( _io_service )
 #endif
 	{
 // see http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
@@ -1447,6 +1483,8 @@ struct AsioWrapper
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
 #endif
 		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_io_service) );
+
+		_signals.add( SIGUSR1 );                               // assign signal handler for SIGUSR1
 	}
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
@@ -1457,16 +1495,30 @@ struct AsioWrapper
 	}
 
 /// Mandatory function for SpagFSM. Called only once, when FSM is started
-	void timerInit()
+	void timerInit( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		SPAG_LOG << '\n';
+
+		_signals.async_wait(            // initialize the signal handler, for deferred events
+			boost::bind(
+				&AsioWrapper<ST,EV,CBA>::signalHandler,
+				this,
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::signal_number,
+				fsm
+			)
+		);
+
 		_io_service.run();          // blocking call !!!
 	}
+
 	void timerKill()
 	{
 		SPAG_LOG << '\n';
+		_signals.clear();
 		_io_service.stop();
 	}
+
 /// Timer callback function, called when timer expires.
 	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
@@ -1490,10 +1542,10 @@ struct AsioWrapper
 		SPAG_LOG << "Canceling timer, expiry in \n";
 		_asioTimer->cancel_one();
 	}
+
 /// Start timer. Instanciation of mandatory function for SpagFSM
 	void timerStart( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-
 		auto duration = fsm->timeOutDuration( fsm->currentState() );
 		SPAG_LOG << "Starting timer with duration=" << duration.first << '\n';
 		switch( duration.second )
@@ -1519,6 +1571,33 @@ struct AsioWrapper
 			)
 		);
 	}
+
+#if 1
+	void signalHandler( const boost::system::error_code& error, int signal_number, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
+	{
+		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
+		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
+		auto stateInfo = fsm->getStateInfo( st_idx );
+//		assert( stateInfo.)
+
+
+		_signals.async_wait(                                   // re-initialize signal handler
+			boost::bind(
+				&AsioWrapper<ST,EV,CBA>::signalHandler,
+				this,
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::signal_number,
+				fsm
+			)
+		);
+	}
+	void raiseSignal()
+	{
+//		std::cout << "raiseSignal() BEFORE!\n";
+		std::raise( SIGUSR1 );
+//		std::cout << "raiseSignal() AFTER!\n";
+	}
+#endif
 };
 #endif
 
