@@ -14,6 +14,10 @@ THE_FILE:=spaghetti.hpp
 # general compiler flags
 CFLAGS = -std=c++11 -Wall -O2 -I.
 
+ifeq "$(DEBUG)" "Y"
+	CFLAGS += -DSPAG_PRINT_STATES
+endif
+
 # build options
 
 OPTIONS:= \
@@ -93,6 +97,7 @@ tests: $(EXEC_FILES_T)
 	for f in $(EXEC_FILES_T); do ./$$f; done;
 
 doc: html/index.html src/html/index.html
+	-xdg-open html/index.html
 	@echo "- Done target $@"
 
 html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css
@@ -132,7 +137,7 @@ show:
 # special target, for dev use only
 diff:
 	git diff | colordiff | aha > /tmp/diff.html
-	xdg-open /tmp/diff.html
+	-xdg-open /tmp/diff.html
 
 clean:
 	-rm $(OBJ_DIR)/*

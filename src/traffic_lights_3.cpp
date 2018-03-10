@@ -15,7 +15,6 @@ Homepage: https://github.com/skramm/spaghetti
 #include "traffic_lights_common.hpp"
 
 #define SPAG_USE_ASIO_TIMER
-//#define SPAG_PRINT_STATES
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 #define SPAG_GENERATE_DOTFILE
