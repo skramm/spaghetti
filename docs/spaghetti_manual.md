@@ -523,8 +523,7 @@ This will print out, in a CSV style:
  You can pass to this function a second parameter, to specify **what** data you want:
  - ```PrintFlags::stateCount``` : print state counters
  - ```PrintFlags::eventCount``` : print event counters
- - ```PrintFlags::history``` : print runtime history
- - ```PrintFlags::all```: all of the above (default value)
+  - ```PrintFlags::all```: all of the above (default value)
 <br>
 These flags can be "OR-ed" to have several ones active.
 

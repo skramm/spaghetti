@@ -9,7 +9,6 @@ Homepage: https://github.com/skramm/spaghetti
 
 #define SPAG_EMBED_ASIO_TIMER
 #define SPAG_GENERATE_DOTFILE
-//#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include <functional>

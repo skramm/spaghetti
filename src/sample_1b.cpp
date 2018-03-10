@@ -15,7 +15,6 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
-//#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 #include <thread>
@@ -88,5 +87,5 @@ int main( int, char* argv[] )
 	fsm.start();  // blocking !
 	thread_ui.join();
 
-	fsm.printLoggedData( std::cout, spag::PrintFlags::history );
+	fsm.printLoggedData( std::cout );
 }

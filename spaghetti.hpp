@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.54
+#define SPAG_VERSION 0.6
 
 #include <vector>
 #include <map>
@@ -42,7 +42,6 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_USE_ASIO_TIMER
 #endif
 
-
 #if defined (SPAG_USE_ASIO_TIMER)
 	#include <boost/bind.hpp>
 	#include <boost/asio.hpp>
@@ -51,8 +50,6 @@ This program is free software: you can redistribute it and/or modify
 #if defined (SPAG_USE_ASIO_TIMER) || defined (SPAG_ENABLE_LOGGING)
 	#include <chrono>
 #endif
-
-
 
 #ifdef SPAG_PRINT_STATES
 	#define SPAG_LOG \
@@ -64,11 +61,27 @@ This program is free software: you can redistribute it and/or modify
 			std::cout
 #endif
 
+#ifdef SPAG_NO_VERBOSE
+	#define SPAG_P_LOG_ERROR \
+		if(0) \
+			std::cerr
+#else
+	#define SPAG_P_LOG_ERROR \
+		if(1) \
+			std::cerr << spag::priv::getSpagName()
+#endif
+
 #define SPAG_P_THROW_ERROR_RT( msg ) \
-	throw std::runtime_error( spag::priv::getSpagName() + "runtime error in " + __FUNCTION__ + "(): " + msg )
+	{ \
+		SPAG_P_LOG_ERROR << spag::priv::getSpagName() << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
+		throw std::runtime_error( spag::priv::getSpagName() + "runtime error in " + __FUNCTION__ + "(): " + msg ); \
+	}
 
 #define SPAG_P_THROW_ERROR_CFG( msg ) \
-	throw std::logic_error( spag::priv::getSpagName() + "configuration error in " + __FUNCTION__ + "(): " + msg )
+	{ \
+		SPAG_P_LOG_ERROR << spag::priv::getSpagName() << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
+		throw std::logic_error( spag::priv::getSpagName() + "configuration error in " + __FUNCTION__ + "(): " + msg ); \
+	}
 
 #ifdef SPAG_FRIENDLY_CHECKING
 	#define SPAG_CHECK_EQUAL( a, b ) \
@@ -129,8 +142,7 @@ enum PrintFlags
 {
 	stateCount  = 0x01
 	,eventCount = 0x02
-	,history    = 0x04
-	,all        = 0x07
+	,all        = 0x03
 };
 
 
@@ -232,6 +244,7 @@ inline
 void
 PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
 {
+	assert( !str.empty() );
 	assert( str.size() <= maxlength );
 	out << str;
 	for( size_t i=0; i<maxlength-str.size(); i++ )
@@ -246,6 +259,9 @@ template<typename T>
 size_t
 getMaxLength( const T& v_str )
 {
+	assert( !v_str.empty() );
+	assert( !v_str[0].empty() );
+
 	size_t maxlength(0);
 	if( v_str.size() > 1 )
 	{
@@ -264,8 +280,24 @@ getMaxLength( const T& v_str )
 template<typename ST,typename EV>
 struct RunTimeData
 {
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/// a state-change event, used for logging
+	struct StateChangeEvent
+	{
+		size_t _state;
+		size_t _event;   ///< stored as size_t because it will hold values other than the ones in the enum
+		std::chrono::duration<double> _elapsed;
+	};
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 	public:
 #ifdef SPAG_ENUM_STRINGS
+		void init()
+		{
+			_maxlength_e = priv::getMaxLength( _strEvents );
+			_maxlength_s = priv::getMaxLength( _strStates );
+		}
+
 		RunTimeData( const std::vector<std::string>& str_events, const std::vector<std::string>& str_states )
 			: _strEvents(str_events), _strStates( str_states )
 #else
@@ -274,25 +306,6 @@ struct RunTimeData
 		{
 			_startTime = std::chrono::high_resolution_clock::now();
 		}
-
-/// a state-change event, used for logging, see _history
-	struct StateChangeEvent
-	{
-		ST     _state;
-		size_t _event; ///< stored as size_t because it will hold values other than the ones in the enum
-		std::chrono::duration<double> _elapsed;
-
-// deprecated, replaced by printData()
-#if 0
-		friend std::ostream& operator << ( std::ostream& s, const StateChangeEvent& sce )
-		{
-			char sep(';');
-			s << sce.elapsed.count() << sep << sce.event << sep;
-			s << sce.state << '\n';
-			return s;
-		}
-#endif
-	};
 
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
@@ -306,19 +319,12 @@ struct RunTimeData
 	}
 	void clear()
 	{
-		_history.clear();
 		_stateCounter.clear();
 		_eventCounter.clear();
 	}
 	/// Print dynamic data (runtime data) to \c out
 	void printData( std::ostream& out, PrintFlags pflags ) const
 	{
-#ifdef SPAG_ENUM_STRINGS
-		size_t maxlength_e = priv::getMaxLength( _strEvents );
-		size_t maxlength_s = priv::getMaxLength( _strStates );
-#endif
-		char sep(';');
-
 		if( pflags & PrintFlags::stateCount )
 		{
 			out << "# State counters:\n";
@@ -326,7 +332,7 @@ struct RunTimeData
 			{
 				out << i << sep,
 #ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strStates[i], maxlength_s );
+				priv::PrintEnumString( out, _strStates[i], _maxlength_s );
 				out << sep;
 #endif
 				out << _stateCounter[i] << '\n';
@@ -340,61 +346,71 @@ struct RunTimeData
 			{
 				out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strEvents[i], maxlength_e );
+				priv::PrintEnumString( out, _strEvents[i], _maxlength_e );
 				out << sep;
 #endif
 				out << _eventCounter[i] << '\n';
 			}
 		}
+	}
 
-		if( pflags & PrintFlags::history )
+	void print2LogFile( std::ofstream& f,  const StateChangeEvent sce ) const
+	{
+		char sep(';');
+		f << sce._elapsed.count() << sep << sce._event << sep;
+
+#ifdef SPAG_ENUM_STRINGS
+		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
+		f << sep;
+#endif
+		f << sce._state << sep;
+#ifdef SPAG_ENUM_STRINGS
+		priv::PrintEnumString( f, _strStates[sce._state], _maxlength_s );
+#endif
+		f << '\n';
+	}
+
+/// Logs a transition from current state to state \c st, that was produced by event \c ev
+/**
+event stored as size_t because we may pass values other than the ones in the enum (timeout and Always Active transitions)
+*/
+	void logTransition( ST st, size_t ev_idx )
+	{
+		assert( ev_idx < SPAG_P_CAST2IDX( EV::NB_EVENTS ) + 2 );
+		assert( st < ST::NB_STATES );
+		auto st_idx = SPAG_P_CAST2IDX(st);
+		_eventCounter[ ev_idx ]++;
+		_stateCounter[ st_idx ]++;
+
+		if( !_logfile.is_open() )
 		{
-			out << "\n# Run history:\n#time" << sep << "event" << sep
+			_logfile.open( _logfileName );
+			if( !_logfile.is_open() )
+				SPAG_P_THROW_ERROR_RT( "unable to open file " + _logfileName );
+
+			_logfile << "\n# FSM run history:\n#time" << sep << "event" << sep
 #ifdef SPAG_ENUM_STRINGS
 				<< "event_string" << sep << "state" << sep << "state_string\n";
 #else
 				<< "state\n";
 #endif
-			for( size_t i=0; i<_history.size(); i++ )
-			{
-				size_t ev = _history[i]._event;
-				size_t st = SPAG_P_CAST2IDX(_history[i]._state);
-				out << _history[i]._elapsed.count() << sep << ev << sep;
-#ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strEvents[ev], maxlength_e );
-				out << sep;
-#endif
-				out << st << sep;
-#ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strStates[ev], maxlength_s );
-#endif
-				out << '\n';
-			}
 		}
-	}
-/// Logs a transition from current state to state \c st, that was produced by event \c ev
-/**
-event stored as size_t because we may pass values other than the ones in the enum (timeout and Always Active transitions)
-*/
-	void logTransition( ST st, size_t ev )
-	{
-		assert( ev < SPAG_P_CAST2IDX( EV::NB_EVENTS ) + 2 );
-		assert( st < ST::NB_STATES );
-		_eventCounter[ ev ]++;
-		_stateCounter[ SPAG_P_CAST2IDX(st) ]++;
-		_history.push_back( StateChangeEvent{ st, ev, std::chrono::high_resolution_clock::now() - _startTime } );
+		print2LogFile( _logfile, StateChangeEvent{ st_idx, ev_idx, std::chrono::high_resolution_clock::now() - _startTime } );
 	}
 
+		std::string   _logfileName = "spaghetti.csv";
+		char sep = ';';
 	private:
 		std::vector<size_t>  _stateCounter;    ///< per state counter
 		std::vector<size_t>  _eventCounter;    ///< per event counter
-/// Dynamic history of a given run: holds a state and the event that led to it. For the latter, the value EV_NB_EVENTS is used to store a "timeout" event.
-		std::vector<StateChangeEvent> _history;
 		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
+		std::ofstream _logfile;
 
 #ifdef SPAG_ENUM_STRINGS
 		const std::vector<std::string>& _strEvents; ///< reference on vector of strings of events
 		const std::vector<std::string>& _strStates; ///< reference on vector of strings of states
+		size_t _maxlength_e;
+		size_t _maxlength_s;
 #endif
 };
 #endif
@@ -557,7 +573,7 @@ class SpagFSM
 			auto& te = _stateInfo[st1]._timerEvent;
 			if( te._enabled )
 			{
-				std::cerr << priv::getSpagName() << "warning, removal of timeout of "
+				SPAG_P_LOG_ERROR << "warning, removal of timeout of "
 					<< te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
 					<< " on state " << SPAG_P_CAST2IDX(st1)
 #ifdef SPAG_ENUM_STRINGS
@@ -660,7 +676,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			if( !_stateInfo[ st_idx ]._timerEvent._enabled )
 			{
-				std::cerr << priv::getSpagName() << "warning: asking for removal of timeout on state " << st_idx
+				SPAG_P_LOG_ERROR << "warning: asking for removal of timeout on state " << st_idx
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" << _strStates[st_idx]  << ')'
 #endif
@@ -803,6 +819,10 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_P_ASSERT( !_isRunning, "attempt to start an already running FSM" );
 
 			doChecking();
+
+#if (defined SPAG_ENABLE_LOGGING) && (defined SPAG_ENUM_STRINGS)
+			_rtdata.init();
+#endif
 			_isRunning = true;
 
 #ifdef SPAG_ENABLE_LOGGING
@@ -938,7 +958,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
+
 #ifdef SPAG_ENABLE_LOGGING
+		void setLogFilename( std::string fn ) const
+		{
+			assert( !fn.empty() );
+			_rtdata._logfileName = fn;
+		}
 /// Print dynamic data to \c str
 		void printLoggedData( std::ostream& str, PrintFlags pf=PrintFlags::all ) const
 		{
@@ -946,6 +972,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 #else
 		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
+		void setLogFilename( std::string fn ) const {}
 #endif
 
 		void setTimerDefaultUnit( DurUnit unit ) const
@@ -1411,7 +1438,7 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) const
 {
-	std::ofstream f ( fname );
+	std::ofstream f( fname );
 	if( !f.is_open() )
 		SPAG_P_THROW_ERROR_RT( "error, unable to open file: " + fname );
 	f << "digraph G {\n";
@@ -1576,8 +1603,7 @@ struct AsioWrapper
 				fsm->processTimeOut();                    // normal operation: timer has expired
 			break;
 			default:                                         // all other values
-				std::cerr << "unexpected error code, message=" << err_code.message() << "\n";
-				SPAG_P_ASSERT( false, "boost::asio timer unexpected error: " + err_code.message() );
+				SPAG_P_THROW_ERROR_RT( "boost::asio timer unexpected error: " + err_code.message() );
 		}
 	}
 /// Mandatory function for SpagFSM. Cancel the pending async timer
