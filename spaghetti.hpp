@@ -73,13 +73,13 @@ This program is free software: you can redistribute it and/or modify
 
 #define SPAG_P_THROW_ERROR_RT( msg ) \
 	{ \
-		SPAG_P_LOG_ERROR << spag::priv::getSpagName() << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
+		SPAG_P_LOG_ERROR << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
 		throw std::runtime_error( spag::priv::getSpagName() + "runtime error in " + __FUNCTION__ + "(): " + msg ); \
 	}
 
 #define SPAG_P_THROW_ERROR_CFG( msg ) \
 	{ \
-		SPAG_P_LOG_ERROR << spag::priv::getSpagName() << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
+		SPAG_P_LOG_ERROR << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
 		throw std::logic_error( spag::priv::getSpagName() + "configuration error in " + __FUNCTION__ + "(): " + msg ); \
 	}
 
