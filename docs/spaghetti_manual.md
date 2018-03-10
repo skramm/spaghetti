@@ -23,12 +23,30 @@ For a reference manual, run ```make doc```, then open
 1. [FAQ](spaghetti_faq.md)
 
 Before you can get started, all you need is to download and install the file ```spaghetti.hpp``` to a location where your compiler can find it
-(On Linux, ```/usr/local/include``` is usually pretty good).
+On Linux, ```/usr/local/include``` is usually pretty good.
+You can do that manually, or with ```sudo make install```.
 Then you can create a program.
 
 <a name="concepts"></a>
 ## 1 - Fundamental concepts
 
+### 1.1 - Library content
+This library is actually made of two parts:
+The main part is the FSM class, that is only a container of all the characteristics of your machine.
+You instanciate it, configure it, and start it.
+When events occur, it is up to your code to call the relevant member function, nothing happens magically.
+This part has no dependency other than the standard library.
+
+But a lot of situations require more than just handling of external events.
+For example, timeouts.
+Thus, the FSM object can work together with another object that will provide all the needed tasks, such as time handling, and generating events at the right moment.
+
+This class is not part of the root library, and the FSM could theorically work with any user-written class that provides theses services, and that respects certain requirements.
+But of course, the Spaghetti library provides such a class, that works seamlessly.
+This is of course the preferred way, but it comes at the price of a dependency on the Boost libraries.
+More on this below.
+
+### 1.2 - States and Events
 Configuration of the state machine is a mix of static and dynamic: the number of states and hardware events is fixed at build time, but it is possible to add transitions at run-time.
 
 States and events are simply defined as enum values:
@@ -52,7 +70,7 @@ But you can have none ! In that case, just define the events enum as:
 ```
 - "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
 
-For the latter case, you need to provide a special "timing" class, that will have some requirements.
+As explained above, for the latter case you need to provide a special "timing" class, that will have some requirements.
 You will need to instanciate an object of that class, then assign it to the FSM in the configuration step.
 Fortunately, this is made easy for the usual case, no worry.<br>
 For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
@@ -262,10 +280,10 @@ Configuration of the FSM will be as previously, we just add this (self-explanato
 	fsm.assignTimeOut( st_BlinkOn,  1, st_BlinkOff );
 	fsm.assignTimeOut( st_BlinkOff, 1, st_BlinkOn );
 
-	fsm.assignTransitionAlways( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
-	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
-	fsm.assignTransition(       st_BlinkOff,  ev_WarningOff, st_Red );
-	fsm.assignTransition(       st_BlinkOn,   ev_WarningOff, st_Red );
+	fsm.assignTransition( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
+	fsm.assignTransition( ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition( st_BlinkOff,  ev_WarningOff, st_Red );
+	fsm.assignTransition( st_BlinkOn,   ev_WarningOff, st_Red );
 ```
 
 As the ```start()``` member function is blocking, we need to handle the keyboard events in a different thread.

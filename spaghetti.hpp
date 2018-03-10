@@ -259,7 +259,7 @@ getMaxLength( const T& v_str )
 	return maxlength;
 }
 //------------------------------------------------------------------------------------
-/// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING at \ref ssec_BuildSymbols )
+/// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING)
 #ifdef SPAG_ENABLE_LOGGING
 template<typename ST,typename EV>
 struct RunTimeData
@@ -670,7 +670,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
-		void assignTransitionAlways( EV ev, ST st )
+//		void assignTransitionAlways( EV ev, ST st )
+		void assignTransition( EV ev, ST st )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );

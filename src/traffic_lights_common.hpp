@@ -56,8 +56,12 @@ configureFSM( FSM& fsm )
 	fsm.assignTimeOut( st_BlinkOn,  500, "ms", st_BlinkOff );
 	fsm.assignTimeOut( st_BlinkOff, 500, "ms", st_BlinkOn );
 
-	fsm.assignTransitionAlways( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
-	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
+//	fsm.assignTransitionAlways( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
+
+	fsm.assignTransition( ev_WarningOn, st_BlinkOn );
+//	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
+
 	fsm.assignTransition(       st_BlinkOff,  ev_WarningOff, st_Red );
 	fsm.assignTransition(       st_BlinkOn,   ev_WarningOff, st_Red );
 

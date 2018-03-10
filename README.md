@@ -1,4 +1,7 @@
 # Spaghetti
+
+[![Build Status](https://travis-ci.org/skramm/spaghetti.svg?branch=master)](https://travis-ci.org/skramm/spaghetti)
+
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## Key points
