@@ -9,7 +9,8 @@ Homepage: https://github.com/skramm/spaghetti
 
 #define SPAG_EMBED_ASIO_TIMER
 #define SPAG_GENERATE_DOTFILE
-#define SPAG_PRINT_STATES
+#define SPAG_USE_SIGNALS
+//#define SPAG_PRINT_STATES
 #include "spaghetti.hpp"
 
 //-----------------------------------------------------------------------------------
@@ -38,7 +39,7 @@ struct TestClass
 //			surprise = true;
 			std::cout << "process special !\n";
 			redCounter =0;
-			fsm.processInnerEvent( ev_special );
+			fsm.activateInnerEvent( ev_special );
 		}
 		std::cout << "callback end\n";
 	}
