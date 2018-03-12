@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.6
+#define SPAG_VERSION 0.61
 
 #include <vector>
 #include <map>
@@ -142,9 +142,9 @@ enum PrintFlags
 {
 	stateCount  = 0x01
 	,eventCount = 0x02
-	,all        = 0x03
+	,ignoredEvents = 0x04
+	,all        = 0xff
 };
-
 
 /// Timer units
 enum class DurUnit { ms, sec, min };
@@ -275,20 +275,21 @@ struct RunTimeData
 
 	public:
 #ifdef SPAG_ENUM_STRINGS
-		void init()
-		{
-			_maxlength_e = priv::getMaxLength( _strEvents );
-			_maxlength_s = priv::getMaxLength( _strStates );
-		}
+	void init()
+	{
+		_maxlength_e = priv::getMaxLength( _strEvents );
+		_maxlength_s = priv::getMaxLength( _strStates );
+	}
 
-		RunTimeData( const std::vector<std::string>& str_events, const std::vector<std::string>& str_states )
-			: _strEvents(str_events), _strStates( str_states )
+	RunTimeData( const std::vector<std::string>& str_events, const std::vector<std::string>& str_states )
+		: _strEvents(str_events), _strStates( str_states )
 #else
-		RunTimeData()
+	RunTimeData()
 #endif
-		{
-			_startTime = std::chrono::high_resolution_clock::now();
-		}
+	{
+		_startTime = std::chrono::high_resolution_clock::now();
+		_ignoredEvents.fill( 0 );
+	}
 
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
@@ -335,22 +336,20 @@ struct RunTimeData
 				out << _eventCounter[i] << '\n';
 			}
 		}
-	}
 
-	void print2LogFile( std::ofstream& f,  const StateChangeEvent sce ) const
-	{
-		char sep(';');
-		f << sce._elapsed.count() << sep << sce._event << sep;
-
+		if( pflags & PrintFlags::ignoredEvents )
+		{
+			out << "\n# Ignored Events counters:\n";
+			for( size_t i=0; i<_ignoredEvents.size(); i++ )
+			{
+				out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
-		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
-		f << sep;
+				priv::PrintEnumString( out, _strEvents[i], _maxlength_e );
+				out << sep;
 #endif
-		f << sce._state << sep;
-#ifdef SPAG_ENUM_STRINGS
-		priv::PrintEnumString( f, _strStates[sce._state], _maxlength_s );
-#endif
-		f << '\n';
+				out << _ignoredEvents[i] << '\n';
+			}
+		}
 	}
 
 /// Logs a transition from current state to state \c st, that was produced by event \c ev
@@ -381,13 +380,50 @@ event stored as size_t because we may pass values other than the ones in the enu
 		print2LogFile( _logfile, StateChangeEvent{ st_idx, ev_idx, std::chrono::high_resolution_clock::now() - _startTime } );
 	}
 
-		std::string   _logfileName = "spaghetti.csv";
-		char sep = ';';
+	void logIgnoredEvent( size_t ev_idx )
+	{
+		SPAG_CHECK_LESS( ev_idx, SPAG_P_CAST2IDX(EV::NB_EVENTS) );
+		_ignoredEvents[ ev_idx ]++;
+	}
+
+//////////////////////////////////
+// public data section
+//////////////////////////////////
+
+	std::string   _logfileName = "spaghetti.csv";
+	char sep = ';';
+
+//////////////////////////////////
+// private member function section
+//////////////////////////////////
+
+	private:
+	void print2LogFile( std::ofstream& f,  const StateChangeEvent sce ) const
+	{
+		char sep(';');
+		f << sce._elapsed.count() << sep << sce._event << sep;
+
+#ifdef SPAG_ENUM_STRINGS
+		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
+		f << sep;
+#endif
+		f << sce._state << sep;
+#ifdef SPAG_ENUM_STRINGS
+		priv::PrintEnumString( f, _strStates[sce._state], _maxlength_s );
+#endif
+		f << '\n';
+	}
+
+//////////////////////////////////
+// private data section
+//////////////////////////////////
+
 	private:
 		std::vector<size_t>  _stateCounter;    ///< per state counter
 		std::vector<size_t>  _eventCounter;    ///< per event counter
 		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
 		std::ofstream _logfile;
+		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)> _ignoredEvents;
 
 #ifdef SPAG_ENUM_STRINGS
 		const std::vector<std::string>& _strEvents; ///< reference on vector of strings of events
@@ -861,7 +897,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				runAction();                                                          // 3 - call the callback function
 			}
 			else
+			{
 				SPAG_LOG << "event is ignored\n";
+#ifdef SPAG_ENABLE_LOGGING
+				_rtdata.logIgnoredEvent( ev_idx );
+#endif
+			}
 		}
 ///@}
 
