@@ -50,8 +50,8 @@ configureFSM( FSM& fsm )
 	fsm.assignTimeOut( st_Green,     800,  st_Orange );
 
 	fsm.setTimerDefaultUnit( "sec" );
-	fsm.assignTimeOut( st_Red,       3, st_Green  );
-	fsm.assignTimeOut( st_Orange,    3, st_Red    );
+	fsm.assignTimeOut( st_Red,       1, st_Green  );
+	fsm.assignTimeOut( st_Orange,    1, st_Red    );
 
 	fsm.assignTimeOut( st_BlinkOn,  500, "ms", st_BlinkOff );
 	fsm.assignTimeOut( st_BlinkOff, 500, "ms", st_BlinkOn );
