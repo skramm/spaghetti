@@ -1398,6 +1398,8 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 		SPAG_P_THROW_ERROR_RT( "error, unable to open file: " + fname );
 	f << "digraph G {\n";
 	f << "rankdir=LR;\n";
+	f << "edge[style=\"bold\"]\n";
+	f << "node[shape=\"circle\"]\n";
 	for( size_t j=0; j<nbStates(); j++ )
 	{
 		f << j << " [label=\"S" << j << "\"";
