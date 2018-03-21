@@ -35,6 +35,13 @@ enum Events {
 };
 
 //-----------------------------------------------------------------------------------
+/// Ignored events callback function
+void cb_ignored_events( States st, Events ev )
+{
+	std::cout << "- detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
+}
+
+//-----------------------------------------------------------------------------------
 /// callback function
 void cb_func( std::string s )
 {
@@ -45,6 +52,7 @@ template<typename FSM>
 void
 configureFSM( FSM& fsm )
 {
+	fsm.assignIgnoredEventsCallback( cb_ignored_events );
 	fsm.setTimerDefaultUnit( "ms" );
 	fsm.assignTimeOut( st_Init,      50,   st_Red    );
 	fsm.assignTimeOut( st_Green,     800,  st_Orange );
@@ -57,10 +65,9 @@ configureFSM( FSM& fsm )
 	fsm.assignTimeOut( st_BlinkOff, 500, "ms", st_BlinkOn );
 
 	fsm.assignTransition( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
-//	fsm.assignTransitionAlways( ev_Reset,     st_Init ); // if reception of message ev_Reset, then switch to state st_Init, whatever the current state is
-
-	fsm.assignTransition( ev_WarningOn, st_BlinkOn );
-//	fsm.assignTransitionAlways( ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition( st_Red,    ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition( st_Green,  ev_WarningOn, st_BlinkOn );
+	fsm.assignTransition( st_Orange, ev_WarningOn, st_BlinkOn );
 
 	fsm.assignTransition(       st_BlinkOff,  ev_WarningOff, st_Red );
 	fsm.assignTransition(       st_BlinkOn,   ev_WarningOff, st_Red );

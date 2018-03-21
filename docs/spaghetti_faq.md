@@ -68,7 +68,9 @@ But **be careful**, because in that case, no checking will be done on what you w
 You could make the FSM run into some invalid configuration, leading to undefined behavior.
 
 - **Q**: *Can I have as callback function a class member function?*<br>
-**A**: Sure! This is of course useful so that the callback can handle some data. The only technical issue is that you cannot store a non-static function into a ```std::function``` object. So the workaround is that you will need to use a *binding* trick. This is demonstrated in
+**A**: Sure! This is of course useful so that the callback can handle some data.
+The only technical issue is that you cannot store a non-static function into a ```std::function``` object.
+So the workaround is that you will need to use a *binding* trick. This is demonstrated in
 [```src/traffic_lights_1c.cpp```](../../../tree/master/src/traffic_lights_1c.cpp):
 ```C++
    fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )
@@ -94,10 +96,25 @@ And this object **can not** be serialized.<br>
 All the rest of the configuration could be serialized, but I felt that saving config without the callbacks would be useless.
 Post an issue if you feel that can be useful, it wouldn't be too hard to add that.
 
+- **Q**: *Can I build a FSM with 0 events, only time outs?*<br>
+**A**: Sure, just declare the events as ```enum Events { NB_EVENTS };```.
+This is demonstrated in ```src/sample_3.cpp```.
+
+- **Q**: *I need to track ignored events. How can I do that?*<br>
+**A**: First, these are logged (if logging is enable, of course), and you can print them once your FMS is stopped with ```printLoggedData()```.
+Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs.
+See member function assignIgnoredEventsCallback()
+This is demonstrated in ```src/traffic_lights_common.hpp```:
+switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state, the callback function is triggered.
+
+
+
 - **Q**: *Why that name? Where does that come from?*<br/>
 **A**: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)
+
+
 
 --- Copyright S. Kramm - 2018 ---

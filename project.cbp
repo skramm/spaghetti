@@ -22,6 +22,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="CHANGELOG" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
 		<Unit filename="docs/spaghetti_faq.md" />

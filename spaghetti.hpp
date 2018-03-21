@@ -731,6 +731,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				_stateInfo[ SPAG_P_CAST2IDX(i) ]._callback = func;
 		}
 
+/// Assigns a callback function called when an ignored event occurs
+		void assignIgnoredEventsCallback( std::function<void(ST,EV)> func )
+		{
+			_ignEventCallback = func;
+		}
+
 		void assignCallbackValue( ST st, CBA cb_arg )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
@@ -899,6 +905,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			else
 			{
 				SPAG_LOG << "event is ignored\n";
+				if( _ignEventCallback )
+					_ignEventCallback( _current, ev );
+
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logIgnoredEvent( ev_idx );
 #endif
@@ -1108,9 +1117,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif // SPAG_USE_ARRAY
 
 #ifdef SPAG_USE_ARRAY
-		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state the details
+		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state its details
 #else
-		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state the details
+		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state its details
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
@@ -1121,6 +1130,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_EMBED_ASIO_TIMER
 		AsioWrapper<ST,EV,CBA>             _asioWrapper; ///< optional wrapper around boost::asio::io_service
 #endif
+
+		std::function<void(ST,EV)> _ignEventCallback;     ///< ignored events callback function
 
 };
 //-----------------------------------------------------------------------------------
