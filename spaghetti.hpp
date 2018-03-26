@@ -34,6 +34,7 @@ This program is free software: you can redistribute it and/or modify
 #include <algorithm>
 #include <functional>
 #include <cassert>
+#include <iomanip>
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
 
@@ -1191,13 +1192,15 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	maxlength = priv::getMaxLength( _strEvents );
 #endif
 
+	char spc_char{ ' ' };
+
 	std::string capt( "EVENTS" );
-	priv::printChars( out, maxlength, ' ' );
+	priv::printChars( out, maxlength, spc_char );
 	out << "       STATES:\n      ";
-	priv::printChars( out, maxlength, ' ' );
+	priv::printChars( out, maxlength, spc_char );
 	for( size_t i=0; i<nbStates(); i++ )
 		out << i << "  ";
-	out << "\n----";
+	out << "\n-----";
 	priv::printChars( out, maxlength, '-' );
 	out << '|';
 	for( size_t i=0; i<nbStates(); i++ )
@@ -1219,40 +1222,42 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			out << capt[i];
 		else
 #endif
-			out << ' ';
+			out << spc_char;
 
 		if( i<nbEvents() )
 		{
-			out << ' ' << i << " | ";
+			out << spc_char << std::setw(2) << i << " | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _allowedMat[i][j] && !_stateInfo[j]._isPassState )
-					out << _transitionMat[i][j];
+					out << std::setw(2) << _transitionMat[i][j];
 				else
-					out << '.';
-				out << "  ";
+					out << " .";
+				out << spc_char;
 			}
 		}
 		if( i == nbEvents() ) // TimeOut
 		{
-			out << "   | ";
+			out << "    | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._timerEvent._enabled )
-					out << _stateInfo[j]._timerEvent._nextState << "  ";
+					out << std::setw(2) << _stateInfo[j]._timerEvent._nextState;
 				else
-					out << ".  ";
+					out << " .";
+				out << spc_char;
 			}
 		}
 		if( i == nbEvents()+1 ) // Pass-state
 		{
-			out << "   | ";
+			out << "    | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._isPassState )
-					out << _transitionMat[0][j] << "  ";
+					out << std::setw(2) << _transitionMat[0][j];
 				else
-					out << ".  ";
+					out << " .";
+				out << spc_char;
 			}
 		}
 		out << '\n';
