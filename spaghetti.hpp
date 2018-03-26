@@ -27,13 +27,14 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.61
+#define SPAG_VERSION 0.62
 
 #include <vector>
 #include <map>
 #include <algorithm>
 #include <functional>
 #include <cassert>
+#include <iomanip>
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
 
@@ -761,6 +762,12 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				_stateInfo[ SPAG_P_CAST2IDX(i) ]._callback = func;
 		}
 
+/// Assigns a callback function called when an ignored event occurs
+		void assignIgnoredEventsCallback( std::function<void(ST,EV)> func )
+		{
+			_ignEventCallback = func;
+		}
+
 		void assignCallbackValue( ST st, CBA cb_arg )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
@@ -929,6 +936,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			else
 			{
 				SPAG_LOG << "event is ignored\n";
+				if( _ignEventCallback )
+					_ignEventCallback( _current, ev );
+
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logIgnoredEvent( ev_idx );
 #endif
@@ -1198,6 +1208,13 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::map<EV,ST>   _eventInfo; ///< holds for inner event the state it is assigned to
 #endif
 
+/*=======
+		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state its details
+#else
+		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state its details
+>>>>>>> master
+#endif*/
+
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _strEvents;      ///< holds events strings
 		std::vector<std::string>           _strStates;      ///< holds states strings
@@ -1206,6 +1223,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_EMBED_ASIO_TIMER
 		AsioWrapper<ST,EV,CBA>             _asioWrapper; ///< optional wrapper around boost::asio::io_service
 #endif
+
+		std::function<void(ST,EV)> _ignEventCallback;     ///< ignored events callback function
 
 };
 //-----------------------------------------------------------------------------------
@@ -1265,13 +1284,15 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	maxlength = priv::getMaxLength( _strEvents );
 #endif
 
+	char spc_char{ ' ' };
+
 	std::string capt( "EVENTS" );
-	priv::printChars( out, maxlength, ' ' );
+	priv::printChars( out, maxlength, spc_char );
 	out << "       STATES:\n      ";
-	priv::printChars( out, maxlength, ' ' );
+	priv::printChars( out, maxlength, spc_char );
 	for( size_t i=0; i<nbStates(); i++ )
 		out << i << "  ";
-	out << "\n----";
+	out << "\n-----";
 	priv::printChars( out, maxlength, '-' );
 	out << '|';
 	for( size_t i=0; i<nbStates(); i++ )
@@ -1293,40 +1314,42 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			out << capt[i];
 		else
 #endif
-			out << ' ';
+			out << spc_char;
 
 		if( i<nbEvents() )
 		{
-			out << ' ' << i << " | ";
+			out << spc_char << std::setw(2) << i << " | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _allowedMat[i][j] && !_stateInfo[j]._isPassState )
-					out << _transitionMat[i][j];
+					out << std::setw(2) << _transitionMat[i][j];
 				else
-					out << '.';
-				out << "  ";
+					out << " .";
+				out << spc_char;
 			}
 		}
 		if( i == nbEvents() ) // TimeOut
 		{
-			out << "   | ";
+			out << "    | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._timerEvent._enabled )
-					out << _stateInfo[j]._timerEvent._nextState << "  ";
+					out << std::setw(2) << _stateInfo[j]._timerEvent._nextState;
 				else
-					out << ".  ";
+					out << " .";
+				out << spc_char;
 			}
 		}
 		if( i == nbEvents()+1 ) // Pass-state
 		{
-			out << "   | ";
+			out << "    | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._isPassState )
-					out << _transitionMat[0][j] << "  ";
+					out << std::setw(2) << _transitionMat[0][j];
 				else
-					out << ".  ";
+					out << " .";
+				out << spc_char;
 			}
 		}
 		out << '\n';
