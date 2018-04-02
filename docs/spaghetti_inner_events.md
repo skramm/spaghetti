@@ -1,8 +1,8 @@
-...temp...
+
 
 ## Inner events
 
-In some situations, a FSM has to change its behaviour depending on some ot its internal characteristics.
+In some situations, a FSM has to change its behavior depending on some of its internal characteristics.
 For example
 - "If state X has been activated 5 times, then switch to state Y instead of state Z"
 - "if some class member variable has value 10, then, when on state X, we want to switch to state Y instead of having a timeout leading to state Z"

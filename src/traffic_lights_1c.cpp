@@ -21,7 +21,6 @@ SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 struct TestClass
 {
 	fsm_t fsm;
-//	bool surprise = false;
 	int redCounter = 0;
 	void start()
 	{
@@ -35,7 +34,6 @@ struct TestClass
 
 		if( redCounter == 2 )
 		{
-//			surprise = true;
 			std::cout << "process special !\n";
 			redCounter =0;
 			fsm.activateInnerEvent( ev_special );
