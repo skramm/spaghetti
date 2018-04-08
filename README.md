@@ -19,7 +19,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 ## General information
 
 ### What is this ?
-This library provides a container and API functions to easily implement a Finite State Machine
+This library provides a container and API functions to easily implement an event-driven Finite State Machine
 (see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine)).
 It can be used for FSM requiring the handling of hardware events, or time out situations.
 It has been designed with good "Modern C++" practices, but provides an API as simple as possible to the developper.
