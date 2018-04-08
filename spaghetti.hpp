@@ -232,8 +232,13 @@ struct StateInfo
 	TimerEvent<ST>           _timerEvent;   ///< Holds for each state the information on timeout
 	std::function<void(CBA)> _callback;     ///< callback function
 	CBA                      _callbackArg;  ///< value of argument of callback function
+
 /// True if this is a "pass state", that is a state with only one transition and no timeout.
 /// Destination state is stored in transition matrix
+/** \todo this will be deprecated, at least in how it is handled at present. Now,
+pass states do not fullfill the requirement that execution returns from the callback function before
+calling the callback of next state. We need to handle this through signals.
+*/
 	bool                      _isPassState = false;
 #ifdef SPAG_USE_SIGNALS
 	InnerTransition<ST,EV>    _innerTrans;
@@ -1208,13 +1213,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		std::map<EV,ST>   _eventInfo; ///< holds for inner event the state it is assigned to
 #endif
 
-/*=======
-		std::array<priv::StateInfo<ST,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state its details
-#else
-		std::vector<priv::StateInfo<ST,CBA>>  _stateInfo;         ///< Holds for each state its details
->>>>>>> master
-#endif*/
-
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string>           _strEvents;      ///< holds events strings
 		std::vector<std::string>           _strStates;      ///< holds states strings
@@ -1709,6 +1707,7 @@ struct AsioWrapper
 	}
 
 #ifdef SPAG_USE_SIGNALS
+/// This is a handler, automatically called by boost::io_service when an OS signal USR1 is detected.
 	void signalHandler( const boost::system::error_code& error, int signal_number, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
