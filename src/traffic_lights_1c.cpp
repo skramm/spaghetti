@@ -13,7 +13,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "spaghetti.hpp"
 
 //-----------------------------------------------------------------------------------
-enum States { st_Init, st_Red, st_Orange, st_Green, st_All, NB_STATES };
+enum States { st_Init, st_Red, st_Orange, st_Green, st_All, st_special, NB_STATES };
 enum Events { ev_special, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
@@ -45,11 +45,14 @@ struct TestClass
 	{
 		fsm.setTimerDefaultUnit( "ms" );
 		fsm.assignTimeOut( st_Init,   200, st_Red    );
-		fsm.assignTimeOut( st_Red,    600, st_Green  );
+//		fsm.assignTimeOut( st_Red,    600, st_Green  );
 		fsm.assignTimeOut( st_Green,  600, st_Orange );
 		fsm.assignTimeOut( st_Orange, 300, st_Red   );
 
 		fsm.assignInnerTransition( st_Red, ev_special, st_All );
+
+		fsm.assignTransition( st_Orange, st_special );
+		fsm.assignTimeOut( st_special,   200, st_Red    );
 
 		fsm.assignCallback( std::bind( &TestClass::callback, this, std::placeholders::_1 ) );
 		fsm.assignCallbackValue( st_Red,    "RED" );
@@ -65,6 +68,7 @@ struct TestClass
 //-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
+	std::cout << fsm_t::buildOptions();
 	TestClass test;
 	test.config();
 	test.start();

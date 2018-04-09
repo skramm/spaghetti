@@ -222,7 +222,27 @@ struct InnerTransition
 	bool    _isActive = false;
 	ST      _destState;
 	EV      _innerEvent;
+	friend std::ostream& operator << ( std::ostream& s, const InnerTransition& it )
+	{
+		s << "InnerTransition: hasOne=" << it._hasOne
+			<< " isActive=" << it._isActive
+			<< " destState=" << (int)it._destState
+			<< " innerEvent=" << (int)it._innerEvent << '\n';
+		return s;
+	}
+
 };
+
+/*std::ostream& operator << ( const std::ostream& s, const InnerTransition& it )
+{
+	s << "InnerTransition: hasOne=" << it._hasOne
+		<< " isActive=" << it._isActive
+		<< " destState=" << (int)it._destState
+		<< " innerEvent=" << (int)it._innerEvent << '\n'
+	return s;
+}
+*/
+
 #endif
 //-----------------------------------------------------------------------------------
 /// Private class, holds information about a state
@@ -233,10 +253,10 @@ struct StateInfo
 	std::function<void(CBA)> _callback;     ///< callback function
 	CBA                      _callbackArg;  ///< value of argument of callback function
 
-/// True if this is a "pass state", that is a state with only one transition and no timeout.
+/// True if this is a "pass-state", that is a state with only one transition and no timeout.
 /// Destination state is stored in transition matrix
 /** \todo this will be deprecated, at least in how it is handled at present. Now,
-pass states do not fullfill the requirement that execution returns from the callback function before
+pass-states do not fullfill the requirement that execution returns from the callback function before
 calling the callback of next state. We need to handle this through signals.
 */
 	bool                      _isPassState = false;
@@ -317,7 +337,7 @@ struct RunTimeData
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
 		_stateCounter.resize( nbStates,   0 );
-		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass states")
+		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass-states")
 	}
 	void incrementInitState()
 	{
@@ -472,7 +492,7 @@ enum EN_ConfigError
 {
 	CE_TimeOutAndPassState   ///< state has both timeout and pass-state flags active
 	,CE_IllegalPassState     ///< pass-state is followed by another pass-state
-	,CE_SamePassState        ///< pass state leads to same state
+	,CE_SamePassState        ///< pass-state leads to same state
 };
 
 //-----------------------------------------------------------------------------------
@@ -599,20 +619,28 @@ class SpagFSM
 			_allowedMat[    SPAG_P_CAST2IDX(ev) ][ st1_idx ] = 1;
 		}
 
-/// Assigns a transition to a "pass state": once on state \c st1, the FSM will switch right away to \c st2
+/// Assigns a transition to a "pass-state": once on state \c st1, the FSM will switch right away to \c st2
 /**
 \warning If a time out has previously been assigned to state \c st1, it will be removed
 */
 		void assignTransition( ST st1, ST st2 )
 		{
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
+			size_t st1_idx = SPAG_P_CAST2IDX(st1);
+			size_t st2_idx = SPAG_P_CAST2IDX(st2);
+			SPAG_CHECK_LESS( st1_idx, nbStates() );
+			SPAG_CHECK_LESS( st2_idx, nbStates() );
 			for( auto& line: _transitionMat )
-				line[ SPAG_P_CAST2IDX( st1 ) ] = st2;
+				line[ st1_idx ] = st2;
 			for( auto& line: _allowedMat )
-				line[ SPAG_P_CAST2IDX( st1 ) ] = 1;
-			_stateInfo[st1]._isPassState = 1;
-			auto& te = _stateInfo[st1]._timerEvent;
+				line[ st1_idx ] = 1;
+			_stateInfo[st1_idx]._isPassState = 1;
+
+#ifdef SPAG_USE_SIGNALS
+	_stateInfo[st1_idx]._innerTrans._hasOne   = true;
+	_stateInfo[st1_idx]._innerTrans._isActive = true;
+#endif
+
+			auto& te = _stateInfo[st1_idx]._timerEvent;
 			if( te._enabled )
 			{
 				SPAG_P_LOG_ERROR << "warning, removal of timeout of "
@@ -1048,6 +1076,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 /// Returns the build options
+/**
+Usage (example): <code>std::cout << fsm_t::buildOptions();<code>
+*/
 		static std::string buildOptions()
 		{
 			std::string yes(" = yes\n"), no(" = no\n");
@@ -1121,6 +1152,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			auto stateInfo = _stateInfo[ curr_idx ];
 			runAction_DoJob( stateInfo );
 
+#if 0
 			if( stateInfo._isPassState )
 			{
 				assert( !stateInfo._timerEvent._enabled );
@@ -1131,6 +1163,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #endif
 				runAction_DoJob( _stateInfo[ curr_idx ] );
 			}
+#endif
 		}
 
 /// sub-function of runAction(), needed for pass-states
@@ -1160,15 +1193,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 #ifdef SPAG_USE_SIGNALS
 			if( stateInfo._innerTrans._hasOne )
 			{
-				assert( !stateInfo._isPassState );
-				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
+//				assert( !stateInfo._isPassState );             // TEMP
 				if( stateInfo._innerTrans._isActive )
 				{
+					std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
 					_timer->raiseSignal();
 					_timer->timerCancel();
 				}
 			}
 #endif
+			std::cout << "runAction_DoJob(): end\n";
 		}
 
 		void printMatrix( std::ostream& str ) const;
@@ -1673,7 +1707,7 @@ struct AsioWrapper
 /// Mandatory function for SpagFSM. Cancel the pending async timer
 	void timerCancel()
 	{
-		SPAG_LOG << "Canceling timer, expiry in \n";
+		SPAG_LOG << '\n';
 		_asioTimer->cancel_one();
 	}
 
@@ -1715,7 +1749,7 @@ struct AsioWrapper
 		const auto& stateInfo = fsm->getStateInfo( st_idx );
 		assert( stateInfo._innerTrans._hasOne );
 		assert( stateInfo._innerTrans._isActive );
-
+		std::cout << "signal handler, processing " << stateInfo._innerTrans;
 		fsm->processInnerEvent( stateInfo._innerTrans );
 
 		_signals.async_wait(                                   // re-initialize signal handler
@@ -1730,6 +1764,7 @@ struct AsioWrapper
 	}
 	void raiseSignal()
 	{
+		SPAG_LOG << '\n';
 		std::raise( SIGUSR1 );
 	}
 #endif
