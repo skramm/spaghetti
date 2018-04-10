@@ -7,16 +7,26 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+#define SPAG_ENUM_STRINGS
 #define SPAG_EMBED_ASIO_TIMER
 #define SPAG_GENERATE_DOTFILE
 #define SPAG_USE_SIGNALS
 #include "spaghetti.hpp"
 
 //-----------------------------------------------------------------------------------
-enum States { st_Init, st_Red, st_Orange, st_Green, st_All, st_special, NB_STATES };
+enum States { st_Init, st_Red, st_Orange, st_Green, st_All, st_FOR_TEST, NB_STATES };
 enum Events { ev_special, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
+
+std::map<States,std::string> states_str = {
+	{ st_Init,    "Init" },
+	{ st_Red,     "RED" },
+	{ st_Orange,  "ORANGE" },
+	{ st_Green,   "GREEN" },
+	{ st_All,     "All" },
+	{ st_FOR_TEST, "TEST-STATE" },
+};
 
 struct TestClass
 {
@@ -34,31 +44,34 @@ struct TestClass
 
 		if( redCounter == 2 )
 		{
-			std::cout << "process special !\n";
+			std::cout << "process to ALL !\n";
 			redCounter =0;
 			fsm.activateInnerEvent( ev_special );
 		}
-		std::cout << "callback end\n";
+//		std::cout << "callback end\n";
 	}
 
 	void config()
 	{
+		fsm.assignStrings2States( states_str );
 		fsm.setTimerDefaultUnit( "ms" );
 		fsm.assignTimeOut( st_Init,   200, st_Red    );
-//		fsm.assignTimeOut( st_Red,    600, st_Green  );
+		fsm.assignTimeOut( st_Red,    600, st_Green  );
 		fsm.assignTimeOut( st_Green,  600, st_Orange );
 		fsm.assignTimeOut( st_Orange, 300, st_Red   );
 
 		fsm.assignInnerTransition( st_Red, ev_special, st_All );
 
-		fsm.assignTransition( st_Orange, st_special );
-		fsm.assignTimeOut( st_special,   200, st_Red    );
+		fsm.assignTransition( st_Orange, st_FOR_TEST );
+		fsm.assignTimeOut( st_FOR_TEST, 200, st_Red    );
 
 		fsm.assignCallback( std::bind( &TestClass::callback, this, std::placeholders::_1 ) );
-		fsm.assignCallbackValue( st_Red,    "RED" );
-		fsm.assignCallbackValue( st_Orange, "ORANGE" );
-		fsm.assignCallbackValue( st_Green,  "GREEN" );
-		fsm.assignCallbackValue( st_All,  "RED-GREEN-ORANGE" );
+		fsm.assignCallbackValue( st_Init,    "Init state" );
+		fsm.assignCallbackValue( st_Red,     "RED" );
+		fsm.assignCallbackValue( st_Orange,  "ORANGE" );
+		fsm.assignCallbackValue( st_Green,   "GREEN" );
+		fsm.assignCallbackValue( st_All,     "RED-GREEN-ORANGE" );
+		fsm.assignCallbackValue( st_FOR_TEST, "TEST!!!" );
 
 		fsm.printConfig( std::cout );
 		fsm.writeDotFile( "traffic_lights_1c.dot" );

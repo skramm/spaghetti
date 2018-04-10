@@ -1,6 +1,6 @@
 /**
 \file sample_1.cpp
-\brief Demo program of a simple FSM with 2 events (key press), 5 states, and 1 pass state. No Timer
+\brief Demo program of a simple FSM with 3 events (key press) and 5 states. No Timer
 \image html sample_1.svg
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
@@ -14,7 +14,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "spaghetti.hpp"
 
 enum States { st0, st1, st2, st3, st4, NB_STATES };
-enum Events { ev_1, ev_2, NB_EVENTS };
+enum Events { ev_1, ev_2, ev_3, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, std::string );
 
@@ -46,7 +46,7 @@ int main( int, char* argv[] )
 	fsm.assignTransition( st2, ev_2, st4 );
 	fsm.assignTransition( st3, ev_2, st4 );
 
-	fsm.assignTransition( st4, st0 );   // st4 is a "pass state": no transition
+	fsm.assignTransition( st4, ev_3, st0 );
 
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "sample_1.dot" );
@@ -61,6 +61,7 @@ int main( int, char* argv[] )
 		{
 			case '1': fsm.processEvent( ev_1 ); break;
 			case '2': fsm.processEvent( ev_2 ); break;
+			case '3': fsm.processEvent( ev_3 ); break;
 			case 'q': quit = true; break;
 			default: std::cout << "invalid key\n";
 		}

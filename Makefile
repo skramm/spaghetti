@@ -79,7 +79,7 @@ SVG_FILES := $(DOT_FILES:.dot=.svg)
 
 # default target
 help:
-	@echo "This is not a program but a header-only library. Therefore, it is not supposed to be build"
+	@echo "This is not a program but a header-only library. Therefore, it is not supposed to be build."
 	@echo -e "If you want to build the sample programs, try target 'demo'.\n"
 	@echo "* Available targets:"
 	@echo " - demo"
