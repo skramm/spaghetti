@@ -1,6 +1,8 @@
 /**
 \file sample_3.cpp
-\brief Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global
+\brief Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable.
+Also demonstrates how user code can stop the running FSM.
+
 \image html sample_3.svg
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
@@ -47,6 +49,7 @@ int main( int, char* argv[] )
 
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "sample_3.dot" );
+
 	fsm.start();
 	std::cout << "FSM Stopped by callback action\n";
 }

@@ -47,8 +47,8 @@ int main( int, char* argv[] )
 	fsm_B.assignCallbackValue( st_1, "st1-B" );
 	fsm_B.assignCallbackValue( st_2, "st2-B" );
 
-	fsm_A.printConfig( std::cout );
-	fsm_B.printConfig( std::cout );
+	fsm_A.printConfig( std::cout, "FSM-A" );
+	fsm_B.printConfig( std::cout, "FSM-B" );
 
 	boost::asio::io_service io_service;
 	spag::AsioTimer asio_A( io_service );

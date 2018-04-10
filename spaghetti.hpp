@@ -168,6 +168,7 @@ timeUnitFromString( std::string str ) noexcept
 		return std::make_pair( true, DurUnit::min );
 	return std::make_pair( false, DurUnit::min );
 }
+
 //-----------------------------------------------------------------------------------
 /// helper function
 inline
@@ -567,8 +568,8 @@ class SpagFSM
 
 /** \name Configuration of FSM */
 ///@{
-/// Assigned ignored event matrix
-		void assignEventMatrix( const std::vector<std::vector<int>>& mat )
+/// Assigned allowed event matrix
+		void assignEventMatrix( const std::vector<std::vector<char>>& mat )
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
@@ -589,8 +590,9 @@ class SpagFSM
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev),  nbEvents() );
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
-/*
-			if( _stateInfo[st1_idx]._isPassState )
+
+#ifdef SPAG_USE_SIGNALS
+			if( _stateInfo[st1_idx]._innerTrans._isPassState )
 			{
 				std::string err_msg{ "error, attempting to assign a transition to state" };
 				err_msg += std::to_string( st1_idx );
@@ -600,7 +602,7 @@ class SpagFSM
 				err_msg += ", was previously declared as pass-state";
 				SPAG_P_THROW_ERROR_CFG( err_msg );
 			}
-*/
+#endif
 			_transitionMat[ SPAG_P_CAST2IDX(ev) ][ st1_idx ] = st2;
 			_allowedMat[    SPAG_P_CAST2IDX(ev) ][ st1_idx ] = 1;
 		}
@@ -609,6 +611,8 @@ class SpagFSM
 /// Assigns a transition to a "pass-state": once on state \c st1, the FSM will switch right away to \c st2
 /**
 \warning If a time out has previously been assigned to state \c st1, it will be removed
+
+\warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 */
 		void assignTransition( ST st1, ST st2 )
 		{
@@ -620,13 +624,10 @@ class SpagFSM
 				line[ st1_idx ] = st2;
 			for( auto& line: _allowedMat )
 				line[ st1_idx ] = 1;
-			_stateInfo[st1_idx]._innerTrans._isPassState = 1;
-
-
-	_stateInfo[st1_idx]._innerTrans._hasOne   = true;
-	_stateInfo[st1_idx]._innerTrans._isActive = true;
-	_stateInfo[st1_idx]._innerTrans._destState = st2;
-
+			_stateInfo[st1_idx]._innerTrans._isPassState = true;
+			_stateInfo[st1_idx]._innerTrans._hasOne   = true;
+			_stateInfo[st1_idx]._innerTrans._isActive = true;
+			_stateInfo[st1_idx]._innerTrans._destState = st2;
 
 			auto& te = _stateInfo[st1_idx]._timerEvent;
 			if( te._enabled )
@@ -641,10 +642,9 @@ class SpagFSM
 				te._enabled = false;
 			}
 		}
-#endif
 
-#ifdef SPAG_USE_SIGNALS
 /// Assigns a inner transition between \c st1 and \c st2, triggered by event \c ev
+/// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 		void assignInnerTransition( ST st1, EV ev, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
@@ -745,7 +745,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 /// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
-//		void assignTransitionAlways( EV ev, ST st )
 		void assignTransition( EV ev, ST st )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
@@ -863,7 +862,6 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			for( size_t i=0; i<nbStates(); i++ )
 				assignCallbackValue( static_cast<ST>(i), _strStates[i] );
 		}
-
 #else
 		void assignString2Event( EV, std::string ) {}
 		void assignString2State( ST, std::string ) {}
@@ -968,7 +966,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		}
 
 #ifdef SPAG_USE_SIGNALS
-/// activate inner event: set the inner event to true, so that a signal will be raised when we are on that state.
+/// activate inner event: set the inner event to true, so that a signal will be raised when we are on that state (and once callback has been completed).
+/// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 		void activateInnerEvent( EV ev )
 		{
 			SPAG_LOG << "\n";
@@ -983,7 +982,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			_stateInfo[ SPAG_P_CAST2IDX(st1) ]._innerTrans._isActive = true;
 		}
 
-/// Called by event loop wrapper
+/// This is to be called by event loop wrapper, by the signal handler.
+/// <strong>DO NOT CALL in user code</strong>
+/// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 		void processInnerEvent( const priv::InnerTransition<ST,EV>& it ) const
 		{
 			SPAG_P_ASSERT( _isRunning, "attempting to process a inner event but FSM is not started" );
@@ -1141,9 +1142,9 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();<code>
 	private:
 /// Run associated action with a state switch (state has already switched)
 /**
-#- first, starts timer, if needed (first, because running callback can take some time)
-#- second, calls callback function, if any.
-#- third, raises a signal if a deferred action has been requested on this state
+-# first, starts timer, if needed (first, because running callback can take some time).
+-# second, calls callback function, if any.
+-# third, raises a signal if a deferred action has been requested on this state (only if signals have been enabled, see manual).
 */
 		void runAction() const
 		{
@@ -1154,7 +1155,6 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();<code>
 			if( stateInfo._timerEvent._enabled )
 			{
 				SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
-//				assert( !stateInfo._innerTrans._isPassState );
 				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
 				_timer->timerStart( this );
 			}
@@ -1170,12 +1170,11 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();<code>
 			const auto& si_it = stateInfo._innerTrans;
 			if( si_it._isPassState || ( si_it._hasOne && si_it._isActive ) )
 			{
-				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
+//				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
 				_timer->raiseSignal();
 				_timer->timerCancel();
 			}
 #endif
-//			std::cout << "runAction_DoJob(): end\n";
 		}
 
 		void printMatrix( std::ostream& str ) const;
@@ -1464,16 +1463,16 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 {
-	out << "---------------------\nTransition table: ";
+	out << "\n* FSM Configuration: ";
 	if( msg )
-		out << "msg=" << msg;
-	out << '\n';
+		out << msg;
+	out << "\n - Transition table:\n";
 	printMatrix( out );
 
 #ifdef SPAG_ENUM_STRINGS
 	size_t maxlength = priv::getMaxLength( _strStates );
 #endif
-	out << "\nState info:\n";
+	out << "\n - State info:\n";
 	for( size_t i=0; i<nbStates(); i++ )
 	{
 		const auto& te = _stateInfo[i]._timerEvent;
@@ -1727,6 +1726,7 @@ struct AsioWrapper
 
 #ifdef SPAG_USE_SIGNALS
 /// This is a handler, automatically called by boost::io_service when an OS signal USR1 is detected.
+/// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 	void signalHandler( const boost::system::error_code& error, int signal_number, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
