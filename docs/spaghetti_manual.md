@@ -3,7 +3,7 @@
 Homepage: https://github.com/skramm/spaghetti
 
 This page demonstrates usage of the library through several showcases, and gives additional details.
-All the example are included and runnable in the src folder, just ```make demo```, then run ```bin/program_name```.
+All the example are included and runnable in the src folder, just ```make demo``` (or ```make demo -j4``` to make things quicker), then run ```bin/program_name```.
 
 For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
@@ -26,20 +26,23 @@ Before you can get started, all you need is to download and install the file ```
 On Linux, ```/usr/local/include``` is usually pretty good.
 You can do that manually, or with ```sudo make install```.
 Then you can create a program.
+Or, you can clone the whole repo to have a look at the provided examples.
 
 <a name="concepts"></a>
 ## 1 - Fundamental concepts
 
 ### 1.1 - Library content
 This library is actually made of two parts:
-The main part is the FSM class, that is only a container of all the characteristics of your machine.
-You instanciate it, configure it, and start it.
-When events occur, it is up to your code to call the relevant member function, nothing happens magically.
+The main part is the FSM main class, that is only a container of all the characteristics of your machine.
+You instanciate it and configure it:
+you define the states, the events, the callback functions associated to the states, and of course what event may lead from one state to another state.
+Then you start it and when an events occur, it is up to your code to call the relevant member function, nothing happens magically.
 This part has no dependency other than the standard library.
 
 But a lot of situations require more than just handling of external events.
 For example, timeouts.
 Thus, the FSM object can work together with another object that will provide all the needed tasks, such as time handling, and generating events at the right moment.
+Consider this as some kind of *event loop*.
 
 This class is not part of the root library, and the FSM could theorically work with any user-written class that provides theses services, and that respects certain requirements.
 But of course, the Spaghetti library provides such a class, that works seamlessly.
@@ -52,7 +55,7 @@ Configuration of the state machine is a mix of static and dynamic: the number of
 States and events are simply defined as enum values:
 ```C++
 enum States { st_1, st_2, st_3, NB_STATES }; // 3 states
-enum Events { ev_1, ev_2, ev_3,  NB_EVENTS }; // 3 events
+enum Events { ev_1, ev_2, ev_3, NB_EVENTS }; // 3 events
 ```
 Naming is free except for the last value that
 **must** be ```NB_STATES``` and ```NB_EVENTS```, respectively.
@@ -62,15 +65,18 @@ You can use either classical C++03 enums or C++11 scoped enums (```enum class { 
 The latter adds of course some type safety.
 But all these values are internally casted to integers, so you must not assign values to the enumerators.
 
-Events can be of two types:
-- "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
+Events can be of **three** types:
+
+1. "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
 But you can have none ! In that case, just define the events enum as:
 ```C++
 	enum Events { NB_EVENTS }
 ```
-- "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
+1. "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
+1. "internal events", that depend on some **inner** condition on your application.
+Say something like: "*if the state X is activated 3 times, then, once on state Y, switch immediately to state Z*".
 
-As explained above, for the latter case you need to provide a special "timing" class, that will have some requirements.
+As described above, for the two latter cases you need to provide a special "timing/event handler" class, that will have some requirements.
 You will need to instanciate an object of that class, then assign it to the FSM in the configuration step.
 Fortunately, this is made easy for the usual case, no worry.<br>
 For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
@@ -88,11 +94,11 @@ First, create enums for states and events:
 enum States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 ```
-Then, create the FSM data type:
+Then, create the FSM data type, using a conveniency macro:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-This means you create the type ```fsm_t``` (it's a typedef), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
+This means you create the type ```fsm_t``` (the macro is actually a typedef), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
 
 Now, you can instanciate the fsm:
 
@@ -114,7 +120,7 @@ This means:
 
 Ok, and also tell the FSM what is to be done when a state gets triggered.
 This is done by providing a callback function.
-In this case it is the same for all, but you can have a different function for all the states.
+In this case it is the same for all, but you can have a different function for every state.
 You don't even need to provide a callback function, it is always optional:
 some states can have one while others won't.
 The only constraint is that they must have the same signature.
@@ -124,7 +130,7 @@ The only constraint is that they must have the same signature.
 	fsm.assignCallback( st_Unlocked, cb_func, false );
 ```
 
-Alternatively (and that is useful if you have a lot of states), you can provide the callback function for all the states, and separately set the argument value:
+Alternatively (and that is useful if you have a lot of states), you can provide a common callback function for all the states, and separately set the argument value:
 
 ```C++
 	fsm.assignCallback( cb_func );
@@ -167,7 +173,7 @@ do
 		break;
 	}
 }
-while( 1 );
+while( true );
 ```
 
 That's it!
@@ -350,9 +356,9 @@ Now the server. The potential problem we need to deal with is that:
 - the server needs to hold the FSM, so that network-received commands can take action on it,
 - the server also needs to hold the socket,
 - with Boost::asio, to create a socket, we need to provide an "io_service" object,
-- if we embed that object inside the FSM, we won't be able to create the socket...
+- if we embed that object inside the FSM (as it is done in the previous example), we won't be able to create the socket...
 
-So here, we demonstrate another use-case: we will use the provided asio-based timer class, but we will instanciate it separately, it will not be embedded inside the FSM:
+So here, we demonstrate another use-case: we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
 ```C++
 #define SPAG_USE_ASIO_TIMER
 #include "spaghetti.hpp"
@@ -392,16 +398,22 @@ struct MyServer : public UdpServer<1024>
 };
 ```
 
-And the main() function will instanciate the timer class and **assign it** to the fsm (skipped the parts about the keyboard UI thread):
+And the ```main()``` function will instanciate the timer class and **assign it** to the fsm
+(skipped the parts about the keyboard UI thread):
 ```C++
 int main()
 {
-	spag::AsioTimer asio;                            // instanciate Timer
-	MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
+// instanciate Timer/Event loop
+	spag::AsioTimer asio;
+
+// create udp server with asio, listening on port 12345
+	MyServer server( asio.get_io_service(), 12345 );
+
 	configureFSM<fsm_t>( server.fsm );
 	server.fsm.assignTimer( &asio );
-	server.start_receive();           // start reception, see UdpServer
-	server.fsm.start();               // blocking !
+
+	server.start_receive();  // start reception, see UdpServer
+	server.fsm.start();      // blocking !
 }
 ```
 
@@ -467,9 +479,9 @@ Of course in such a situation, it would be simpler to use the following two memb
 The first one allows all events for all the states.
 The second one disables event ```ev2``` when on state ```st2```.
 Please note that this latter function can also be used to **allow** an event, for example one could write:
-```fsm.allowEvent( ev2, st2, true )```
+```fsm.allowEvent(ev2, st2, true)```
 or just
-```fsm.allowEvent( ev2, st2 )```.
+```fsm.allowEvent(ev2, st2)```.
 
 You can also copy all the configuration from one instance of an FSM to another:
 ```C++
