@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.62
+#define SPAG_VERSION 0.63
 
 #include <vector>
 #include <map>
@@ -541,7 +541,7 @@ class SpagFSM
 /** \name Configuration of FSM */
 ///@{
 /// Assigned ignored event matrix
-		void assignEventMatrix( const std::vector<std::vector<int>>& mat )
+		void assignEventMatrix( const std::vector<std::vector<char>>& mat )
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );

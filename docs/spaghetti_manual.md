@@ -449,7 +449,7 @@ So you also need to provide an **authorization matrix**, that defines what can a
 This is done with the member function ```assignEventMatrix()```.
 For example and with the above code, if we want to disable transitionning from state st2 to st0 when event ev2 occurs, it will be this:
 ```C++
-	std::vector<std::vector<En_States>> eventMat = {
+	std::vector<std::vector<char>> eventMat = {
 //          st0 - st1 - st2
 /* ev1 */  { 1 ,   1 ,   1 },
 /* ev2 */  { 1 ,   1 ,   0 }
