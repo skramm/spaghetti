@@ -6,10 +6,10 @@ CHANGELOG
 
 * 2018-04-10: changes from release 0.7 (currently only in branch "add_new_transition")
  - pass-states (aka "always active transitions", AAT) are now implemented using signaling.
- This was neccessary because with the previous implementation, the callback of second state
+ This was necessary because with the previous implementation, the callback of second state
  (in case of an AAT between two states)
  was called before the "processEvent()" of previous event was done. This was not acceptable,
  thus, signals are now used.
  Consequence: this is only available if the user provides or uses (more likely) the external
- timing class, that must now also handle the signalling handling.
+ timing class, that must now also handle the signaling handling.
 
