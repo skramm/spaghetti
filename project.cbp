@@ -25,10 +25,12 @@
 		<Unit filename="CHANGELOG" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
+		<Unit filename="docs/spaghetti_changelog.md" />
 		<Unit filename="docs/spaghetti_faq.md" />
 		<Unit filename="docs/spaghetti_inner_events.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="docs/spaghetti_options.md" />
+		<Unit filename="docs/spaghetti_roadmap.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
 		<Unit filename="src/doxyfile" />
