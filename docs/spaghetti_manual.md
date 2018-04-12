@@ -46,7 +46,7 @@ Consider this as some kind of *event loop*.
 
 This class is not part of the root library, and the FSM could theorically work with any user-written class that provides theses services, and that respects certain requirements.
 But of course, the Spaghetti library provides such a class, that works seamlessly.
-This is of course the preferred way, but it comes at the price of a dependency on the Boost libraries.
+This is the preferred way, but it comes at the price of a dependency on the Boost libraries.
 More on this below.
 
 ### 1.2 - States and Events

@@ -1,6 +1,12 @@
 /**
 \file traffic_lights_1c.cpp
-\brief same as traffic_lights_1.cpp but with the fsm and the callback function inside a class
+\brief same as traffic_lights_1.cpp but with the fsm and the callback function inside a class.
+
+Also demonstrates:
+- how a inner event can be activated from a callback function: here, once the
+RED state has been activate 5 times, we transition to the ALL state.
+- how a pass state is implemented (see state
+
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
@@ -14,7 +20,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "spaghetti.hpp"
 
 //-----------------------------------------------------------------------------------
-enum States { st_Init, st_Red, st_Orange, st_Green, st_All, st_FOR_TEST, NB_STATES };
+enum States { st_Init, st_Red, st_Orange, st_Green, st_All, st_PASS, NB_STATES };
 enum Events { ev_special, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
@@ -25,7 +31,7 @@ std::map<States,std::string> states_str = {
 	{ st_Orange,  "ORANGE" },
 	{ st_Green,   "GREEN" },
 	{ st_All,     "All" },
-	{ st_FOR_TEST, "TEST-STATE" },
+	{ st_PASS,    "PASS-STATE" },
 };
 
 struct TestClass
@@ -42,9 +48,9 @@ struct TestClass
 		if( v == "RED" )
 			redCounter++;
 
-		if( redCounter == 2 )
+		if( redCounter == 5 )
 		{
-			std::cout << "process to ALL !\n";
+			std::cout << "Activate inner event, next time on RED => proceed to ALL\n";
 			redCounter =0;
 			fsm.activateInnerEvent( ev_special );
 		}
@@ -62,16 +68,17 @@ struct TestClass
 
 		fsm.assignInnerTransition( st_Red, ev_special, st_All );
 
-		fsm.assignTransition( st_Orange, st_FOR_TEST );
-		fsm.assignTimeOut( st_FOR_TEST, 200, st_Red    );
+		fsm.assignTransition( st_Orange, st_PASS );
+//		fsm.assignTimeOut( st_PASS, 200, st_Red    );
+		fsm.assignTransition( st_PASS,  st_Red    );
 
 		fsm.assignCallback( std::bind( &TestClass::callback, this, std::placeholders::_1 ) );
 		fsm.assignCallbackValue( st_Init,    "Init state" );
 		fsm.assignCallbackValue( st_Red,     "RED" );
 		fsm.assignCallbackValue( st_Orange,  "ORANGE" );
 		fsm.assignCallbackValue( st_Green,   "GREEN" );
-		fsm.assignCallbackValue( st_All,     "RED-GREEN-ORANGE" );
-		fsm.assignCallbackValue( st_FOR_TEST, "TEST!!!" );
+		fsm.assignCallbackValue( st_All,     "ALL: RED-GREEN-ORANGE" );
+		fsm.assignCallbackValue( st_PASS, "PASS STATE" );
 
 		fsm.printConfig( std::cout );
 		fsm.writeDotFile( "traffic_lights_1c.dot" );

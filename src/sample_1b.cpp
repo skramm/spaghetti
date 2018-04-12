@@ -21,7 +21,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include <thread>
 
 enum States { st0, st1, st2, st3, st_err, NB_STATES };
-enum Events { ev_1, ev_2, NB_EVENTS };
+enum Events { ev_1, ev_2, ev_inner, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
@@ -43,6 +43,7 @@ void UI_thread( const FSM* fsm )
 			{
 				case '1': fsm->processEvent( ev_1 ); break;
 				case '2': fsm->processEvent( ev_2 ); break;
+				case '3': fsm->processEvent( ev_inner ); break; // this is only to make sure that this will generate an error
 				case 'q': quit = true; fsm->stop();  break;
 			}
 		}
@@ -71,6 +72,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st3, ev_2, st_err );
 
 	fsm.assignTransition( st_err, st0 );   // st_err is a "pass state": no transition
+	fsm.assignInnerTransition( st1, ev_inner, st2 ); // dummy transition, just for error checking
 }
 
 int main( int, char* argv[] )

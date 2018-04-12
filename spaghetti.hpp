@@ -936,6 +936,16 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
+
+#ifdef SPAG_USE_SIGNALS
+			if( _eventInfo.find( ev ) != std::end( _eventInfo ) ) // if found, this means that this event is "special", thus should not be processed that way
+			{
+				SPAG_P_THROW_ERROR_RT(
+					"illegal processing of special event of id=" + std::to_string( SPAG_P_CAST2IDX(ev) )
+				);
+			}
+#endif
+
 			auto ev_idx = SPAG_P_CAST2IDX( ev );
 #ifdef SPAG_ENUM_STRINGS
 			SPAG_LOG << "processing event " << ev_idx << ": \"" << _strEvents[ev_idx] << "\"\n";
@@ -1731,7 +1741,7 @@ struct AsioWrapper
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 	void signalHandler( const boost::system::error_code& error, int signal_number, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
+//		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
 		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
 		const auto& stateInfo = fsm->getStateInfo( st_idx );
 		assert( stateInfo._innerTrans._hasOne );
