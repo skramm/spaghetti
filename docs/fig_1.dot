@@ -1,0 +1,16 @@
+digraph G {
+rankdir=LR;
+edge[style="bold"]
+node[shape="circle"]
+
+A -> B [label="1"];
+B -> C [label="E1"];
+B -> D [label="E2"];
+B -> E [label="SE1"];
+B -> F [label="SE2"];
+F -> G;
+E -> G;
+C -> H;
+
+}
+

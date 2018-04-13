@@ -54,7 +54,6 @@ struct TestClass
 			redCounter =0;
 			fsm.activateInnerEvent( ev_special );
 		}
-//		std::cout << "callback end\n";
 	}
 
 	void config()

@@ -938,11 +938,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 #ifdef SPAG_USE_SIGNALS
 			if( _eventInfo.find( ev ) != std::end( _eventInfo ) ) // if found, this means that this event is "special", thus should not be processed that way
-			{
 				SPAG_P_THROW_ERROR_RT(
 					"illegal processing of special event of id=" + std::to_string( SPAG_P_CAST2IDX(ev) )
 				);
-			}
 #endif
 
 			auto ev_idx = SPAG_P_CAST2IDX( ev );
