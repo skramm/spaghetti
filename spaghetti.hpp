@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 #define SPAG_USE_ARRAY
 
 
-#define SPAG_VERSION 0.7.0
+#define SPAG_VERSION 0.7.1
 
 #include <vector>
 #include <map>
@@ -464,15 +464,19 @@ event stored as size_t because we may pass values other than the ones in the enu
 };
 #endif
 //-----------------------------------------------------------------------------------
+#ifndef SPAG_USE_ARRAY
 /// helper template function (unused if SPAG_USE_ARRAY defined)
 template<typename T>
 void
 resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t nb_cols )
 {
 	mat.resize( nb_lines );
-	for( auto& e: mat )
-		e.resize( nb_cols );
+	for( auto& line: mat )
+		line.resize( nb_cols );
+		for( auto& elem: line )
+			elem = static_cast<T>(0);
 }
+#endif
 //-----------------------------------------------------------------------------------
 /// Used for configuration errors (more to be added). Used through priv::getConfigErrorMessage()
 enum EN_ConfigError
@@ -533,13 +537,17 @@ class SpagFSM
 #endif
 		{
 			static_assert( SPAG_P_CAST2IDX(ST::NB_STATES) > 1, "Error, you need to provide at least two states" );
-#ifndef SPAG_USE_ARRAY
+
+#ifdef SPAG_USE_ARRAY
+			for( auto& e: _allowedMat )      // all events will be ignored at init
+				std::fill( e.begin(), e.end(), 0 );
+			for( auto& e: _transitionMat )      // transition table filled with state 0
+				std::fill( e.begin(), e.end(), static_cast<ST>(0) );
+#else
 			priv::resizemat( _transitionMat, nbEvents(), nbStates() );
 			priv::resizemat( _allowedMat, nbEvents(), nbStates() );
 			_stateInfo.resize( nbStates() );    // states information
 #endif
-			for( auto& e: _allowedMat )      // all events will be ignored at init
-				std::fill( e.begin(), e.end(), 0 );
 
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.alloc( nbStates(), nbEvents() );
@@ -586,6 +594,9 @@ class SpagFSM
 		}
 
 /// Assigns an external transition event \c ev to switch from state \c st1 to state \c st2
+/**
+\note Transition to same state are allowed.
+*/
 		void assignTransition( ST st1, EV ev, ST st2 )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st1), nbStates() );
@@ -622,10 +633,16 @@ class SpagFSM
 			size_t st2_idx = SPAG_P_CAST2IDX(st2);
 			SPAG_CHECK_LESS( st1_idx, nbStates() );
 			SPAG_CHECK_LESS( st2_idx, nbStates() );
-			for( auto& line: _transitionMat )
-				line[ st1_idx ] = st2;
-			for( auto& line: _allowedMat )
-				line[ st1_idx ] = 1;
+			if( st1 == st2 )
+				SPAG_P_THROW_ERROR_CFG(
+					"unable to assign an AAT to same states: S"
+					 + std::to_string( st1_idx ) + "and S" + std::to_string( st2_idx )
+				);
+
+//			for( auto& line: _transitionMat )
+//				line[ st1_idx ] = st2;
+//			for( auto& line: _allowedMat )
+//				line[ st1_idx ] = 1;
 			_stateInfo[st1_idx]._innerTrans._isPassState = true;
 			_stateInfo[st1_idx]._innerTrans._hasOne   = false;
 			_stateInfo[st1_idx]._innerTrans._isActive = true;
@@ -636,7 +653,7 @@ class SpagFSM
 			{
 				SPAG_P_LOG_ERROR << "warning, removal of timeout of "
 					<< te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
-					<< " on state " << SPAG_P_CAST2IDX(st1)
+					<< " on state S" << std::setfill('0') << std::setw(2) << SPAG_P_CAST2IDX(st1)
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" << _strStates[st1] << ')'
 #endif
@@ -650,12 +667,19 @@ class SpagFSM
 		void assignInnerTransition( ST st1, EV ev, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
+			SPAG_CHECK_LESS( st1_idx,              nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev),  nbEvents() );
+
 			_stateInfo[ st1_idx ]._innerTrans._hasOne = true;
 			_stateInfo[ st1_idx ]._innerTrans._innerEvent = ev;
 			_stateInfo[ st1_idx ]._innerTrans._destState  = st2;
 			_eventInfo[ ev ] = st1;
+			_transitionMat[ SPAG_P_CAST2IDX(ev) ][st1_idx] = st2;
+			_allowedMat[ SPAG_P_CAST2IDX(ev) ][st1_idx]    = 1;
+//			std::cout << "assign to col " << st1_idx << " line " << ev << ": value=" <<st2 << '\n';
 		}
-#endif
+#endif // SPAG_USE_SIGNALS
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
 		void assignGlobalTimeOut( Duration dur, ST st_final )
@@ -736,7 +760,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			if( !_stateInfo[ st_idx ]._timerEvent._enabled )
 			{
-				SPAG_P_LOG_ERROR << "warning: asking for removal of timeout on state " << st_idx
+				SPAG_P_LOG_ERROR << "warning: asking for removal of timeout on state S" << st_idx
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" << _strStates[st_idx]  << ')'
 #endif
@@ -1076,7 +1100,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 
 /// Returns the build options
 /**
-Usage (example): <code>std::cout << fsm_t::buildOptions();<code>
+Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 */
 		static std::string buildOptions()
 		{
@@ -1285,7 +1309,6 @@ SpagFSM<ST,EV,T,CBA>::getConfigErrorMessage( priv::EN_ConfigError ce, size_t st 
 	}
 	return msg;
 }
-
 //-----------------------------------------------------------------------------------
 /// helper function template for printConfig()
 template<typename ST, typename EV,typename T,typename CBA>
@@ -1298,17 +1321,18 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 #endif
 
 	char spc_char{ ' ' };
+	out << std::setfill('0');
 
 	priv::printChars( out, maxlength, spc_char );
-	out << "       STATES:\n        ";
+	out << "       STATES:\n       ";
 	priv::printChars( out, maxlength, spc_char );
 	for( size_t i=0; i<nbStates(); i++ )
-		out << i << "  ";
-	out << "\n-----";
+		out << spc_char<< 'S' << std::setw(2) << i;
+	out << "\n------";
 	priv::printChars( out, maxlength, '-' );
 	out << '|';
 	for( size_t i=0; i<nbStates(); i++ )
-		out << "---";
+		out << "----";
 	out << '\n';
 
 	auto nbLines = nbEvents()+1; // +1 for timeout events
@@ -1318,7 +1342,6 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 
 #ifndef SPAG_ENUM_STRINGS
 	std::string capt( "EVENTS" );
-//	nbLines = std::max( capt.size(), nbEvents()+2 );
 	nbLines = std::max( capt.size(), nbLines );
 #endif
 
@@ -1336,40 +1359,40 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 
 		if( i<nbEvents() )
 		{
-			out << spc_char << std::setw(2) << i << " | ";
+			out << spc_char << 'E' << std::setw(2) << i << " | ";
 
 			for( size_t j=0; j<nbStates(); j++ )
 			{
-				if( _allowedMat[i][j] ) //&& !_stateInfo[j]._innerTrans._isPassState )
-					out << std::setw(2) << _transitionMat[i][j];
+				if( _allowedMat[i][j] )
+					out << 'S' << std::setw(2) << _transitionMat[i][j];
 				else
-					out << " .";
+					out << " . ";
 				out << spc_char;
 			}
 
 		}
 		if( i == nbEvents() ) // TimeOut events
 		{
-			out << "    | ";
+			out << "     | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._timerEvent._enabled )
-					out << std::setw(2) << _stateInfo[j]._timerEvent._nextState;
+					out << 'S' << std::setw(2) << _stateInfo[j]._timerEvent._nextState;
 				else
-					out << " .";
+					out << " . ";
 				out << spc_char;
 			}
 		}
 #ifdef SPAG_USE_SIGNALS
 		if( i == nbEvents()+1 ) // Pass-state
 		{
-			out << "    | ";
+			out << "     | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._innerTrans._isPassState )
-					out << std::setw(2) << _transitionMat[0][j];
+					out << 'S' << std::setw(2) << _stateInfo[j]._innerTrans._destState;
 				else
-					out << " .";
+					out << " . ";
 				out << spc_char;
 			}
 		}
@@ -1395,6 +1418,16 @@ SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
 			if( _stateInfo[i]._timerEvent._enabled )
 				if( SPAG_P_CAST2IDX( _stateInfo[i]._timerEvent._nextState ) == st )
 					return true;
+
+#ifdef SPAG_USE_SIGNALS
+			if( _stateInfo[i]._innerTrans._isPassState )
+				if( SPAG_P_CAST2IDX( _stateInfo[i]._innerTrans._destState ) == st )
+					return true;
+
+			if( _stateInfo[i]._innerTrans._hasOne )
+				if( SPAG_P_CAST2IDX( _stateInfo[i]._innerTrans._destState ) == st )
+					return true;
+#endif
 		}
 
 	return false;
@@ -1406,8 +1439,8 @@ template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::doChecking() const
 {
-/*
-	for( size_t i=0; i<nbStates(); i++ )
+ #if 0
+ 	for( size_t i=0; i<nbStates(); i++ )
 	{
 		auto state = _stateInfo[i];
 		if( state._isPassState )
@@ -1419,11 +1452,12 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 //			if( _stateInfo[ nextState ]._isPassState )
 //				SPAG_P_THROW_ERROR_CFG( getConfigErrorMessage( priv::CE_IllegalPassState, i ) );
 
-			if( state._timerEvent._enabled )
-				SPAG_P_THROW_ERROR_CFG( getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
+//			if( state._timerEvent._enabled )
+//				SPAG_P_THROW_ERROR_CFG( getConfigErrorMessage( priv::CE_TimeOutAndPassState, i ) );
 		}
 	}
-*/
+#endif
+
 // check for unreachable states
 	std::vector<size_t> unreachableStates;
 	for( size_t i=1; i<nbStates(); i++ )         // we start from index 1, because 0 is the initial state, and thus is always reachable!
@@ -1431,7 +1465,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 			unreachableStates.push_back( i );
 	for( const auto& st: unreachableStates )
 	{
-		std::cout << priv::getSpagName() << "Warning, state " << st
+		std::cout << priv::getSpagName() << "Warning, state S" << std::setw(2) << st
 #ifdef SPAG_ENUM_STRINGS
 			<< " (" << _strStates[st] << ')'
 #endif
@@ -1443,7 +1477,11 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		bool foundValid(false);
 		if( _stateInfo[i]._timerEvent._enabled )
 			foundValid = true;
-		else
+#ifdef SPAG_USE_SIGNALS
+		if( _stateInfo[i]._innerTrans._isPassState )
+			foundValid = true;
+#endif
+		if( !foundValid )       // else
 		{
 			for( size_t j=0; j<nbEvents(); j++ )
 				if( SPAG_P_CAST2IDX( _transitionMat[j][i] ) != i )   // if the transition leads to another state
@@ -1458,7 +1496,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 				i
 			) == unreachableStates.end() )     // AND it is not in the unreachable states list
 		{
-			std::cout << priv::getSpagName() << "Warning, state " << i
+			std::cout << priv::getSpagName() << "Warning, state S" << std::setw(2) << i
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[i] << ')'
 #endif
@@ -1485,7 +1523,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 	for( size_t i=0; i<nbStates(); i++ )
 	{
 		const auto& te = _stateInfo[i]._timerEvent;
-		out << i;
+		out << 'S' << std::setw(2) << i;
 #ifdef SPAG_ENUM_STRINGS
 		out << ':';
 		priv::PrintEnumString( out, _strStates[i], maxlength );
@@ -1493,7 +1531,8 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		out << "| ";
 		if( te._enabled )
 		{
-			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << " => St." << te._nextState;
+			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
+				<< " => S" << std::setw(2) << SPAG_P_CAST2IDX( te._nextState );
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
 			priv::PrintEnumString( out, _strStates[te._nextState], maxlength );
@@ -1505,7 +1544,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 #ifdef SPAG_USE_SIGNALS
 			if( _stateInfo[i]._innerTrans._isPassState )
 			{
-				out << "AAT => St." << _transitionMat[0][i];
+				out << "AAT => S" << std::setw(2) << SPAG_P_CAST2IDX( _transitionMat[0][i] );
 #ifdef SPAG_ENUM_STRINGS
 				out << " (";
 				priv::PrintEnumString( out, _strStates[_transitionMat[0][i]], maxlength );
