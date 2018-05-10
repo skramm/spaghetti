@@ -667,18 +667,42 @@ class SpagFSM
 		void assignInnerTransition( ST st1, EV ev, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
+			auto ev_idx  = SPAG_P_CAST2IDX(ev);
 			SPAG_CHECK_LESS( st1_idx,              nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev),  nbEvents() );
+			SPAG_CHECK_LESS( ev_idx,               nbEvents() );
 
-			_stateInfo[ st1_idx ]._innerTrans._hasOne = true;
+			_stateInfo[ st1_idx ]._innerTrans._hasOne     = true;
 			_stateInfo[ st1_idx ]._innerTrans._innerEvent = ev;
 			_stateInfo[ st1_idx ]._innerTrans._destState  = st2;
 			_eventInfo[ ev ] = st1;
-			_transitionMat[ SPAG_P_CAST2IDX(ev) ][st1_idx] = st2;
-			_allowedMat[ SPAG_P_CAST2IDX(ev) ][st1_idx]    = 1;
+			_transitionMat[ ev_idx ][st1_idx] = st2;
+			_allowedMat[    ev_idx ][st1_idx] = 1;
 //			std::cout << "assign to col " << st1_idx << " line " << ev << ": value=" <<st2 << '\n';
 		}
+
+/// Whatever state we are on, when event \c ev occurs, we switch to state \c st
+/// \todo WIP ! finish this...
+		void assignInnerTransition( EV ev, ST st )
+		{
+			std::cerr << __FUNCTION__ << "(): WARNING: experimental feature\n";
+			auto ev_idx  = SPAG_P_CAST2IDX(ev);
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
+			SPAG_CHECK_LESS( ev_idx, nbEvents() );
+			for( auto& si: _stateInfo )
+			{
+				if( si._innerTrans._hasOne )
+				{
+					std::cerr << "GENERAL FAILURE: at present, multiple inner transitions on one state not allowed!\n";
+					assert(0);
+				}
+				si._innerTrans._hasOne     = true;
+				si._innerTrans._innerEvent = ev;
+				si._innerTrans._destState  = st;
+			}
+			_eventInfo[ ev_idx ] = st;
+		}
+
 #endif // SPAG_USE_SIGNALS
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units

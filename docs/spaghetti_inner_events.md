@@ -39,3 +39,6 @@ Now, it will also check if there is an inner event associated to that state, and
 **raise a signal**, that will be handled **after completion** of the function, by a dedicated handler function.
 
 The signal handler will then itself call the ```processInnerEvent()``` member function,
+
+
+--- Copyright S. Kramm - 2018 ---
