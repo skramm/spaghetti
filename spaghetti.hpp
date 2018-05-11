@@ -700,7 +700,7 @@ class SpagFSM
 				si._innerTrans._innerEvent = ev;
 				si._innerTrans._destState  = st;
 			}
-			_eventInfo[ ev_idx ] = st;
+			_eventInfo[ ev ] = st;
 		}
 
 #endif // SPAG_USE_SIGNALS
@@ -911,6 +911,14 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			for( size_t i=0; i<nbStates(); i++ )
 				assignCallbackValue( static_cast<ST>(i), _strStates[i] );
 		}
+		std::string getString( EV ev ) const
+		{
+			return _strEvents[ev];
+		}
+		std::string getString( ST st ) const
+		{
+			return _strStates[st];
+		}
 #else
 		void assignString2Event( EV, std::string ) {}
 		void assignString2State( ST, std::string ) {}
@@ -919,6 +927,8 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void assignStrings2Events( const std::map<EV,std::string>& ) {}
 		void assignStrings2States( const std::map<ST,std::string>& ) {}
 		void assignCBValuesStrings() const {}
+		std::string getString( EV ) const { return std::string(); }
+		std::string getString( ST ) const { return std::string(); }
 #endif
 
 ///@}
