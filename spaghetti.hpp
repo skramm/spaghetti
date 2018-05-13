@@ -235,9 +235,8 @@ struct InnerTransition
 			<< " innerEvent=" << (int)it._innerEvent << '\n';
 		return s;
 	}
-
 };
-#endif
+#endif // SPAG_USE_SIGNALS
 //-----------------------------------------------------------------------------------
 /// Private class, holds information about a state
 template<typename ST,typename EV,typename CBA>
@@ -686,24 +685,30 @@ class SpagFSM
 //			std::cout << "assign to col " << st1_idx << " line " << ev << ": value=" <<st2 << '\n';
 		}
 
-/// Whatever state we are on, when event \c ev occurs, we switch to state \c st
-/// \todo WIP ! finish this...
+/// Whatever state we are on, when event \c ev occurs, we switch to state \c st (except if we are already on that state...).
+/**
+To remove afterwards the inner events on some states, use \c disableInnerTransition()
+*/
 		void assignInnerTransition( EV ev, ST st )
 		{
 			std::cerr << __FUNCTION__ << "(): WARNING: experimental feature\n";
 			auto ev_idx  = SPAG_P_CAST2IDX(ev);
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( ev_idx, nbEvents() );
-			for( auto& si: _stateInfo )
+			for( size_t i=0; i<_stateInfo.size(); ++i )
 			{
-				if( si._innerTrans._hasOne )
+				auto& si = _stateInfo[i];
+				if( i != SPAG_P_CAST2IDX(st) )
 				{
-					std::cerr << "GENERAL FAILURE: at present, multiple inner transitions on one state not allowed!\n";
-					assert(0);
+					if( si._innerTrans._hasOne )
+					{
+						std::cerr << "GENERAL FAILURE: at present, multiple inner transitions on one state not allowed!\n";
+						assert(0);
+					}
+					si._innerTrans._hasOne     = true;
+					si._innerTrans._innerEvent = ev;
+					si._innerTrans._destState  = st;
 				}
-				si._innerTrans._hasOne     = true;
-				si._innerTrans._innerEvent = ev;
-				si._innerTrans._destState  = st;
 			}
 			_eventInfo[ ev ] = st;
 		}
@@ -816,12 +821,49 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 					e = 1;
 		}
 /// Allow event \c ev when on state \c st
+/**
+\warning This does not assign a transition, it only changes things in the allowed transitions matrix.
+Thus it is also not usable for inner transitions.
+*/
 		void allowEvent( ST st, EV ev, bool what=true )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = (what?1:0);
+
+#ifdef SPAG_USE_SIGNALS
+			if( _stateInfo[SPAG_P_CAST2IDX(st)]._innerTrans._hasOne )
+				if( _stateInfo[SPAG_P_CAST2IDX(st)]._innerTrans._innerEvent == ev )
+					throw std::runtime_error( "usage of allowEvent() not possible for inner events" );
+#endif // SPAG_USE_SIGNALS
 		}
+
+#ifdef SPAG_USE_SIGNALS
+/// Remove inner transition \c ev that is assigned on state \c st
+/**
+This is a companion function of \c assignInnerTransition( EV, ST )
+
+Hence, as this latter ones assigns an inner event to all the states, we need a function
+to remove this event on some states
+*/
+		void disableInnerTransition( EV ev, ST st )
+		{
+			size_t st_idx = SPAG_P_CAST2IDX(st);
+			if( !_stateInfo[st_idx]._innerTrans._hasOne )
+				SPAG_P_THROW_ERROR_CFG( "state "
+					+ std::to_string( st_idx )
+					+ " has no inner transition"
+				);
+			if( _stateInfo[st_idx]._innerTrans._innerEvent != ev )
+				SPAG_P_THROW_ERROR_CFG( "state "
+					+ std::to_string( st_idx )
+					+ " is not configured for event "
+					+ std::to_string( SPAG_P_CAST2IDX(ev) )
+				);
+			_stateInfo[st_idx]._innerTrans._hasOne = false;
+		}
+#endif // SPAG_USE_SIGNALS
+
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )
 		{
@@ -1288,12 +1330,12 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #endif
 
 #ifdef SPAG_USE_SIGNALS
-		std::map<EV,ST>   _eventInfo; ///< holds for inner event the state it is assigned to
+		std::map<EV,ST> _eventInfo; ///< holds for inner event the state it is assigned to
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
-		std::vector<std::string>           _strEvents;      ///< holds events strings
-		std::vector<std::string>           _strStates;      ///< holds states strings
+		std::vector<std::string> _strEvents;      ///< holds events strings
+		std::vector<std::string> _strStates;      ///< holds states strings
 #endif
 
 #ifdef SPAG_EMBED_ASIO_TIMER
@@ -1637,7 +1679,9 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 		if( opt.showActiveState )
 			if( SPAG_P_CAST2IDX( currentState() ) == j )
 				f << ",style=filled,fillcolor=black,fontcolor=white";
+#if 0
 		f << ",URL=\"" << fname << ".html#node_" << j << "\"";
+#endif
 		f << "];\n";
 	}
 	f << "\n/* External events */\n";
@@ -1674,9 +1718,17 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 			f << j << " -> " << _transitionMat[0][j] << " [label=\"AAT\"];\n";
 
 		if( itr._hasOne && opt.showInnerEvents )
-			f << j << " -> " << SPAG_P_CAST2IDX( itr._destState )
-				<< " [label=\"IE" << SPAG_P_CAST2IDX( itr._innerEvent ) << "\"];\n";
-#endif
+		{
+			f << j << " -> " << SPAG_P_CAST2IDX( itr._destState ) << " [label=\"";
+#ifdef SPAG_ENUM_STRINGS
+			if( opt.useEventStrings )
+				f << _strEvents.at(itr._innerEvent);
+			else
+#endif // SPAG_ENUM_STRINGS
+				f << "IE" << SPAG_P_CAST2IDX( itr._innerEvent );
+			f << "\"];\n";
+		}
+#endif // SPAG_USE_SIGNALS
 	}
 	f << "}\n";
 
