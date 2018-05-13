@@ -38,7 +38,7 @@ int main( int, char* argv[] )
 		fsm.assignString2State( st_Red, "Red" );
 
 		fsm.printConfig( std::cout );
-		fsm.writeDotFile( "traffic_lights_2.dot" );
+		fsm.writeDotFile( "traffic_lights_2" );
 
 		std::thread thread_ui( UI_thread<fsm_t>, &fsm );
 

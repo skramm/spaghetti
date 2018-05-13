@@ -26,7 +26,7 @@ void cb_func( int )
 {
 	static int c;
 	if( c < 5 )
-		fsm.writeDotFile( "sample_3_" + std::to_string(c) + ".dot" );
+		fsm.writeDotFile( "sample_3_" + std::to_string(c) );
 	c++;
 	if( !(c%100) )
 		std::cout << "c=" << c << '\n';
@@ -48,7 +48,7 @@ int main( int, char* argv[] )
 	fsm.assignTimeOut( st4, 5 , st0 );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample_3.dot" );
+	fsm.writeDotFile( "sample_3" );
 
 	fsm.start();
 	std::cout << "FSM Stopped by callback action\n";

@@ -80,7 +80,7 @@ struct TestClass
 		fsm.assignCallbackValue( st_PASS, "PASS STATE" );
 
 		fsm.printConfig( std::cout );
-		fsm.writeDotFile( "traffic_lights_1c.dot" );
+		fsm.writeDotFile( "traffic_lights_1c" );
 	}
 };
 

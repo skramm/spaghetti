@@ -125,7 +125,7 @@ int main( int, char* argv[] )
 
 	configureFSM( fsm )	;
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "turnstyle_2.dot" );
+	fsm.writeDotFile( "turnstyle_2" );
 
 	std::thread thread_ui( UI_thread<fsm_t>, &fsm );
 

@@ -83,7 +83,7 @@ int main( int, char* argv[] )
 	configureFSM( fsm );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample_1b.dot" );
+	fsm.writeDotFile( "sample_1b" );
 	std::cout << "Enter event key: 1 or 2 (q:quit)\n";
 
 	std::thread thread_ui( UI_thread<fsm_t>, &fsm );

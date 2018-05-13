@@ -49,7 +49,7 @@ int main( int, char* argv[] )
 	fsm.assignTransition( st4, ev_3, st0 );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample_1.dot" );
+	fsm.writeDotFile( "sample_1" );
 	fsm.start();
 	std::cout << "Enter event key: 1 or 2 (q:quit)\n";
 	bool quit(false);

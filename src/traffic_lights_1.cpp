@@ -42,7 +42,7 @@ int main( int, char* argv[] )
 	fsm.assignCallback( st_Green,  callback, std::string("GREEN") );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "traffic_lights_1.dot" );
+	fsm.writeDotFile( "traffic_lights_1" );
 
 	fsm.start();
 }
