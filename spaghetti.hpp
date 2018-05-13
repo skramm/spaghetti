@@ -504,6 +504,11 @@ struct NoTimer;
 struct DotFileOptions
 {
 	bool showActiveState = true;
+	bool showTimeOuts    = true;
+	bool showInnerEvents = true;
+	bool showAAT         = true;
+	bool useStateStrings = true;
+	bool useEventStrings = true;
 };
 
 //-----------------------------------------------------------------------------------
@@ -1617,7 +1622,16 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "\n/* States (=nodes)*/\n";
 	for( size_t j=0; j<nbStates(); j++ )
 	{
-		f << j << " [label=\"S" << j << "\"";
+		f << j << " [label=\"";
+#ifdef SPAG_ENUM_STRINGS
+		if( opt.useStateStrings )
+			f << _strStates[j];
+		else
+#endif
+			f << 'S' << j;
+
+		f << '"';
+
 		if( j == 0 )                                // initial state
 			f << ",shape=doublecircle";
 		if( opt.showActiveState )
@@ -1633,13 +1647,22 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 #ifdef SPAG_USE_SIGNALS
 				if( !_stateInfo[j]._innerTrans._isPassState )
 #endif
-					f << j << " -> " << _transitionMat[i][j] << " [label=\"E" << i << "\"];\n";
+				{
+					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
+#ifdef SPAG_ENUM_STRINGS
+					if( opt.useEventStrings )
+						f << _strEvents[i];
+					else
+#endif
+						f << 'E' << i;
+					f << "\"];\n";
+				}
 
 	f << "\n/* Inner events and timeout transitions */\n";
 	for( size_t j=0; j<nbStates(); j++ )
 	{
 		const auto& te = _stateInfo[j]._timerEvent;
-		if( te._enabled )
+		if( te._enabled && opt.showTimeOuts )
 			f << j << " -> " << te._nextState
 				<< " [label=\"TO:"
 				<< te._duration
@@ -1647,9 +1670,10 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 				<< "\"];\n";
 #ifdef SPAG_USE_SIGNALS
 		const auto& itr = _stateInfo[j]._innerTrans;
-		if( itr._isPassState )
+		if( itr._isPassState && opt.showAAT )
 			f << j << " -> " << _transitionMat[0][j] << " [label=\"AAT\"];\n";
-		if( itr._hasOne )
+
+		if( itr._hasOne && opt.showInnerEvents )
 			f << j << " -> " << SPAG_P_CAST2IDX( itr._destState )
 				<< " [label=\"IE" << SPAG_P_CAST2IDX( itr._innerEvent ) << "\"];\n";
 #endif
