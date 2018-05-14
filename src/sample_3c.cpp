@@ -1,16 +1,14 @@
 /**
-\file sample_3b.cpp
-\brief Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable.
-Also demonstrates how user code can stop the running FSM (without using signals).
+\file sample_3c.cpp
+\brief Similar to sample_3b.cpp, but with external event handler
 
-\image html sample_3.svg
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 
 Homepage: https://github.com/skramm/spaghetti
 */
-
-#define SPAG_EMBED_ASIO_WRAPPER
+#define SPAG_USE_ASIO_WRAPPER
+#define SPAG_EXTERNAL_EVENT_LOOP
 #define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
 #define SPAG_USE_SIGNALS
@@ -45,6 +43,9 @@ int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
+	boost::asio::io_service io_service;
+	spag::AsioTimer asio(io_service);
+	fsm.assignEventHandler( &asio );
 	fsm.setTimerDefaultUnit( "ms" );
 
 	fsm.assignCallback( cb_func );
@@ -60,5 +61,6 @@ int main( int, char* argv[] )
 	fsm.writeDotFile( "sample_3" );
 
 	fsm.start();
+	io_service.run();
 	std::cout << "FSM Stopped by inner event\n";
 }

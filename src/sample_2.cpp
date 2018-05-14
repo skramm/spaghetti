@@ -10,7 +10,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-#define SPAG_USE_ASIO_TIMER
+#define SPAG_USE_ASIO_WRAPPER
 #define SPAG_EXTERNAL_EVENT_LOOP
 #define SPAG_GENERATE_DOTFILE
 //#define SPAG_ENUM_STRINGS
@@ -53,8 +53,8 @@ int main( int, char* argv[] )
 	boost::asio::io_service io_service;
 	spag::AsioTimer asio_A( io_service );
 	spag::AsioTimer asio_B( io_service );
-	fsm_A.assignTimer( &asio_A );
-	fsm_B.assignTimer( &asio_B );
+	fsm_A.assignEventHandler( &asio_A );
+	fsm_B.assignEventHandler( &asio_B );
 
 	try
 	{

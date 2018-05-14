@@ -27,16 +27,19 @@ There are two types of symbols:
 
 Theses options/symbols must be chosen carefully, depending on what you need:
 
-* ```SPAG_USE_ASIO_TIMER``` : this enables the usage of a included Timer class: ```AsioWrapper```, that fits nicely for timeout events.
+* ```SPAG_USE_ASIO_WRAPPER``` : this enables the usage of a included event handling class: ```AsioWrapper```, that fits nicely for timeout events.
 It is provided as an option as it brings in a dependency to the Boost libraries, which might not be wanted by end user.
-It is automatically activated if ```SPAG_EMBED_ASIO_TIMER``` (see below) is defined.
+It is automatically activated if ```SPAG_EMBED_ASIO_WRAPPER``` (see below) is defined.<br>
+If you do not define this symbol, then you may not use timers and inner events, unless you provide your own event handling class.
 
-* ```SPAG_EMBED_ASIO_TIMER```: this option embeds the above boost::asio-based Timer class **inside** the Spaghetti FSM type.
+* ```SPAG_EMBED_ASIO_WRAPPER```: this option embeds the above boost::asio-based Timer class **inside** the Spaghetti FSM type.
 This is the easiest way to do if you need a timer, **and** you have Boost available.<br>
-However, it might not fit your needs in some special situations, even if you want to use the ```AsioWrapper``` class.
+However, it might not fit your needs in some special situations, even if you want to use the ```AsioWrapper``` class.<br>
+If you do not define this symbol but only ```SPAG_USE_ASIO_WRAPPER```, then you will need to instanciate yourself a variable of type
+```AsioWrapper```.
 
 * ```SPAG_EXTERNAL_EVENT_LOOP``` : this is needed if you intend to run several FSM concurrently.
-In that case, the Timer class must **not** hold the timer
+In that case, the event handling class must **not** hold the timer
 (*If it does, then starting the FSM with ```fsm.start()``` will be a blocking function, thus it would not be possible to start a second FSM*).<br>
 So you need to provide the event loop separately and define this symbol.
 The change is that now the start function will not be blocking:
@@ -44,13 +47,20 @@ you can start all the needed FSM, then eventually start the event loop.
 This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
 **Note** : If you intend to use the provided ```AsioWrapper``` class with this symbol defined, be aware that this will make significant
 changes to that class: instead of embedding the boost::asio event loop structure (aka "io_service" or "io_context"), it is now up
-to you to provide it (see example above for details).
+to you to provide it (see example above for details).<br>
+Also, the constructor changes: you will now need to provide the boost::io_service:
+```C++
+boost::asio::io_service io_service;
+AsioWrapper asio( io_service );
+```
 
 ### 2 - Behavioral symbols
 
 Theses options/symbols will not impact correct build of your program:
 
-* ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM
+* ```SPAG_PRINT_STATES``` : will print on stdout the steps, useful only for debugging your SpagFSM.
+This can be automatically enabled when building the samples by passing the option ```DEBUG=Y```:<br>
+```make demo -j4 DEBUG=Y```
 
 * ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
 

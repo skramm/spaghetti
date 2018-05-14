@@ -40,16 +40,16 @@ This program is free software: you can redistribute it and/or modify
 #include <iostream> // needed for expansion of SPAG_LOG
 
 
-#if defined (SPAG_EMBED_ASIO_TIMER)
-	#define SPAG_USE_ASIO_TIMER
+#if defined (SPAG_EMBED_ASIO_WRAPPER)
+	#define SPAG_USE_ASIO_WRAPPER
 #endif
 
-#if defined (SPAG_USE_ASIO_TIMER)
+#if defined (SPAG_USE_ASIO_WRAPPER)
 	#include <boost/bind.hpp>
 	#include <boost/asio.hpp>
 #endif
 
-#if defined (SPAG_USE_ASIO_TIMER) || defined (SPAG_ENABLE_LOGGING)
+#if defined (SPAG_USE_ASIO_WRAPPER) || defined (SPAG_ENABLE_LOGGING)
 	#include <chrono>
 #endif
 
@@ -107,7 +107,8 @@ This program is free software: you can redistribute it and/or modify
 		if(!(a) ) \
 		{ \
 			std::cerr << priv::getSpagName() << "assert failure in function " << __FUNCTION__ \
-				<< "(): condition \"" << #a << "\" is false, " << msg << '\n'; \
+				<< "(), line:" << __LINE__ \
+				<< ", condition \"" << #a << "\" is false, " << msg << '\n'; \
 				std::exit(1); \
 		}
 #endif
@@ -257,7 +258,8 @@ struct StateInfo
 	ST                       _ptNextState;   ///< only if _isPassState is true
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
 
-	bool holdsInnerEvent( EV ev, ST st ) const
+/// Returns true if the set of internal transitions holds one with event \c ev leading to state \c st
+	bool holdsInnerTransition( EV ev, ST st ) const
 	{
 		if(
 			std::find(
@@ -269,6 +271,29 @@ struct StateInfo
 		)
 			return false;
 		return true;
+	}
+#if 0 // unused
+/// Returns true if the set of internal transitions holds one using event \c ev
+	bool holdsInnerEvent( EV ev ) const
+	{
+		for( const auto& it: _innerTransList )
+			if( it._innerEvent == ev )
+				return true;
+		return false;
+	}
+#endif
+	typename std::vector<InnerTransition<ST,EV>>::iterator
+	findInnerEvent( EV ev )
+	{
+//		for( const auto& it: _innerTransList )
+		for(
+			auto it=std::begin(_innerTransList);
+			it != std::end(_innerTransList);
+			++it
+		)
+			if( it->_innerEvent == ev )
+				return it;
+		return std::end( _innerTransList );
 	}
 #endif
 };
@@ -514,7 +539,7 @@ struct NoTimer;
 
 } // namespace priv
 
-#if defined (SPAG_USE_ASIO_TIMER)
+#if defined (SPAG_USE_ASIO_WRAPPER)
 /// Forward declaration
 	template<typename ST, typename EV, typename CBA>
 	struct AsioWrapper;
@@ -538,8 +563,8 @@ struct DotFileOptions
 types:
  - ST: an enum defining the different states.
  - EV: an enum defining the different external events.
- - TIM: a type handling the timer, must provide the following methods:
-   - timerInit();
+ - TIM: a type handling the events, must provide the following methods:
+   - init();
    - timerStart( const SpagFSM* );
    - timerCancel();
  - CBA: the callback function type (single) argument
@@ -596,8 +621,8 @@ class SpagFSM
 			_strEvents[ nbEvents()+1 ] = "*  AAT  *"; // Always Active Transition
 #endif
 
-#ifdef SPAG_EMBED_ASIO_TIMER
-			_timer = &_asioWrapper;
+#ifdef SPAG_EMBED_ASIO_WRAPPER
+			_eventHandler = &_asioWrapper;
 #endif
 		}
 
@@ -674,8 +699,15 @@ class SpagFSM
 			stinf._ptNextState = st2;
 
 			if( stinf._innerTransList.size() )
-				SPAG_P_LOG_ERROR << "warning, assign pass state removes the "
-					<< stinf._innerTransList.size() << " inner transitions previously assigned to this state\n";
+				SPAG_P_LOG_ERROR << "warning, assign AAT transition from state "
+#ifdef SPAG_ENUM_STRINGS
+					<< st1_idx << " (" << _strStates[st1_idx] << ") to state "
+					<< st2_idx << " (" << _strStates[st2_idx] << ")"
+#else
+					<< st1_idx << " to state " << st2_idx
+#endif
+					<< " removes the "
+					<< stinf._innerTransList.size() << " inner transition(s) previously assigned to this state\n";
 			stinf._innerTransList.clear();
 
 			auto& te = stinf._timerEvent;
@@ -685,7 +717,7 @@ class SpagFSM
 					<< te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
 					<< " on state S" << std::setfill('0') << std::setw(2) << SPAG_P_CAST2IDX(st1)
 #ifdef SPAG_ENUM_STRINGS
-					<< " (" << _strStates[st1] << ')'
+					<< " (" << _strStates[st1_idx] << ')'
 #endif
 					<< '\n';
 				te._enabled = false;
@@ -718,7 +750,6 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 */
 		void assignInnerTransition( EV ev, ST st )
 		{
-			std::cerr << __FUNCTION__ << "(): WARNING: experimental feature\n";
 			size_t ev_idx = SPAG_P_CAST2IDX(ev);
 			size_t st_idx = SPAG_P_CAST2IDX(st);
 			SPAG_CHECK_LESS( st_idx, nbStates() );
@@ -726,8 +757,17 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 
 			for( size_t i=0; i<_stateInfo.size(); ++i )
 				if( i != st_idx )
-					if( !_stateInfo[i].holdsInnerEvent( ev, st ) )
+				{
+					if( !_stateInfo[i].holdsInnerTransition( ev, st ) )
+					{
 						_stateInfo[i]._innerTransList.push_back( priv::InnerTransition<ST,EV>( ev, st ) );
+						SPAG_LOG << "assigning inner trans to state " << i << " on event " << ev_idx
+#ifdef SPAG_ENUM_STRINGS
+						<< " (" << _strEvents[ev_idx] << ')'
+#endif
+						<< " size=" <<  _stateInfo[i]._innerTransList.size() << '\n';
+					}
+				}
 		}
 
 #endif // SPAG_USE_SIGNALS
@@ -850,26 +890,32 @@ Thus it is also not usable for inner transitions.
 			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ st_idx ] = (what?1:0);
 
 #ifdef SPAG_USE_SIGNALS
-			if( _stateInfo[st_idx].holdsInnerEvent( ev, st ) )
+			if( _stateInfo[st_idx].holdsInnerTransition( ev, st ) )
 				throw std::runtime_error( "usage of allowEvent() not possible for inner events" );
 #endif // SPAG_USE_SIGNALS
 		}
 
 #ifdef SPAG_USE_SIGNALS
-/// Remove inner transition \c ev that is assigned on state \c st
+/// Remove inner transition \c ev that is assigned on state \c st_from
 /**
 This is a companion function of \c assignInnerTransition( EV, ST )
 
 Hence, as this latter ones assigns an inner event to all the states, we need a function
 to remove this event on some states
 */
-		void disableInnerTransition( EV ev, ST st )
+		void disableInnerTransition( EV ev, ST st_from )
 		{
-			size_t st_idx = SPAG_P_CAST2IDX(st);
+			size_t st_idx = SPAG_P_CAST2IDX(st_from);
 			auto& stinf = _stateInfo[st_idx];
-			if( !stinf.holdsInnerEvent( ev, st))
+			std::cout << "nb IT=" << stinf._innerTransList.size() << '\n';
+
+			auto it = stinf.findInnerEvent( ev );
+			if( it == std::end( stinf._innerTransList ) )
 				SPAG_P_THROW_ERROR_CFG( "state "
 					+ std::to_string( st_idx )
+#ifdef SPAG_ENUM_STRINGS
+					+ " (" + _strStates[st_idx] + ") "
+#endif
 					+ " has no inner transition"
 				);
 
@@ -877,14 +923,15 @@ to remove this event on some states
 - https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
 - http://skramm.blogspot.fr/2014/12/c-erasing-elements-of-stdvector-using.html
 */
-			stinf._innerTransList.erase(
-				std::remove(
+			stinf._innerTransList.erase( it );
+
+/*				std::remove(
 					std::begin( stinf._innerTransList ),
 					std::end(   stinf._innerTransList ),
 					priv::InnerTransition<ST,EV>( ev, st )
 				),
 				std::end(   stinf._innerTransList )
-			);
+			);*/
 		}
 #endif // SPAG_USE_SIGNALS
 
@@ -915,11 +962,11 @@ to remove this event on some states
 			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callbackArg = cb_arg;
 		}
 
-#ifndef SPAG_EMBED_ASIO_TIMER
-		void assignTimer( TIM* t )
+#ifndef SPAG_EMBED_ASIO_WRAPPER
+		void assignEventHandler( TIM* t )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			_timer = t;
+			_eventHandler = t;
 		}
 #endif
 
@@ -982,10 +1029,12 @@ to remove this event on some states
 			for( size_t i=0; i<nbStates(); i++ )
 				assignCallbackValue( static_cast<ST>(i), _strStates[i] );
 		}
+/// Returns the string label associated with event \c ev
 		std::string getString( EV ev ) const
 		{
 			return _strEvents[ev];
 		}
+/// Returns the string label associated with state \c st
 		std::string getString( ST st ) const
 		{
 			return _strStates[st];
@@ -998,8 +1047,8 @@ to remove this event on some states
 		void assignStrings2Events( const std::map<EV,std::string>& ) {}
 		void assignStrings2States( const std::map<ST,std::string>& ) {}
 		void assignCBValuesStrings() const {}
-		std::string getString( EV ) const { return std::string(); }
-		std::string getString( ST ) const { return std::string(); }
+		std::string getString( EV ev ) const { return std::to_string( SPAG_P_CAST2IDX(ev) ); }
+		std::string getString( ST st ) const { return std::to_string( SPAG_P_CAST2IDX(st) ); }
 #endif
 
 ///@}
@@ -1026,8 +1075,8 @@ to remove this event on some states
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
 			if( !std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value )
 			{
-				SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
-				_timer->timerInit( this );   // blocking function !
+				SPAG_P_ASSERT( _eventHandler, "Event handler has not been allocated" );
+				_eventHandler->init( this );   // blocking function !
 			}
 #endif
 		}
@@ -1037,12 +1086,12 @@ to remove this event on some states
 		{
 			SPAG_P_ASSERT( _isRunning, "attempt to stop an already stopped FSM" );
 
-			if( _timer )
+			if( _eventHandler )
 			{
 				SPAG_LOG << "call timerCancel()\n";
-				_timer->timerCancel();
+				_eventHandler->timerCancel();
 				SPAG_LOG << "call timerKill()\n";
-				_timer->timerKill();
+				_eventHandler->timerKill();
 			}
 			_isRunning = false;
 		}
@@ -1084,8 +1133,8 @@ to remove this event on some states
 			{
 				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )  // 1 - cancel the waiting timer, if any
 				{
-					SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
-					_timer->timerCancel();
+					SPAG_P_ASSERT( _eventHandler, "Event handler has not been allocated" );
+					_eventHandler->timerCancel();
 				}
 				_current = _transitionMat[ ev_idx ][ SPAG_P_CAST2IDX(_current) ];     // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
@@ -1110,7 +1159,7 @@ to remove this event on some states
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 		void activateInnerEvent( EV ev )
 		{
-			SPAG_LOG << "\n";
+			SPAG_LOG << '\n';
 
 			bool found = false;
 			for( auto& st: _stateInfo )      // iterate all the states
@@ -1122,7 +1171,14 @@ to remove this event on some states
 					}
 /// \todo provide more details in error message
 			if( !found )
-				throw std::runtime_error( "request for activating event, but not found" );
+				throw std::runtime_error(
+					"request for activating event "
+					+ std::to_string( SPAG_P_CAST2IDX(ev) )
+#ifdef SPAG_ENUM_STRINGS
+					+ " (" + _strEvents[ SPAG_P_CAST2IDX(ev) ] + ")"
+#endif
+					+ ", but not found"
+				);
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
@@ -1130,8 +1186,11 @@ to remove this event on some states
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 		void processInnerEvent( const priv::StateInfo<ST,EV,CBA>& stinf ) const
 		{
-			SPAG_P_ASSERT( _isRunning, "attempting to process a inner event but FSM is not started" );
+			SPAG_LOG << '\n';
+			SPAG_P_ASSERT( _isRunning, "attempting to process an inner event but FSM is not started" );
+#ifdef SPAG_ENABLE_LOGGING
 			size_t ev_idx = nbEvents() + 1;
+#endif
 			if( stinf._isPassState )
 				_current = stinf._ptNextState;
 			else
@@ -1141,7 +1200,9 @@ to remove this event on some states
 					if( innerTrans._isActive )              // if several inner transitions
 					{                                       // are active, we process the
 						_current = innerTrans._destState;   // first one that is found
+#ifdef SPAG_ENABLE_LOGGING
 						ev_idx   = innerTrans._innerEvent;
+#endif
 						innerTrans._isActive = false;       // deactivate event
 						break;
 					}
@@ -1234,14 +1295,14 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 			out += SPAG_STRINGIZE( SPAG_VERSION );
 			out += "\nBuild options:\n";
 
-			out += SPAG_P_STRINGIZE2( SPAG_USE_ASIO_TIMER );
-#ifdef SPAG_USE_ASIO_TIMER
+			out += SPAG_P_STRINGIZE2( SPAG_USE_ASIO_WRAPPER );
+#ifdef SPAG_USE_ASIO_WRAPPER
 			out += yes;
 #else
 			out += no;
 #endif
-			out += SPAG_P_STRINGIZE2( SPAG_EMBED_ASIO_TIMER );
-#ifdef SPAG_EMBED_ASIO_TIMER
+			out += SPAG_P_STRINGIZE2( SPAG_EMBED_ASIO_WRAPPER );
+#ifdef SPAG_EMBED_ASIO_WRAPPER
 			out += yes;
 #else
 			out += no;
@@ -1306,15 +1367,19 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 */
 		void runAction() const
 		{
-			SPAG_LOG << "switching to state " << SPAG_P_CAST2IDX(_current) << ", starting action\n";
+			SPAG_LOG << "switching to state " << SPAG_P_CAST2IDX(_current)
+#ifdef SPAG_ENUM_STRINGS
+				<< " (" << _strStates[ SPAG_P_CAST2IDX(_current) ] << ")"
+#endif
+				<< ", starting action\n";
 			auto curr_idx = SPAG_P_CAST2IDX(_current);
 			auto stateInfo = _stateInfo[ curr_idx ];
 
 			if( stateInfo._timerEvent._enabled )
 			{
-				SPAG_P_ASSERT( _timer, "Timer has not been allocated" );
+				SPAG_P_ASSERT( _eventHandler, "Event handler has not been allocated" );
 				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
-				_timer->timerStart( this );
+				_eventHandler->timerStart( this );
 			}
 			if( stateInfo._callback ) // if there is a callback stored, then call it
 			{
@@ -1337,8 +1402,8 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 			if( do_raise_sig )
 			{
 //				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
-				_timer->raiseSignal();
-				_timer->timerCancel();
+				_eventHandler->raiseSignal();
+				_eventHandler->timerCancel();
 			}
 #endif
 		}
@@ -1359,7 +1424,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		mutable bool                     _isRunning = false;
 		mutable DurUnit                  _defaultTimerUnit = DurUnit::sec;   ///< default timer units
 
-		mutable TIM*                     _timer = nullptr;   ///< pointer on timer
+		mutable TIM*                     _eventHandler = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
 		std::array<
@@ -1390,8 +1455,8 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		std::vector<std::string> _strStates;      ///< holds states strings
 #endif
 
-#ifdef SPAG_EMBED_ASIO_TIMER
-		AsioWrapper<ST,EV,CBA>             _asioWrapper; ///< optional wrapper around boost::asio::io_service
+#ifdef SPAG_EMBED_ASIO_WRAPPER
+		AsioWrapper<ST,EV,CBA> _asioWrapper; ///< optional wrapper around boost::asio::io_service
 #endif
 
 		std::function<void(ST,EV)> _ignEventCallback;     ///< ignored events callback function
@@ -1828,7 +1893,7 @@ template<typename ST, typename EV,typename CBA>
 struct NoTimer
 {
 	void timerStart( const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
-	void timerInit(  const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
+	void init(  const SpagFSM<ST,EV,NoTimer,CBA>* ) {}
 	void timerCancel() {}
 	void raiseSignal() {}
 };
@@ -1837,7 +1902,7 @@ struct NoTimer
 
 //-----------------------------------------------------------------------------------
 
-#if defined (SPAG_USE_ASIO_TIMER)
+#if defined (SPAG_USE_ASIO_WRAPPER)
 
 //-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff to have an asynchronous timer easily available
@@ -1905,7 +1970,7 @@ struct AsioWrapper
 	}
 
 /// Mandatory function for SpagFSM. Called only once, when FSM is started
-	void timerInit( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
+	void init( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		SPAG_LOG << '\n';
 #ifdef SPAG_USE_SIGNALS
@@ -1988,7 +2053,7 @@ struct AsioWrapper
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 	void signalHandler( const boost::system::error_code& error, int signal_number, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-//		std::cout << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
+		SPAG_LOG << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
 		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
 		const auto& stateInfo = fsm->getStateInfo( st_idx );
 //		std::cout << "signal handler, processing " << stateInfo._innerTrans;
@@ -2014,16 +2079,16 @@ struct AsioWrapper
 #endif
 };
 
-#endif // SPAG_USE_ASIO_TIMER
+#endif // SPAG_USE_ASIO_WRAPPER
 
 //-----------------------------------------------------------------------------------
 
 } // namespace spag
 
 /// Shorthand for declaring the type of FSM, without a timer
-#ifdef SPAG_USE_ASIO_TIMER
+#ifdef SPAG_USE_ASIO_WRAPPER
 	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
-		static_assert( 0, "Error, can't use this macro with symbol SPAG_USE_ASIO_TIMER defined" )
+		static_assert( 0, "Error, can't use this macro with symbol SPAG_USE_ASIO_WRAPPER defined" )
 #else
 	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
 		typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type
@@ -2032,8 +2097,8 @@ struct AsioWrapper
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type
 
-#ifdef SPAG_USE_ASIO_TIMER
-	#ifdef SPAG_EMBED_ASIO_TIMER
+#ifdef SPAG_USE_ASIO_WRAPPER
+	#ifdef SPAG_EMBED_ASIO_WRAPPER
 /// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Does not create the \c AsioTimer type (user code doesn't need it)
 		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
 			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type
@@ -2047,7 +2112,7 @@ struct AsioWrapper
 	#endif
 #else
 	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
-		static_assert( 0, "Error, can't use this macro without symbol SPAG_EMBED_ASIO_TIMER defined" )
+		static_assert( 0, "Error, can't use this macro without symbol SPAG_EMBED_ASIO_WRAPPER defined" )
 #endif
 
 #endif // HG_SPAGHETTI_FSM_HPP

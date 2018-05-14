@@ -14,7 +14,7 @@ Homepage: https://github.com/skramm/spaghetti
 #include "udp_server.hpp"
 #include "traffic_lights_common.hpp"
 
-#define SPAG_USE_ASIO_TIMER
+#define SPAG_USE_ASIO_WRAPPER
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
 #define SPAG_GENERATE_DOTFILE
@@ -73,7 +73,7 @@ int main( int, char* argv[] )
 		std::cout << "-server created\n";
 
 		configureFSM<fsm_t>( server.fsm );
-		server.fsm.assignTimer( &asio );
+		server.fsm.assignEventHandler( &asio );
 
 		server.fsm.printConfig( std::cout );
 

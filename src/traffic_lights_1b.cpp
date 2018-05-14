@@ -7,7 +7,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-#define SPAG_USE_ASIO_TIMER
+#define SPAG_USE_ASIO_WRAPPER
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
@@ -29,7 +29,7 @@ int main( int, char* argv[] )
 
 	fsm_t fsm;
 	spag::AsioWrapper<States,Events,std::string> asioWrapper;
-	fsm.assignTimer( &asioWrapper );
+	fsm.assignEventHandler( &asioWrapper );
 
 	std::cout << "fsm: nb states=" << fsm.nbStates() << " nb_events=" << fsm.nbEvents() << "\n";
 	fsm.assignTimeOut( st_Init,   3, st_Red    ); // if state st_Init and time out of 5s occurs, then switch to state st_Red

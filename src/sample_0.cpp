@@ -11,7 +11,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
-#define SPAG_EMBED_ASIO_TIMER
+#define SPAG_EMBED_ASIO_WRAPPER
 #define SPAG_FRIENDLY_CHECKING
 #define SPAG_ENABLE_LOGGING
 #include "spaghetti.hpp"

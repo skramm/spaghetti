@@ -203,12 +203,12 @@ If not, if you are lucky enough to have a Debian-based OS (Ubuntu and other deri
 If not,
 [check here](https://duckduckgo.com/?q=installing+boost+asio).
 
-To use the provided Timer class, you need to pass an option to Spaghetti by defining the symbol ```SPAG_EMBED_ASIO_TIMER```
+To use the provided Timer class, you need to pass an option to Spaghetti by defining the symbol ```SPAG_EMBED_ASIO_WRAPPER```
 ([see here details about the build options](spaghetti_options.md)).
 
 So now we use the second form of the type declaration macro:
 ```C++
-#define SPAG_EMBED_ASIO_TIMER
+#define SPAG_EMBED_ASIO_WRAPPER
 #include "spaghetti.hpp"
 
 enum States { st_Red, st_Orange, st_Green, NB_STATES };
@@ -360,7 +360,7 @@ Now the server. The potential problem we need to deal with is that:
 
 So here, we demonstrate another use-case: we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
 ```C++
-#define SPAG_USE_ASIO_TIMER
+#define SPAG_USE_ASIO_WRAPPER
 #include "spaghetti.hpp"
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
@@ -410,7 +410,7 @@ int main()
 	MyServer server( asio.get_io_service(), 12345 );
 
 	configureFSM<fsm_t>( server.fsm );
-	server.fsm.assignTimer( &asio );
+	server.fsm.assignEventHandler( &asio );
 
 	server.start_receive();  // start reception, see UdpServer
 	server.fsm.start();      // blocking !
