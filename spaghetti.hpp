@@ -1162,14 +1162,15 @@ to remove this event on some states
 			SPAG_LOG << '\n';
 
 			bool found = false;
+			size_t c=0;
 			for( auto& st: _stateInfo )      // iterate all the states
 				for( auto& inner: st._innerTransList )
 					if( inner._innerEvent == ev )
 					{
 						inner._isActive = true;
 						found = true;
+						c++;
 					}
-/// \todo provide more details in error message
 			if( !found )
 				throw std::runtime_error(
 					"request for activating event "
@@ -1179,6 +1180,7 @@ to remove this event on some states
 #endif
 					+ ", but not found"
 				);
+			SPAG_LOG << "activating events on " << c << " states\n";
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
@@ -1423,7 +1425,6 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		mutable ST                       _current = static_cast<ST>(0);   ///< current state
 		mutable bool                     _isRunning = false;
 		mutable DurUnit                  _defaultTimerUnit = DurUnit::sec;   ///< default timer units
-
 		mutable TIM*                     _eventHandler = nullptr;   ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
@@ -1912,6 +1913,10 @@ That last point isn't that obvious, has it also must have a lifespan not limited
 
 For timer duration, see
 http://en.cppreference.com/w/cpp/chrono/duration
+
+\bug we have a problem with signal when both symbols SPAG_USE_SIGNALS and SPAG_EXTERNAL_EVENT_LOOP are defined:
+the signal handler is NOT called!!!
+See src/sample_3c.cpp that demonstrates the problem.
 */
 template<typename ST, typename EV, typename CBA>
 struct AsioWrapper

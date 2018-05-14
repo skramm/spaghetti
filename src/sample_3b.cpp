@@ -33,7 +33,7 @@ void cb_func( int v )
 	}
 	static int c;
 	if( c < 5 )
-		fsm.writeDotFile( "sample_3_" + std::to_string(c) );
+		fsm.writeDotFile( "sample_3b_" + std::to_string(c) );
 	c++;
 	if( !(c%100) )
 		std::cout << "c=" << c << '\n';
@@ -57,7 +57,7 @@ int main( int, char* argv[] )
 	fsm.assignInnerTransition( ev_1000, st_Final );
 	fsm.assignCallbackValue( st_Final, -1 );
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample_3" );
+	fsm.writeDotFile( "sample_3b" );
 
 	fsm.start();
 	std::cout << "FSM Stopped by inner event\n";

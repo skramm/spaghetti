@@ -90,7 +90,7 @@ But it *should* be okay with todays current release (1.66 at the time of writing
 **A**: Yes! See sample program [```src/sample_2.cpp```](../../../tree/master/src/sample_2.cpp) that demonstrates this.
 This requires defining the symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see [build options](spaghetti_options.md).
 
-- **Q**: *Does this library provide serialization of the configuration of the FSM, so i can easily save it to a file?*<br/>
+- **Q**: *Does this library provide serialization of the configuration of the FSM, so I can easily save it to a file?*<br/>
 **A**: No, because it holds objects of type ```std::function``` to store the callback functions.
 And this object **can not** be serialized.<br>
 All the rest of the configuration could be serialized, but I felt that saving config without the callbacks would be useless.
@@ -103,7 +103,7 @@ This is demonstrated in ```src/sample_3.cpp```.
 - **Q**: *I need to track ignored events. How can I do that?*<br>
 **A**: First, these are logged (if logging is enable, of course), and you can print them once your FMS is stopped with ```printLoggedData()```.
 Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs.
-See member function assignIgnoredEventsCallback()
+See member function ```assignIgnoredEventsCallback()```.
 This is demonstrated in ```src/traffic_lights_common.hpp```:
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state, the callback function is triggered.
 
