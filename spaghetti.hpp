@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 #define SPAG_USE_ARRAY
 
 
-#define SPAG_VERSION 0.7.2
+#define SPAG_VERSION 0.8.0
 
 #include <vector>
 #include <map>
@@ -220,19 +220,23 @@ struct TimerEvent
 template<typename ST,typename EV>
 struct InnerTransition
 {
-//	bool    _hasOne = false;
-	bool    _isActive = false;
+	mutable bool _isActive = false;
 	ST      _destState;
 	EV      _innerEvent;
-//	bool    _isPassState = false; /// True if this is a "pass-state", that is a state with only one transition and no timeout.
 
 	InnerTransition( EV ev, ST st ) :_isActive(false), _destState(st), _innerEvent(ev)
 	{}
+	bool operator == ( const InnerTransition& it ) const
+	{
+		if( _destState != it._destState )
+			return false;
+		if( _innerEvent != it._innerEvent )
+			return false;
+		return true;
+	}
 	friend std::ostream& operator << ( std::ostream& s, const InnerTransition& it )
 	{
-//		s << "InnerTransition: hasOne=" << it._hasOne
 		s << " isActive=" << it._isActive
-//			<< " isPassState=" << it._isPassState
 			<< " destState=" << (int)it._destState
 			<< " innerEvent=" << (int)it._innerEvent << '\n';
 		return s;
@@ -250,7 +254,7 @@ struct StateInfo
 
 #ifdef SPAG_USE_SIGNALS
 	bool                     _isPassState = false;
-	ST                       _nextState;   ///< only if _isPassState is true
+	ST                       _ptNextState;   ///< only if _isPassState is true
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
 //	InnerTransition<ST,EV>    _innerTrans;
 #endif
@@ -654,7 +658,7 @@ class SpagFSM
 //				line[ st1_idx ] = 1;
 			auto& stinf = _stateInfo[st1_idx];
 			stinf._isPassState = true;
-			stinf._nextState = st2;
+			stinf._ptNextState = st2;
 
 			if( stinf._innerTransList.size() )
 				SPAG_P_LOG_ERROR << "warning, assign pass state removes the "
@@ -706,22 +710,23 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			size_t st_idx = SPAG_P_CAST2IDX(st);
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( ev_idx, nbEvents() );
+
+			auto candidate = priv::InnerTransition<ST,EV>( ev, st );
 			for( size_t i=0; i<_stateInfo.size(); ++i )
 			{
 				if( i != st_idx )
 				{
 					auto& si = _stateInfo[i];
-					if( si._innerTrans._hasOne )
-					{
-						std::cerr << "GENERAL FAILURE: at present, multiple inner transitions on one state not allowed!\n";
-						assert(0);
-					}
-					si._innerTrans._hasOne     = true;
-					si._innerTrans._innerEvent = ev;
-					si._innerTrans._destState  = st;
+					if(
+						std::find(                                   // add event
+							std::begin( si._innerTransList ),        // only if
+							std::end(   si._innerTransList ),        // not already
+							candidate                                // present
+						) == std::end( si._innerTransList )
+					)
+						si._innerTransList.push_back( candidate );
 				}
 			}
-//			_eventInfo[ ev ] = st;
 		}
 
 #endif // SPAG_USE_SIGNALS
@@ -1099,18 +1104,17 @@ to remove this event on some states
 		{
 			SPAG_LOG << "\n";
 
-/// \todo provide more details in error message
-//			if( _eventInfo.find( ev ) == _eventInfo.end() )
-//				throw std::runtime_error( "request for processing inner event but has not been configured" );
-
-//			ST st1 = _eventInfo[ ev ];
+			bool found = false;
 			for( auto& st: _stateInfo )      // iterate all the states
 				for( auto& inner: st._innerTransList )
 					if( inner._innerEvent == ev )
+					{
 						inner._isActive = true;
-
-//			assert( _stateInfo[ SPAG_P_CAST2IDX(st1) ]._innerTrans._hasOne );
-//			_stateInfo[ SPAG_P_CAST2IDX(st1) ]._innerTrans._isActive = true;
+						found = true;
+					}
+/// \todo provide more details in error message
+			if( !found )
+				throw std::runtime_error( "request for activating event, but not found" );
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
@@ -1119,9 +1123,9 @@ to remove this event on some states
 		void processInnerEvent( const priv::StateInfo<ST,EV,CBA>& stinf ) const
 		{
 			SPAG_P_ASSERT( _isRunning, "attempting to process a inner event but FSM is not started" );
-			size_t ev_idx = nbEvents() + 2;
+			size_t ev_idx = nbEvents() + 1;
 			if( stinf._isPassState )
-				_current = stinf._nextState;
+				_current = stinf._ptNextState;
 			else
 			{
                 for( const auto& innerTrans: stinf._innerTransList )
@@ -1130,6 +1134,7 @@ to remove this event on some states
 					{                                       // are active, we process the
 						_current = innerTrans._destState;   // first one that is found
 						ev_idx   = innerTrans._innerEvent;
+						innerTrans._isActive = false;       // deactivate event
 						break;
 					}
                 }
@@ -1317,9 +1322,9 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				do_raise_sig = true;
 			else
 			{
-
-				const auto& si_it = stateInfo._innerTrans;
-//				if( si_it._isPassState || ( si_it._hasOne && si_it._isActive ) )
+				for( const auto& itr: stateInfo._innerTransList )
+					if( itr._isActive )
+						do_raise_sig = true;
 			}
 			if( do_raise_sig )
 			{
@@ -1509,8 +1514,8 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			out << "     | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
-				if( _stateInfo[j]._innerTrans._isPassState )
-					out << 'S' << std::setw(2) << _stateInfo[j]._innerTrans._destState;
+				if( _stateInfo[j]._isPassState )
+					out << 'S' << std::setw(2) << _stateInfo[j]._ptNextState;
 				else
 					out << " . ";
 				out << spc_char;
@@ -1540,12 +1545,12 @@ SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
 					return true;
 
 #ifdef SPAG_USE_SIGNALS
-			if( _stateInfo[i]._innerTrans._isPassState )
-				if( SPAG_P_CAST2IDX( _stateInfo[i]._innerTrans._destState ) == st )
+			if( _stateInfo[i]._isPassState )
+				if( SPAG_P_CAST2IDX( _stateInfo[i]._ptNextState ) == st )
 					return true;
 
-			if( _stateInfo[i]._innerTrans._hasOne )
-				if( SPAG_P_CAST2IDX( _stateInfo[i]._innerTrans._destState ) == st )
+			for( const auto& itr: _stateInfo[i]._innerTransList )
+				if( SPAG_P_CAST2IDX( itr._destState ) == st )
 					return true;
 #endif
 		}
@@ -1598,7 +1603,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		if( _stateInfo[i]._timerEvent._enabled )
 			foundValid = true;
 #ifdef SPAG_USE_SIGNALS
-		if( _stateInfo[i]._innerTrans._isPassState )
+		if( _stateInfo[i]._isPassState )
 			foundValid = true;
 #endif
 		if( !foundValid )       // else
@@ -1662,7 +1667,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
 		else
 		{
 #ifdef SPAG_USE_SIGNALS
-			if( _stateInfo[i]._innerTrans._isPassState )
+			if( _stateInfo[i]._isPassState )
 			{
 				out << "AAT => S" << std::setw(2) << SPAG_P_CAST2IDX( _transitionMat[0][i] );
 #ifdef SPAG_ENUM_STRINGS
@@ -1728,7 +1733,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 		for( size_t j=0; j<nbStates(); j++ )
 			if( _allowedMat[i][j] )
 #ifdef SPAG_USE_SIGNALS
-				if( !_stateInfo[j]._innerTrans._isPassState )
+				if( !_stateInfo[j]._isPassState )
 #endif
 				{
 					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
@@ -1752,20 +1757,22 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 				<< priv::stringFromTimeUnit( te._durUnit )
 				<< "\"];\n";
 #ifdef SPAG_USE_SIGNALS
-		const auto& itr = _stateInfo[j]._innerTrans;
-		if( itr._isPassState && opt.showAAT )
+		if( _stateInfo[j]._isPassState && opt.showAAT )
 			f << j << " -> " << _transitionMat[0][j] << " [label=\"AAT\"];\n";
 
-		if( itr._hasOne && opt.showInnerEvents )
+		if( opt.showInnerEvents )
 		{
-			f << j << " -> " << SPAG_P_CAST2IDX( itr._destState ) << " [label=\"";
+			for( const auto& itr: _stateInfo[j]._innerTransList )
+			{
+				f << j << " -> " << SPAG_P_CAST2IDX( itr._destState ) << " [label=\"";
 #ifdef SPAG_ENUM_STRINGS
-			if( opt.useEventStrings )
-				f << _strEvents.at(itr._innerEvent);
-			else
+				if( opt.useEventStrings )
+					f << _strEvents.at(itr._innerEvent);
+				else
 #endif // SPAG_ENUM_STRINGS
-				f << "IE" << SPAG_P_CAST2IDX( itr._innerEvent );
-			f << "\"];\n";
+					f << "IE" << SPAG_P_CAST2IDX( itr._innerEvent );
+				f << "\"];\n";
+			}
 		}
 #endif // SPAG_USE_SIGNALS
 	}

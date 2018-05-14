@@ -24,8 +24,13 @@ SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
 fsm_t fsm;
 
-void cb_func( int )
+void cb_func( int v )
 {
+	if( v == -1 )
+	{
+		std::cout << "Final state!\n";
+		fsm.stop();
+	}
 	static int c;
 	if( c < 5 )
 		fsm.writeDotFile( "sample_3_" + std::to_string(c) );
@@ -34,7 +39,6 @@ void cb_func( int )
 		std::cout << "c=" << c << '\n';
 	if( c>1000 )
 		fsm.activateInnerEvent( ev_1000 );
-//		fsm.stop();
 }
 
 int main( int, char* argv[] )
@@ -51,6 +55,7 @@ int main( int, char* argv[] )
 	fsm.assignTimeOut( st4, 5 , st0 );
 
 	fsm.assignInnerTransition( ev_1000, st_Final );
+	fsm.assignCallbackValue( st_Final, -1 );
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "sample_3" );
 
