@@ -256,7 +256,20 @@ struct StateInfo
 	bool                     _isPassState = false;
 	ST                       _ptNextState;   ///< only if _isPassState is true
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
-//	InnerTransition<ST,EV>    _innerTrans;
+
+	bool holdsInnerEvent( EV ev, ST st ) const
+	{
+		if(
+			std::find(
+				std::begin( _innerTransList ),
+				std::end(   _innerTransList ),
+				InnerTransition<ST,EV>( ev, st )
+			)
+			== std::end( _innerTransList )
+		)
+			return false;
+		return true;
+	}
 #endif
 };
 //-----------------------------------------------------------------------------------
@@ -711,22 +724,10 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( ev_idx, nbEvents() );
 
-			auto candidate = priv::InnerTransition<ST,EV>( ev, st );
 			for( size_t i=0; i<_stateInfo.size(); ++i )
-			{
 				if( i != st_idx )
-				{
-					auto& si = _stateInfo[i];
-					if(
-						std::find(                                   // add event
-							std::begin( si._innerTransList ),        // only if
-							std::end(   si._innerTransList ),        // not already
-							candidate                                // present
-						) == std::end( si._innerTransList )
-					)
-						si._innerTransList.push_back( candidate );
-				}
-			}
+					if( !_stateInfo[i].holdsInnerEvent( ev, st ) )
+						_stateInfo[i]._innerTransList.push_back( priv::InnerTransition<ST,EV>( ev, st ) );
 		}
 
 #endif // SPAG_USE_SIGNALS
@@ -843,14 +844,14 @@ Thus it is also not usable for inner transitions.
 */
 		void allowEvent( ST st, EV ev, bool what=true )
 		{
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
+			size_t st_idx = SPAG_P_CAST2IDX(st);
+			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ SPAG_P_CAST2IDX(st) ] = (what?1:0);
+			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ st_idx ] = (what?1:0);
 
 #ifdef SPAG_USE_SIGNALS
-			if( _stateInfo[SPAG_P_CAST2IDX(st)]._innerTrans._hasOne )
-				if( _stateInfo[SPAG_P_CAST2IDX(st)]._innerTrans._innerEvent == ev )
-					throw std::runtime_error( "usage of allowEvent() not possible for inner events" );
+			if( _stateInfo[st_idx].holdsInnerEvent( ev, st ) )
+				throw std::runtime_error( "usage of allowEvent() not possible for inner events" );
 #endif // SPAG_USE_SIGNALS
 		}
 
@@ -865,18 +866,25 @@ to remove this event on some states
 		void disableInnerTransition( EV ev, ST st )
 		{
 			size_t st_idx = SPAG_P_CAST2IDX(st);
-			if( !_stateInfo[st_idx]._innerTrans._hasOne )
+			auto& stinf = _stateInfo[st_idx];
+			if( !stinf.holdsInnerEvent( ev, st))
 				SPAG_P_THROW_ERROR_CFG( "state "
 					+ std::to_string( st_idx )
 					+ " has no inner transition"
 				);
-			if( _stateInfo[st_idx]._innerTrans._innerEvent != ev )
-				SPAG_P_THROW_ERROR_CFG( "state "
-					+ std::to_string( st_idx )
-					+ " is not configured for event "
-					+ std::to_string( SPAG_P_CAST2IDX(ev) )
-				);
-			_stateInfo[st_idx]._innerTrans._hasOne = false;
+
+/** Erase-Remove Idiom, see
+- https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
+- http://skramm.blogspot.fr/2014/12/c-erasing-elements-of-stdvector-using.html
+*/
+			stinf._innerTransList.erase(
+				std::remove(
+					std::begin( stinf._innerTransList ),
+					std::end(   stinf._innerTransList ),
+					priv::InnerTransition<ST,EV>( ev, st )
+				),
+				std::end(   stinf._innerTransList )
+			);
 		}
 #endif // SPAG_USE_SIGNALS
 
