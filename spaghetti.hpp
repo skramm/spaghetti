@@ -301,13 +301,14 @@ struct StateInfo
 /// Private, helper function
 inline
 void
-PrintEnumString( std::ostream& out, std::string str, size_t maxlength )
+PrintEnumString( std::ostream& out, std::string str, size_t maxlength=0 )
 {
 	assert( !str.empty() );
-	assert( str.size() <= maxlength );
+	assert( !maxlength || str.size() <= maxlength );
 	out << str;
-	for( size_t i=0; i<maxlength-str.size(); i++ )
-		out << ' ';
+	if( maxlength )
+		for( size_t i=0; i<maxlength-str.size(); i++ )
+			out << ' ';
 }
 //-----------------------------------------------------------------------------------
 /// Helper function, returns max length of string in vector
@@ -761,11 +762,11 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 					if( !_stateInfo[i].holdsInnerTransition( ev, st ) )
 					{
 						_stateInfo[i]._innerTransList.push_back( priv::InnerTransition<ST,EV>( ev, st ) );
-						SPAG_LOG << "assigning inner trans to state " << i << " on event " << ev_idx
+/*						SPAG_LOG << "assigning inner trans to state " << i << " on event " << ev_idx
 #ifdef SPAG_ENUM_STRINGS
 						<< " (" << _strEvents[ev_idx] << ')'
 #endif
-						<< " size=" <<  _stateInfo[i]._innerTransList.size() << '\n';
+						<< " size=" <<  _stateInfo[i]._innerTransList.size() << '\n';*/
 					}
 				}
 		}
@@ -1410,7 +1411,9 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #endif
 		}
 
-		void printMatrix( std::ostream& str ) const;
+		void printLineHeader(  std::ostream&, size_t idx, bool firstline_flag, size_t maxlength ) const;
+		void printMatrix(      std::ostream& ) const;
+		void printStateConfig( std::ostream& ) const;
 		bool isReachable( size_t ) const;
 		std::string getConfigErrorMessage( priv::EN_ConfigError ce, size_t st ) const;
 
@@ -1523,12 +1526,12 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	out << std::setfill('0');
 
 	priv::printChars( out, maxlength, spc_char );
-	out << "       STATES:\n       ";
+	out << "        STATES:\nEVENTS ";
 	priv::printChars( out, maxlength, spc_char );
 	for( size_t i=0; i<nbStates(); i++ )
 		out << spc_char<< 'S' << std::setw(2) << i;
-	out << "\n------";
-	priv::printChars( out, maxlength, '-' );
+	out << '\n';
+	priv::printChars( out, maxlength+6, '-' );
 	out << '|';
 	for( size_t i=0; i<nbStates(); i++ )
 		out << "----";
@@ -1572,7 +1575,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 		}
 		if( i == nbEvents() ) // TimeOut events
 		{
-			out << "     | ";
+			out << "  TO | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._timerEvent._enabled )
@@ -1585,7 +1588,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 #ifdef SPAG_USE_SIGNALS
 		if( i == nbEvents()+1 ) // Pass-state
 		{
-			out << "     | ";
+			out << " AAT | ";
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._isPassState )
@@ -1704,58 +1707,120 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 	}
 }
 //-----------------------------------------------------------------------------------
-/// Printing function, prints transition table
+/// Helper function for printConfig()
 template<typename ST, typename EV,typename T,typename CBA>
 void
-SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg  ) const
+SpagFSM<ST,EV,T,CBA>::printLineHeader( std::ostream& out, size_t idx, bool firstline_flag, size_t maxlength ) const
+{
+	if( firstline_flag )
+		out << 'S' << std::setw(2) << idx;
+	else
+		out << "   ";
+#ifdef SPAG_ENUM_STRINGS
+	out << ':';
+	if( firstline_flag )
+	{
+//		firstline_flag = false;
+		priv::PrintEnumString( out, _strStates[idx], maxlength );
+	}
+	else
+		priv::printChars( out, maxlength, ' ' );
+#endif
+		out << "| ";
+}
+//-----------------------------------------------------------------------------------
+template<typename ST, typename EV,typename T,typename CBA>
+void
+SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
+{
+	size_t maxlength = 0;
+#ifdef SPAG_ENUM_STRINGS
+	maxlength = priv::getMaxLength( _strStates );
+#endif
+
+	for( size_t i=0; i<nbStates(); i++ )
+	{
+		printLineHeader( out, i, true, maxlength );
+		bool print_content = false;
+
+		const auto& stinf = _stateInfo[i];
+		const auto& te = stinf._timerEvent;
+		if( te._enabled )
+		{
+			print_content = true;
+			out << "TO: " <<  te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
+				<< " => S" << std::setw(2) << SPAG_P_CAST2IDX( te._nextState );
+#ifdef SPAG_ENUM_STRINGS
+			out << " (";
+			priv::PrintEnumString( out, _strStates[te._nextState] );
+			out << ')';
+#endif // SPAG_ENUM_STRINGS
+			out << '\n';
+		}
+
+#ifdef SPAG_USE_SIGNALS
+		for( size_t j=0; j<stinf._innerTransList.size(); ++j )
+		{
+			if( print_content )
+				printLineHeader( out, i, false, maxlength );
+			else
+				print_content = true;
+
+			const auto &itr = stinf._innerTransList[j];
+			auto dst_st = SPAG_P_CAST2IDX(itr._destState);
+			auto i_ev   = SPAG_P_CAST2IDX(itr._innerEvent);
+			out  << "IT: E" << std::setw(2) << i_ev;
+#ifdef SPAG_ENUM_STRINGS
+			out << " (";
+			priv::PrintEnumString( out, _strEvents[i_ev] );
+			out << ')';
+#endif // SPAG_ENUM_STRINGS
+
+			out << " => S" << std::setw(2) << dst_st;
+
+#ifdef SPAG_ENUM_STRINGS
+			out << " (";
+			priv::PrintEnumString( out, _strStates[dst_st] );
+			out << ')';
+#endif // SPAG_ENUM_STRINGS
+
+			out << '\n';
+		}
+
+		if( stinf._isPassState )
+		{
+			if( print_content )
+				printLineHeader( out, i, false, maxlength );
+			else
+				print_content = true;
+
+			out << "AAT: => S" << std::setw(2) << SPAG_P_CAST2IDX( _transitionMat[0][i] );
+#ifdef SPAG_ENUM_STRINGS
+			out << " (";
+			priv::PrintEnumString( out, _strStates[_transitionMat[0][i]] );
+			out << ')';
+#endif // SPAG_ENUM_STRINGS
+			out << '\n';
+		}
+#endif // SPAG_USE_SIGNALS
+
+		if( !print_content )
+			out << "-\n";
+	}
+}
+//-----------------------------------------------------------------------------------
+/// Printing function, prints transition table and states info
+template<typename ST, typename EV,typename T,typename CBA>
+void
+SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg ) const
 {
 	out << "\n* FSM Configuration: ";
 	if( msg )
 		out << msg;
 	out << "\n - Transition table:\n";
 	printMatrix( out );
-
-#ifdef SPAG_ENUM_STRINGS
-	size_t maxlength = priv::getMaxLength( _strStates );
-#endif
 	out << "\n - State info:\n";
-	for( size_t i=0; i<nbStates(); i++ )
-	{
-		const auto& te = _stateInfo[i]._timerEvent;
-		out << 'S' << std::setw(2) << i;
-#ifdef SPAG_ENUM_STRINGS
-		out << ':';
-		priv::PrintEnumString( out, _strStates[i], maxlength );
-#endif
-		out << "| ";
-		if( te._enabled )
-		{
-			out << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
-				<< " => S" << std::setw(2) << SPAG_P_CAST2IDX( te._nextState );
-#ifdef SPAG_ENUM_STRINGS
-			out << " (";
-			priv::PrintEnumString( out, _strStates[te._nextState], maxlength );
-			out << ')';
-#endif
-		}
-		else
-		{
-#ifdef SPAG_USE_SIGNALS
-			if( _stateInfo[i]._isPassState )
-			{
-				out << "AAT => S" << std::setw(2) << SPAG_P_CAST2IDX( _transitionMat[0][i] );
-#ifdef SPAG_ENUM_STRINGS
-				out << " (";
-				priv::PrintEnumString( out, _strStates[_transitionMat[0][i]], maxlength );
-				out << ')';
-#endif
-			}
-			else
-#endif
-				out << '-';
-		}
-		out << '\n';
-	}
+	printStateConfig( out );
 	out << "---------------------\n";
 }
 //-----------------------------------------------------------------------------------
