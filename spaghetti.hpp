@@ -27,8 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-
-#define SPAG_VERSION 0.8.0
+#define SPAG_VERSION 0.8.1
 
 #include <vector>
 #include <map>
@@ -681,8 +680,8 @@ class SpagFSM
 */
 		void assignTransition( ST st1, ST st2 )
 		{
-			size_t st1_idx = SPAG_P_CAST2IDX(st1);
-			size_t st2_idx = SPAG_P_CAST2IDX(st2);
+			auto st1_idx = SPAG_P_CAST2IDX(st1);
+			auto st2_idx = SPAG_P_CAST2IDX(st2);
 			SPAG_CHECK_LESS( st1_idx, nbStates() );
 			SPAG_CHECK_LESS( st2_idx, nbStates() );
 			if( st1 == st2 )
@@ -751,8 +750,8 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 */
 		void assignInnerTransition( EV ev, ST st )
 		{
-			size_t ev_idx = SPAG_P_CAST2IDX(ev);
-			size_t st_idx = SPAG_P_CAST2IDX(st);
+			auto ev_idx = SPAG_P_CAST2IDX(ev);
+			auto st_idx = SPAG_P_CAST2IDX(st);
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( ev_idx, nbEvents() );
 
@@ -885,7 +884,7 @@ Thus it is also not usable for inner transitions.
 */
 		void allowEvent( ST st, EV ev, bool what=true )
 		{
-			size_t st_idx = SPAG_P_CAST2IDX(st);
+			auto st_idx = SPAG_P_CAST2IDX(st);
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ st_idx ] = (what?1:0);
@@ -906,9 +905,8 @@ to remove this event on some states
 */
 		void disableInnerTransition( EV ev, ST st_from )
 		{
-			size_t st_idx = SPAG_P_CAST2IDX(st_from);
+			auto st_idx = SPAG_P_CAST2IDX(st_from);
 			auto& stinf = _stateInfo[st_idx];
-			std::cout << "nb IT=" << stinf._innerTransList.size() << '\n';
 
 			auto it = stinf.findInnerEvent( ev );
 			if( it == std::end( stinf._innerTransList ) )
@@ -1181,7 +1179,11 @@ to remove this event on some states
 #endif
 					+ ", but not found"
 				);
-			SPAG_LOG << "activating events on " << c << " states\n";
+			SPAG_LOG << "activating event on " << c << " states, current state is " << (int)currentState()
+#ifdef SPAG_ENUM_STRINGS
+				<< " (" << _strStates[ currentState() ] << ')'
+#endif
+				<< '\n';
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.

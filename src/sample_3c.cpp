@@ -10,8 +10,11 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 
 Homepage: https://github.com/skramm/spaghetti
 */
+
+/// try to def and undef this:
+//#define SPAG_EXTERNAL_EVENT_LOOP
+
 #define SPAG_USE_ASIO_WRAPPER
-#define SPAG_EXTERNAL_EVENT_LOOP
 
 #define SPAG_ENABLE_LOGGING
 #define SPAG_USE_SIGNALS
