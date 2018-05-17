@@ -553,8 +553,10 @@ struct DotFileOptions
 	bool showTimeOuts    = true;
 	bool showInnerEvents = true;
 	bool showAAT         = true;
-	bool useStateStrings = true;
-	bool useEventStrings = true;
+	bool showStateIndex  = true;
+	bool showStateString = true;
+	bool showEventIndex  = true;
+	bool showEventString = true;
 };
 
 //-----------------------------------------------------------------------------------
@@ -1850,18 +1852,21 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 		<< "rankdir=LR;\n"
 		<< "edge[style=\"bold\"];\n"
 		<< "node[shape=\"circle\"];\n";
-
+	f << std::setfill( '0' );
 	f << "\n/* States (=nodes)*/\n";
 	for( size_t j=0; j<nbStates(); j++ )
 	{
 		f << j << " [label=\"";
+		if( opt.showStateIndex )
+			f << 'S' << std::setw(2) << j;
 #ifdef SPAG_ENUM_STRINGS
-		if( opt.useStateStrings )
+		if( opt.showStateString )
+		{
+			if( opt.showStateIndex )
+				f << '\n';
 			f << _strStates[j];
-		else
+		}
 #endif
-			f << 'S' << j;
-
 		f << '"';
 
 		if( j == 0 )                                // initial state
@@ -1883,12 +1888,16 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 #endif
 				{
 					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
+					if( opt.showEventIndex )
+						f << 'E' << std::setw(2) << i;
 #ifdef SPAG_ENUM_STRINGS
-					if( opt.useEventStrings )
+					if( opt.showEventString )
+					{
+						if( opt.showEventIndex )
+							f << ':';
 						f << _strEvents[i];
-					else
+					}
 #endif
-						f << 'E' << i;
 					f << "\"];\n";
 				}
 
@@ -1911,12 +1920,16 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 			for( const auto& itr: _stateInfo[j]._innerTransList )
 			{
 				f << j << " -> " << SPAG_P_CAST2IDX( itr._destState ) << " [label=\"";
+				if( opt.showEventIndex )
+					f << "IE" << std::setw(2) << SPAG_P_CAST2IDX( itr._innerEvent );
 #ifdef SPAG_ENUM_STRINGS
-				if( opt.useEventStrings )
+				if( opt.showEventString )
+				{
+					if( opt.showEventIndex )
+						f << ':';
 					f << _strEvents.at(itr._innerEvent);
-				else
+				}
 #endif // SPAG_ENUM_STRINGS
-					f << "IE" << SPAG_P_CAST2IDX( itr._innerEvent );
 				f << "\"];\n";
 			}
 		}

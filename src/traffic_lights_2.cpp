@@ -41,7 +41,7 @@ int main( int, char* argv[] )
 
 		spag::DotFileOptions opt;
 		opt.showTimeOuts = true;
-		opt.useEventStrings = false;
+		opt.showEventString = false;
 		fsm.writeDotFile( "traffic_lights_2", opt );
 
 		std::thread thread_ui( UI_thread<fsm_t>, &fsm );
