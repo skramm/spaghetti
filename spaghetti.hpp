@@ -1179,7 +1179,12 @@ to remove this event on some states
 #endif
 					+ ", but not found"
 				);
-			SPAG_LOG << "activating event on " << c << " states, current state is " << (int)currentState()
+
+			SPAG_LOG << "activating event " << SPAG_P_CAST2IDX(ev)
+#ifdef SPAG_ENUM_STRINGS
+				<< " (" << _strEvents[ SPAG_P_CAST2IDX(ev) ] << ')'
+#endif
+				<< " on " << c << " state(s), current state is " << (int)currentState()
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[ currentState() ] << ')'
 #endif
