@@ -7,7 +7,7 @@ For example
 - "If state X has been activated 5 times, then switch to state Y instead of state Z"
 - "if some class member variable has value 10, then, when on state X, we want to switch to state Y instead of having a timeout leading to state Z"
 
-This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "hardware events".
+This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "external events".
 These latter ones are triggered by the user code: when they occur, the user code must call the member function ```processEvent()``` and thats it.
 The state switches to the next one and all the actions associated with that state are done:
 callback is executed, timeout (if any) is launched, ...
@@ -40,5 +40,8 @@ Now, it will also check if there is an inner event associated to that state, and
 
 The signal handler will then itself call the ```processInnerEvent()``` member function,
 
+As this require the use of
+[signals](https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSignal_%28IPC%29),
+thus this is available only if symbol ```SPAG_USE_SIGNALS``` (see [build options](spaghetti_options.md).
 
 --- Copyright S. Kramm - 2018 ---

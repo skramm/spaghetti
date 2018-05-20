@@ -8,6 +8,8 @@ All the example are included and runnable in the src folder, just ```make demo``
 For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
 
+**Warning**: this manual is only preliminar, thus it might contain outdated-irrelevant-incorrect information, at this state, please source code also.
+
 ### Summary
 1. [Fundamental concepts](#concepts)
 1. [Showcase 1: Hello World for FSM](#showcase1)
@@ -15,6 +17,7 @@ For a reference manual, run ```make doc```, then open
 1. [Showcase 3 : mixing timeout with hardware events](#showcase3)
 1. [Showcase 4 : adding network control](#showcase4)
 1. [Concurrent FSM](#concurrent)
+1. [Using inner events and pass states](spaghetti_inner_events.md)
 1. [Additional stuff](#additional_stuff)
    1. [Configuration](#config)
    1. [Checking configuration](#checks)
