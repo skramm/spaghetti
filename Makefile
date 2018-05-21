@@ -43,7 +43,7 @@ LDFLAGS += -lboost_system -lboost_thread -pthread
 .SUFFIXES:
 
 # list of targets that are NOT files
-.PHONY: all clean cleanall doc show diff
+.PHONY: all clean cleanall doc show diff tests
 
 SHELL=/bin/bash
 
@@ -65,17 +65,6 @@ DOT_FILES := $(wildcard *.dot)
 DOT_FILES += $(wildcard src/*.dot)
 SVG_FILES := $(DOT_FILES:.dot=.svg)
 
-#FILES=$(basename $(SRC_FILES))
-
-#OPT_ALL:= \
-#	$(foreach a, $(FILES), \
-#		$(foreach b, $(OPT), \
-#			$(foreach c, $(OPT), \
-#				$(foreach d, $(OPT), $(a)_$(b)$(c)$(d).obj ) \
-#			) \
-#		) \
-#	)
-
 
 # default target
 help:
@@ -93,8 +82,9 @@ help:
 demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
+# build and run the tests apps
 tests: $(EXEC_FILES_T)
-	for f in $(EXEC_FILES_T); do ./$$f; done;
+	for f in $(EXEC_FILES_T); do echo -e "\n***********************************\nRunning test programm $$f:"; ./$$f; done;
 
 doc: html/index.html src/html/index.html
 	-xdg-open html/index.html

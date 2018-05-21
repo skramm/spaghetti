@@ -35,24 +35,23 @@ int main( int, char* argv[] )
 
 	fsm_A.assignTimeOut( st_1, 2, st_2 );
 	fsm_A.assignTimeOut( st_2, 2, st_1 );
-	fsm_A.assignCallback( cb );
 
 	fsm_B.assignConfig( fsm_A );
 
 	fsm_B.assignTimeOut( st_1, 800, "ms", st_2 );
 	fsm_B.assignTimeOut( st_2, 500, "ms", st_1 );
 
-	fsm_A.assignCallbackValue( st_1, "st1-A" );
-	fsm_A.assignCallbackValue( st_2, "st2-A" );
-	fsm_B.assignCallbackValue( st_1, "st1-B" );
-	fsm_B.assignCallbackValue( st_2, "st2-B" );
+	fsm_A.assignCallback( st_1, cb, "st1-A" );
+	fsm_A.assignCallback( st_2, cb, "st2-A" );
+	fsm_B.assignCallback( st_1, cb, "st1-B" );
+	fsm_B.assignCallback( st_2, cb, "st2-B" );
 
 	fsm_A.printConfig( std::cout, "FSM-A" );
 	fsm_B.printConfig( std::cout, "FSM-B" );
 
 	boost::asio::io_service io_service;
-	spag::AsioTimer asio_A( io_service );
-	spag::AsioTimer asio_B( io_service );
+	spag::AsioEL asio_A( io_service );
+	spag::AsioEL asio_B( io_service );
 	fsm_A.assignEventHandler( &asio_A );
 	fsm_B.assignEventHandler( &asio_B );
 

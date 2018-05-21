@@ -55,7 +55,7 @@ This program is free software: you can redistribute it and/or modify
 #ifdef SPAG_PRINT_STATES
 	#define SPAG_LOG \
 		if(1) \
-			std::cout << "Spaghetti: " << __FUNCTION__ << "(): "
+			std::cout << spag::priv::getSpagName() << __FUNCTION__ << "(): "
 #else
 	#define SPAG_LOG \
 		if(0) \
@@ -69,7 +69,7 @@ This program is free software: you can redistribute it and/or modify
 #else
 	#define SPAG_P_LOG_ERROR \
 		if(1) \
-			std::cerr << spag::priv::getSpagName()
+			std::cerr << spag::priv::getSpagName() << __FUNCTION__ << "(): "
 #endif
 
 #define SPAG_P_THROW_ERROR_RT( msg ) \
@@ -128,6 +128,12 @@ This program is free software: you can redistribute it and/or modify
 #define SPAG_P_STRINGIZE2( a ) #a
 #define SPAG_STRINGIZE( a ) SPAG_P_STRINGIZE2( a )
 
+#define SPAG_NOT_AVAILABLE(a) \
+	{ \
+		SPAG_P_LOG_ERROR << "This function is not available when symbol " << SPAG_STRINGIZE(a) << " is not defined, see manual.\n"; \
+		assert(0); \
+	}
+
 /// Private macro, used to convert a 'state' type into an integer
 #define SPAG_P_CAST2IDX( a ) static_cast<size_t>(a)
 
@@ -139,7 +145,7 @@ typedef size_t Duration;
 namespace spag {
 
 //------------------------------------------------------------------------------------
-/// Used in printLoggedData() as second argument
+/// Used in \ref SpagFSM<>::printLoggedData() as second argument
 enum PrintFlags
 {
 	stateCount  = 0x01
@@ -540,7 +546,7 @@ struct NoTimer;
 } // namespace priv
 
 #if defined (SPAG_USE_ASIO_WRAPPER)
-/// Forward declaration
+// Forward declaration
 	template<typename ST, typename EV, typename CBA>
 	struct AsioWrapper;
 #endif
@@ -771,7 +777,13 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 					}
 				}
 		}
-
+#else
+		void assignInnerTransition( ST st1, EV ev, ST st2 )
+			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
+		void assignInnerTransition( EV ev, ST st )
+			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
+		void assignTransition( ST st1, ST st2 )
+			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 #endif // SPAG_USE_SIGNALS
 
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
@@ -947,6 +959,7 @@ to remove this event on some states
 /// Assigns a callback function to all the states, will be called each time the state is activated
 		void assignCallback( Callback_t func )
 		{
+//			static_assert( std::is_same<Callback_t,CBA>::value, "Callback function is not of same type as the one declared in FSM" );
 			for( size_t i=0; i<nbStates(); i++ )
 				_stateInfo[ SPAG_P_CAST2IDX(i) ]._callback = func;
 		}
@@ -1194,8 +1207,11 @@ to remove this event on some states
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
-/// <strong>DO NOT CALL in user code</strong>
-/// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
+/// <strong>DO NOT CALL in user code</strong>.
+/**
+This function will be called by the signal handler of the event handler class ONLY (see AsioWrapper::signalHandler() )
+\warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
+*/
 		void processInnerEvent( const priv::StateInfo<ST,EV,CBA>& stinf ) const
 		{
 			SPAG_LOG << '\n';
@@ -1278,7 +1294,7 @@ to remove this event on some states
 #else
 		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 		void setLogFilename( std::string fn ) const {}
-#endif
+#endif // SPAG_ENABLE_LOGGING
 
 		void setTimerDefaultUnit( DurUnit unit ) const
 		{
@@ -2189,20 +2205,20 @@ struct AsioWrapper
 
 #ifdef SPAG_USE_ASIO_WRAPPER
 	#ifdef SPAG_EMBED_ASIO_WRAPPER
-/// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Does not create the \c AsioTimer type (user code doesn't need it)
+/// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Does not create the \c AsioEL type (user code doesn't need it)
 		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
 			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type
 	#else
-/// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Also creates the \c AsioTimer type
+/// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Also creates the \c AsioEL type
 		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
 			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type; \
 			namespace spag { \
-				typedef AsioWrapper<st,ev,cbarg> AsioTimer; \
+				typedef spag::AsioWrapper<st,ev,cbarg> AsioEL; \
 			}
 	#endif
 #else
 	#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
-		static_assert( 0, "Error, can't use this macro without symbol SPAG_EMBED_ASIO_WRAPPER defined" )
+		static_assert( 0, "Error, can't use this macro without symbol SPAG_EMBED_ASIO_WRAPPER or SPAG_USE_ASIO_WRAPPER defined" )
 #endif
 
 #endif // HG_SPAGHETTI_FSM_HPP

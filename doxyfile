@@ -49,7 +49,7 @@ LOOKUP_CACHE_SIZE      = 0
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
-EXTRACT_ALL            = NO
+EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = YES
 EXTRACT_PACKAGE        = NO
 EXTRACT_STATIC         = NO
@@ -258,7 +258,7 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           =
 INCLUDE_FILE_PATTERNS  =
-PREDEFINED             = SPAG_USE_ASIO_WRAPPER SPAG_GENERATE_DOTFILE SPAG_USE_SIGNALS
+PREDEFINED             = SPAG_USE_ASIO_WRAPPER SPAG_GENERATE_DOTFILE SPAG_USE_SIGNALS SPAG_ENABLE_LOGGING
 EXPAND_AS_DEFINED      =
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------

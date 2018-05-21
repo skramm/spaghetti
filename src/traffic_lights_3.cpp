@@ -66,7 +66,7 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		spag::AsioTimer asio;  // create Timer class
+		spag::AsioEL asio;  // create Timer class
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 

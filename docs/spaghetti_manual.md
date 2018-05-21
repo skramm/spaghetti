@@ -8,7 +8,7 @@ All the example are included and runnable in the src folder, just ```make demo``
 For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
 
-**Warning**: this manual is only preliminar, thus it might contain outdated-irrelevant-incorrect information, at this state, please source code also.
+**Warning**: this manual is only preliminar, thus it might contain outdated-irrelevant-incorrect information at this state, please check source code also.
 
 ### Summary
 1. [Fundamental concepts](#concepts)
@@ -368,7 +368,7 @@ So here, we demonstrate another use-case: we will use the provided asio-based ti
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 ```
-This macro also defines the class ```AsioTimer``` that you will need to instanciate (see below).
+This macro also defines the class ```AsioEL``` ("boost::Asio Event Loop") that you will need to instanciate (see below).
 
 The server will inherit from some generic UDP server (also included):
 ```C++
@@ -407,7 +407,7 @@ And the ```main()``` function will instanciate the timer class and **assign it**
 int main()
 {
 // instanciate Timer/Event loop
-	spag::AsioTimer asio;
+	spag::AsioEL asio;
 
 // create udp server with asio, listening on port 12345
 	MyServer server( asio.get_io_service(), 12345 );

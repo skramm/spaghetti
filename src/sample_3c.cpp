@@ -52,9 +52,9 @@ int main( int, char* argv[] )
 
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
 	boost::asio::io_service io_service;
-	spag::AsioTimer asio(io_service);
+	spag::AsioEL asio(io_service);
 #else
-	spag::AsioTimer asio;
+	spag::AsioEL asio;
 #endif
 
 	fsm.assignEventHandler( &asio );
