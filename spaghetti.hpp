@@ -27,7 +27,7 @@ This program is free software: you can redistribute it and/or modify
 /// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.8.1
+#define SPAG_VERSION 0.8.2
 
 #include <vector>
 #include <map>
@@ -1115,6 +1115,7 @@ to remove this event on some states
 		{
 			SPAG_LOG << "processing timeout event, delay was " << _stateInfo[ _current ]._timerEvent._duration << "\n";
 			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent._enabled ); // or else, the timer shouldn't have been started, and thus we shouldn't be here...
+			_previous = _current;
 			_current = _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._nextState;
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.logTransition( _current, nbEvents() );
@@ -1150,6 +1151,7 @@ to remove this event on some states
 					SPAG_P_ASSERT( _eventHandler, "Event handler has not been allocated" );
 					_eventHandler->timerCancel();
 				}
+				_previous = _current;
 				_current = _transitionMat[ ev_idx ][ SPAG_P_CAST2IDX(_current) ];     // 2 - switch to next state
 #ifdef SPAG_ENABLE_LOGGING
 				_rtdata.logTransition( _current, ev_idx );
@@ -1220,14 +1222,18 @@ This function will be called by the signal handler of the event handler class ON
 			size_t ev_idx = nbEvents() + 1;
 #endif
 			if( stinf._isPassState )
+			{
+				_previous = _current;
 				_current = stinf._ptNextState;
+			}
 			else
 			{
                 for( const auto& innerTrans: stinf._innerTransList )
                 {
 					if( innerTrans._isActive )              // if several inner transitions
 					{                                       // are active, we process the
-						_current = innerTrans._destState;   // first one that is found
+						_previous = _current;               // first one that is found
+						_current = innerTrans._destState;
 #ifdef SPAG_ENABLE_LOGGING
 						ev_idx   = innerTrans._innerEvent;
 #endif
@@ -1263,6 +1269,12 @@ This function will be called by the signal handler of the event handler class ON
 		{
 			return _current;
 		}
+/// Return previous state (or initial state upon start() )
+		ST previousState() const
+		{
+			return _previous;
+		}
+
 		priv::StateInfo<ST,EV,CBA> getStateInfo( size_t idx ) const
 		{
 			assert( idx < nbStates() );
@@ -1450,7 +1462,8 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #ifdef SPAG_ENABLE_LOGGING
 		mutable priv::RunTimeData<ST,EV> _rtdata;
 #endif
-		mutable ST                       _current = static_cast<ST>(0);   ///< current state
+		mutable ST                       _current  = static_cast<ST>(0);   ///< current state
+		mutable ST                       _previous = static_cast<ST>(0);   ///< previous state
 		mutable bool                     _isRunning = false;
 		mutable DurUnit                  _defaultTimerUnit = DurUnit::sec;   ///< default timer units
 		mutable TIM*                     _eventHandler = nullptr;   ///< pointer on timer
@@ -2199,6 +2212,7 @@ struct AsioWrapper
 	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
 		typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type
 #endif
+
 /// Shorthand for declaring the type of FSM with an arbitrary timer class
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
 	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type
