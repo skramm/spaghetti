@@ -9,7 +9,7 @@
 #define SPAG_ENABLE_LOGGING
 //#define SPAG_PRINT_STATES
 #define SPAG_USE_SIGNALS
-
+#define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
 enum States { st0, st1, st2, NB_STATES };
@@ -45,18 +45,66 @@ void configureFSM( fsm_t& fsm )
 	};
 	fsm.assignStrings2States( mstr_st );
 
-	fsm.assignString2Event( ev0, "eveeeeent" );
+	fsm.assignString2Event( ev0, "my_event" );
 }
+
+#define WRITE_INCREMENTAL_DOT_FILE( fsm, dfo ) \
+	{ \
+		std::ostringstream oss; \
+		oss << "test_2_" << std::setfill('0') << std::setw(2) << fn_index++; \
+		fsm.writeDotFile( oss.str(), dfo ); \
+	}
 
 int main( int, char* argv[] )
 {
-//	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
-
-
-
+	int fn_index{0};
 	configureFSM( fsm )	;
 	fsm.printConfig( std::cout );
 	fsm.doChecking();
+
+	spag::DotFileOptions dfo;                   // default
+	WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+
+	{
+		spag::DotFileOptions dfo;
+		dfo.showActiveState = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showInnerEvents = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showAAT = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showTimeOuts = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showEventIndex = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showEventString = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showStateIndex = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showStateString = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
 
 	try
 	{

@@ -1390,7 +1390,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 /// Generates in current folder a dot file corresponding to the FSM
 		void writeDotFile( std::string fn, DotFileOptions opt=DotFileOptions() ) const;
 #else
-		void writeDotFile( std::string, DotFileOptions ) const {}
+		void writeDotFile( std::string, DotFileOptions=DotFileOptions() ) const {}
 #endif
 ///@}
 
@@ -1911,9 +1911,11 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "\n/* External events */\n";
 	for( size_t i=0; i<nbEvents(); i++ )
 		for( size_t j=0; j<nbStates(); j++ )
+		{
+			const auto& sinfo = _stateInfo[j];
 			if( _allowedMat[i][j] )
 #ifdef SPAG_USE_SIGNALS
-				if( !_stateInfo[j]._isPassState )
+				if( !sinfo._isPassState && sinfo._innerTransList.empty() )
 #endif
 				{
 					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
@@ -1929,6 +1931,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 #endif
 					f << "\"];\n";
 				}
+		}
 
 	f << "\n/* Inner events and timeout transitions */\n";
 	for( size_t j=0; j<nbStates(); j++ )
