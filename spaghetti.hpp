@@ -1911,11 +1911,10 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "\n/* External events */\n";
 	for( size_t i=0; i<nbEvents(); i++ )
 		for( size_t j=0; j<nbStates(); j++ )
-		{
-			const auto& sinfo = _stateInfo[j];
 			if( _allowedMat[i][j] )
+			{
 #ifdef SPAG_USE_SIGNALS
-				if( !sinfo._isPassState && sinfo._innerTransList.empty() )
+				if( !_stateInfo[j]._isPassState && _stateInfo[j]._innerTransList.empty() )
 #endif
 				{
 					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
@@ -1931,7 +1930,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 #endif
 					f << "\"];\n";
 				}
-		}
+			}
 
 	f << "\n/* Inner events and timeout transitions */\n";
 	for( size_t j=0; j<nbStates(); j++ )
