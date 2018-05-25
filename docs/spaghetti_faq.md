@@ -65,7 +65,14 @@ But you can then make the FSM object global, so the callbacks can access it.s
 This is demonstrated in sample program
 [```src/sample_3.cpp```](../../../tree/master/src/sample_3.cpp).<br>
 But **be careful**, because in that case, no checking will be done on what you will change on the configuration of the FSM structure.
-You could make the FSM run into some invalid configuration, leading to undefined behavior.
+You could make the FSM run into some invalid configuration, leading to undefined behavior.<br>
+
+- **Q**: *How can I assign callback argument values in a more convenient way?
+I have a lot of states, and assigning these one by one (with ```assignCallbackValue()```) is tedious*<br/>
+**A**: If you have no special needs on the value of the callback arguments (i.e. you only need them to be different values),
+then you can use ```assignCallbackAutoval( cb )```, that will assign to all the states the callback function ```cb(int)```
+and will assign as callback argument value the **index** of the corresponding state.
+Of course, this requires that you have defined the FSM type with some kind of integer type as callback argument.
 
 - **Q**: *Can I have as callback function a class member function?*<br>
 **A**: Sure! This is of course useful so that the callback can handle some data.
@@ -93,7 +100,7 @@ This requires defining the symbol ```SPAG_EXTERNAL_EVENT_LOOP```, see [build opt
 - **Q**: *Does this library provide serialization of the configuration of the FSM, so I can easily save it to a file?*<br/>
 **A**: No, because it holds objects of type ```std::function``` to store the callback functions.
 And this object **can not** be serialized.<br>
-All the rest of the configuration could be serialized, but I felt that saving config without the callbacks would be useless.
+All the rest of the configuration could be serialized, but I felt that saving configuration without the callbacks would be useless.
 Post an issue if you feel that can be useful, it wouldn't be too hard to add that.
 
 - **Q**: *Can I build a FSM with 0 events, only time outs?*<br>
@@ -110,7 +117,7 @@ switching to "warning" mode is only allowed while on regular modes, and if that 
 
 
 - **Q**: *Why that name? Where does that come from?*<br/>
-**A**: Naming is hard. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
+**A**: *Naming is hard*. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.
 (and certainly not related to [this](https://en.wikipedia.org/wiki/Spaghetti_code), hopefully!)

@@ -12,10 +12,10 @@
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
-enum States { st0, st1, st2, NB_STATES };
+enum States { st0, st1, st2, st3, st4, NB_STATES };
 enum Events { ev0, NB_EVENTS };
 
-SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, bool );
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
 fsm_t fsm;
 int g_count = 0;
@@ -29,15 +29,21 @@ void cb( int s )
 //-----------------------------------------------------------------------------------
 void configureFSM( fsm_t& fsm )
 {
-	fsm.assignCallback( st0, cb, (int)st0 );
-	fsm.assignCallback( st1, cb, (int)st1 );
-	fsm.assignCallback( st2, cb, (int)st2 );
+	fsm.assignCallbackAutoval( cb );
 
-	fsm.assignTimeOut( st0, 400, "ms", st2 );
-	fsm.assignTimeOut( st2, 800, "ms", st0 );
+//	fsm.assignGlobalTimeOut( st0 );
+	fsm.assignGlobalTimeOut( 400, "ms", st0 );
+
+	fsm.assignTimeOut( st0, st2 );
+	fsm.assignTimeOut( st1, st2 );
+	fsm.assignTimeOut( st3, st4 );
+	fsm.assignTimeOut( st2, st4 );
+	fsm.assignTimeOut( st4, st0 );
+
+//	fsm.assignTimeOut( st2, 800, "ms", st0 );
 	fsm.assignInnerTransition( st0, ev0, st1 );
 //	fsm.assignTransition( st2, st0 );
-	fsm.assignTransition( st1, st2 );
+
 
 	std::map<States,std::string> mstr_st = {
 		{ st0, "init state" },

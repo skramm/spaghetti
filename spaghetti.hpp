@@ -24,10 +24,11 @@ This program is free software: you can redistribute it and/or modify
 #ifndef HG_SPAGHETTI_FSM_HPP
 #define HG_SPAGHETTI_FSM_HPP
 
-/// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option. If not defined, it defaults to std::vector
+/// At present, data is stored into arrays if this is defined. \todo Need performance evaluation of this build option.
+/// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.8.2
+#define SPAG_VERSION 0.8.3
 
 #include <vector>
 #include <map>
@@ -786,6 +787,13 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 #endif // SPAG_USE_SIGNALS
 
+/// Assigns an timeout event leading to state \c st_final, on \b all states except \c st_final,
+/// using default timer unit and default timer duration value
+		void assignGlobalTimeOut( ST st_final )
+		{
+			assignGlobalTimeOut( _defaultTimerValue, _defaultTimerUnit, st_final );
+		}
+
 /// Assigns an timeout event on \b all states except \c st_final, using default timer units
 		void assignGlobalTimeOut( Duration dur, ST st_final )
 		{
@@ -815,19 +823,40 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 					auto te = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;
 					if( te._enabled )
 					{
-						std::string err_msg = "error, assigning global timeout of " + std::to_string( dur ) + " " + priv::stringFromTimeUnit( durUnit );
-						err_msg += ": unable because of previously assigned timeout on state '" + std::to_string( i ) + "' ";
+						SPAG_P_LOG_ERROR << " warning, removal of previously assigned timeout leading from state " << i
 #ifdef SPAG_ENUM_STRINGS
-						err_msg += "(" + _strStates[i] + ") ";
+							<< " (" << _strStates[i] << ')'
 #endif
-						err_msg += ", value " + std::to_string( te._duration ) + " " + priv::stringFromTimeUnit( te._durUnit );
-						SPAG_P_THROW_ERROR_CFG( err_msg );
+							<< " to state " << te._nextState
+#ifdef SPAG_ENUM_STRINGS
+							<< " (" << _strStates.at( SPAG_P_CAST2IDX(te._nextState)) << ')'
+#endif
+							<< " after " << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << '\n';
 					}
 					assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
 				}
 		}
 
 /// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
+/**
+Duration will be:
+ - if a timeout has been \b previously assigned to \c st_curr, then its value will be retained.
+ - if not, the default value and units will be used.
+See setTimerDefaultValue() and setTimerDefaultUnit()
+*/
+		void assignTimeOut( ST st_curr, ST st_next )
+		{
+			auto st_idx = SPAG_P_CAST2IDX( st_curr );
+			SPAG_CHECK_LESS( st_idx, nbStates() );
+			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
+			if( _stateInfo[ st_idx ]._timerEvent._enabled )         // if already one assigned,
+				_stateInfo[ st_idx ]._timerEvent._nextState = st_next;  // then just change the destination state
+			else
+				_stateInfo[ st_idx ]._timerEvent = priv::TimerEvent<ST>( st_next, _defaultTimerValue, _defaultTimerUnit );
+		}
+
+/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
+/// Duration will be \c dur, with the default unit
 		void assignTimeOut( ST st_curr, Duration dur, ST st_next )
 		{
 			assignTimeOut( st_curr, dur, _defaultTimerUnit, st_next );
@@ -951,9 +980,10 @@ to remove this event on some states
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )
 		{
-			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
-			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callback    = func;
-			_stateInfo[ SPAG_P_CAST2IDX(st) ]._callbackArg = cb_arg;
+			auto st_idx = SPAG_P_CAST2IDX(st);
+			SPAG_CHECK_LESS( st_idx, nbStates() );
+			_stateInfo[ st_idx ]._callback    = func;
+			_stateInfo[ st_idx ]._callbackArg = cb_arg;
 		}
 
 /// Assigns a callback function to all the states, will be called each time the state is activated
@@ -964,12 +994,30 @@ to remove this event on some states
 				_stateInfo[ SPAG_P_CAST2IDX(i) ]._callback = func;
 		}
 
+/// Assigns a callback function to all the states, with argument value being the state value/index, converted to an \c int .
+/**
+Requires that argument type is an "integer" type (int, long int, char, ...).
+See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
+*/
+		void assignCallbackAutoval( Callback_t func )
+		{
+			static_assert( std::numeric_limits<CBA>::is_integer, "To use this, Callback function argument MUST be 'int'" );
+			for( size_t i=0; i<nbStates(); i++ )
+			{
+				_stateInfo[ i ]._callback = func;
+				_stateInfo[ i ]._callbackArg = static_cast<CBA>(i);
+				if( i > std::numeric_limits<CBA>::max() )
+					SPAG_P_THROW_ERROR_CFG( "type of callback argument too small to hold all the states" );
+			}
+		}
+
 /// Assigns a callback function called when an ignored event occurs
 		void assignIgnoredEventsCallback( std::function<void(ST,EV)> func )
 		{
 			_ignEventCallback = func;
 		}
 
+/// Assigns the callback function value \c cb_arg, for state \c st
 		void assignCallbackValue( ST st, CBA cb_arg )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
@@ -1308,13 +1356,25 @@ This function will be called by the signal handler of the event handler class ON
 		void setLogFilename( std::string fn ) const {}
 #endif // SPAG_ENABLE_LOGGING
 
+/// Sets the timer default value. See assignTimeOut()
+		void setTimerDefaultValue( Duration val ) const
+		{
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+            _defaultTimerValue = val;
+		}
+
+/// Sets the timer default unit. See assignTimeOut()
 		void setTimerDefaultUnit( DurUnit unit ) const
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
             _defaultTimerUnit = unit;
 		}
-/// Provided so that we can use this in a function templated with the FSM type, without having the type \c DurUnit available
-/// (see for example in src/traffic_lights_common.hpp)
+
+/// Sets the timer default unit, given as a string. See assignTimeOut()
+/**
+Provided so that we can use this in a function templated with the FSM type, without having the type \c DurUnit available
+(see for example in src/traffic_lights_common.hpp)
+*/
 		void setTimerDefaultUnit( std::string str ) const
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
@@ -1465,8 +1525,9 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		mutable ST                       _current  = static_cast<ST>(0);   ///< current state
 		mutable ST                       _previous = static_cast<ST>(0);   ///< previous state
 		mutable bool                     _isRunning = false;
-		mutable DurUnit                  _defaultTimerUnit = DurUnit::sec;   ///< default timer units
-		mutable TIM*                     _eventHandler = nullptr;   ///< pointer on timer
+		mutable DurUnit                  _defaultTimerUnit  = DurUnit::sec;  ///< default timer units
+		mutable Duration                 _defaultTimerValue = 1;             ///< default timer value
+		mutable TIM*                     _eventHandler = nullptr;            ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
 		std::array<
