@@ -47,7 +47,8 @@ For example, timeouts.
 Thus, the FSM object can work together with another object that will provide all the needed tasks, such as time handling, and generating events at the right moment.
 Consider this as some kind of *event loop*.
 
-This class is not part of the root library, and the FSM could theorically work with any user-written class that provides theses services, and that respects certain requirements.
+This class is independent from the main FSM class.
+The FSM could theorically work with any user-written class that provides theses services, and that respects certain requirements.
 But of course, the Spaghetti library provides such a class, that works seamlessly.
 This is the preferred way, but it comes at the price of a dependency on the Boost libraries.
 More on this below.
@@ -88,7 +89,7 @@ For the other events, it is up to your code to detect these, and then call some 
 ## 2 - Showcase 1: Hello World for FSM
 
 In this example, we show the "Hello World" of FSM, which is the "Turnstyle" FSM
-(see [WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile)).
+(see [WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile).
 
 First, create enums for states and events:
 
@@ -361,7 +362,7 @@ Now the server. The potential problem we need to deal with is that:
 - with Boost::asio, to create a socket, we need to provide an "io_service" object,
 - if we embed that object inside the FSM (as it is done in the previous example), we won't be able to create the socket...
 
-So here, we demonstrate another use-case: we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
+So here, we demonstrate another use case: we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
 ```C++
 #define SPAG_USE_ASIO_WRAPPER
 #include "spaghetti.hpp"
@@ -430,8 +431,9 @@ When using a timer associated with the FSM, the default behavior is that startin
 If you need to run several FSMs concurrently, then you need to handle the event loop separately, and the ```start()``` function must not be blocking.
 This implies that the Timer class must not hold the timer.
 
-To use the provided Timer class ```AsioWrapper``` in this situation, you need to define the symbol ```SPAG_EXTERNAL_EVENT_LOOP```.
-This will change the class behavior, it will not include the Boost::asio event loop structure (aka "io_service" or "io_context"), it is now up to your code to provide it.
+To use the provided Event loop class ```AsioEL``` in this situation, you need to define the symbol ```SPAG_EXTERNAL_EVENT_LOOP```.
+This will change the class behavior, it will not embed the Boost::asio event loop structure (aka "io_service" or "io_context"),
+it is now up to your code to provide it.
 You can then start all the needed FSM, then eventually start the event loop, usually with something looking like: ```io_service.run()```
 
 This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
@@ -473,7 +475,7 @@ For example and with the above code, if we want to disable transitionning from s
 ```
 As you can see, '1' means transition is allowed, '0' means it is disabled.
 
-Of course in such a situation, it would be simpler to use the following two member functions:
+However, in such a situation, it would be simpler to use the following two member functions:
 ```C++
 	fsm.allowAllEvents();
 	fsm.allowEvent( ev2, st2, false );
@@ -504,19 +506,21 @@ This function can either throw an error in case of an invalid situation, or just
 This function is public, so you may call it yourself, in case you need to make sure everything is correct before running.
 
 A warning is issued in the following situations:
-- a state is unreachable, that is it is referenced in the states enum but no transitions leads to it.
+- a state is unreachable: it is referenced in the states enum but no transitions leads to it.
 - a state is a "Dead-end": once in this state, there is no transition leading to another state: the FSM is "stuck".
 
-These latter situations will not disable running the FSM, because they may occur in developement phases, where everything is not finished but the user wants to test things anyway.
+These latter situations will not disable running the FSM, because they may occur in developement phases,
+where everything is not finished but the user wants to test things anyway.
 
 <a name="getters"></a>
 ### 7.3 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
  - ```nbStates()```: returns nb of states
- - ```nbEvents()```: returns nb of events (only "hardware" ones, not timeouts).
+ - ```nbEvents()```: returns nb of events (only "hardware" an "inner" ones, not timeouts).
  - ```currentState()```: returns current state
- - ```timeOutDuration( EN_States )```: returns duration of timeout, as a std::pair (Duration, DurUnit)
+ - ```previousState()```: returns previous state
+ - ```timeOutDuration( EN_States st )```: returns duration of timeout on state ```st```, as a std::pair (Duration, DurUnit)
 
 Other stuff:
 - Printing the configuration:
