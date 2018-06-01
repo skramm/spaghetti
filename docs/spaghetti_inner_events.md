@@ -41,7 +41,7 @@ Now, it will also check if there is an inner event associated to that state, and
 The signal handler will then itself call the ```processInnerEvent()``` member function,
 
 As this require the use of
-[signals](https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSignal_%28IPC%29),
-thus this is available only if symbol ```SPAG_USE_SIGNALS``` (see [build options](spaghetti_options.md).
+[signals](https://en.wikipedia.org%2Fwiki%2FSignal_%28IPC%29),
+thus this is available only if symbol ```SPAG_USE_SIGNALS``` (see [build options](spaghetti_options.md).)
 
 --- Copyright S. Kramm - 2018 ---

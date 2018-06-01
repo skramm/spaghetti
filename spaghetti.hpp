@@ -1307,10 +1307,6 @@ then we need to raise the signal right away! (instead of waiting)
 #endif
 				<< '\n';
 
-#if 0
-	if( )
-			std::raise( SIGUSR1 );
-#endif
 			SPAG_P_END;
 		}
 
