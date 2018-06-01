@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.8.3
+#define SPAG_VERSION 0.8.4
 
 #include <vector>
 #include <map>
@@ -57,10 +57,12 @@ This program is free software: you can redistribute it and/or modify
 	#define SPAG_LOG \
 		if(1) \
 			std::cout << spag::priv::getSpagName() << __FUNCTION__ << "(): "
+	#define SPAG_LOG_FLUSH std::cout << std::endl
 #else
 	#define SPAG_LOG \
 		if(0) \
 			std::cout
+	#define SPAG_LOG_FLUSH ;
 #endif
 
 #ifdef SPAG_NO_VERBOSE
@@ -134,6 +136,32 @@ This program is free software: you can redistribute it and/or modify
 		SPAG_P_LOG_ERROR << "This function is not available when symbol " << SPAG_STRINGIZE(a) << " is not defined, see manual.\n"; \
 		assert(0); \
 	}
+
+#ifdef SPAG_TRACK_RUNTIME
+int g_indent;
+#define SPAG_P_START \
+	static int funct_count; \
+	{ \
+		for( char i=0; i<3*g_indent; i++ ) \
+			std::cout << '-'; \
+		std::cout << "START " << __FUNCTION__ << "(): " << funct_count << std::endl; \
+		g_indent++; \
+		funct_count++; \
+	}
+
+#define SPAG_P_END \
+	{ \
+		g_indent--; \
+		assert( g_indent >=0 ); \
+		for( char i=0; i<3*g_indent; i++ ) \
+			std::cout << '-'; \
+		std::cout << "END  " << __FUNCTION__ << "(): " << funct_count << std::endl; \
+	}
+
+#else
+	#define SPAG_P_START ;
+	#define SPAG_P_END ;
+#endif // SPAG_TRACK_RUNTIME
 
 /// Private macro, used to convert a 'state' type into an integer
 #define SPAG_P_CAST2IDX( a ) static_cast<size_t>(a)
@@ -243,9 +271,9 @@ struct InnerTransition
 	}
 	friend std::ostream& operator << ( std::ostream& s, const InnerTransition& it )
 	{
-		s << " isActive=" << it._isActive
+		s << "InnerTransition: isActive=" << it._isActive
 			<< " destState=" << (int)it._destState
-			<< " innerEvent=" << (int)it._innerEvent << '\n';
+			<< " innerEvent=" << (int)it._innerEvent;// << '\n';
 		return s;
 	}
 };
@@ -263,6 +291,20 @@ struct StateInfo
 	bool                     _isPassState = false;
 	ST                       _ptNextState;   ///< only if _isPassState is true
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
+
+	friend std::ostream& operator << ( std::ostream& s, const StateInfo& si )
+	{
+		s << "StateInfo:"
+			<< "\n -has callback=" << (si._callback==0?"NO":"YES")
+			<< "\n -callbackArg=" << si._callbackArg
+
+			<< "\n -isPassState=" << si._isPassState
+			<< "\n -NbInnerTransition=" << si._innerTransList.size()
+			<< '\n';
+		for( const auto& it: si._innerTransList )
+			s << "  -" << it << '\n';
+		return s;
+	}
 
 /// Returns true if the set of internal transitions holds one with event \c ev leading to state \c st
 	bool holdsInnerTransition( EV ev, ST st ) const
@@ -301,7 +343,7 @@ struct StateInfo
 				return it;
 		return std::end( _innerTransList );
 	}
-#endif
+#endif // SPAG_USE_SIGNALS
 };
 //-----------------------------------------------------------------------------------
 /// Private, helper function
@@ -1118,7 +1160,7 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 /** \name Run time functions */
 ///@{
 /// start FSM : run callback associated to initial state (if any), an run timer (if any)
-		void start() const
+		void start()
 		{
 			SPAG_P_ASSERT( !_isRunning, "attempt to start an already running FSM" );
 
@@ -1152,8 +1194,8 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			{
 				SPAG_LOG << "call timerCancel()\n";
 				_eventHandler->timerCancel();
-				SPAG_LOG << "call timerKill()\n";
-				_eventHandler->timerKill();
+				SPAG_LOG << "call event loop kill()\n";
+				_eventHandler->kill();
 			}
 			_isRunning = false;
 		}
@@ -1161,6 +1203,7 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 /// User-code timer end function/callback should call this when the timer expires
 		void processTimeOut() const
 		{
+			SPAG_P_START;
 			SPAG_LOG << "processing timeout event, delay was " << _stateInfo[ _current ]._timerEvent._duration << "\n";
 			assert( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._timerEvent._enabled ); // or else, the timer shouldn't have been started, and thus we shouldn't be here...
 			_previous = _current;
@@ -1169,11 +1212,14 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			_rtdata.logTransition( _current, nbEvents() );
 #endif
 			runAction();
+			SPAG_P_END;
 		}
 
 /// User-code should call this function when an external event occurs
 		void processEvent( EV ev ) const
 		{
+			SPAG_P_START;
+
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
 
@@ -1216,14 +1262,20 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 				_rtdata.logIgnoredEvent( ev_idx );
 #endif
 			}
+			SPAG_P_END;
 		}
 
 #ifdef SPAG_USE_SIGNALS
 /// activate inner event: set the inner event to true, so that a signal will be raised when we are on that state (and once callback has been completed).
-/// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
+/**
+\warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
+\todo implement "early quit" (as soon as found)
+\todo check if one of the states on which we activate the event is the current one. If so,
+then we need to raise the signal right away! (instead of waiting)
+*/
 		void activateInnerEvent( EV ev )
 		{
-			SPAG_LOG << '\n';
+			SPAG_P_START;
 
 			bool found = false;
 			size_t c=0;
@@ -1254,6 +1306,12 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 				<< " (" << _strStates[ currentState() ] << ')'
 #endif
 				<< '\n';
+
+#if 0
+	if( )
+			std::raise( SIGUSR1 );
+#endif
+			SPAG_P_END;
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
@@ -1264,13 +1322,15 @@ This function will be called by the signal handler of the event handler class ON
 */
 		void processInnerEvent( const priv::StateInfo<ST,EV,CBA>& stinf ) const
 		{
-			SPAG_LOG << '\n';
+			SPAG_P_START;
+
 			SPAG_P_ASSERT( _isRunning, "attempting to process an inner event but FSM is not started" );
 #ifdef SPAG_ENABLE_LOGGING
 			size_t ev_idx = nbEvents() + 1;
 #endif
 			if( stinf._isPassState )
 			{
+				SPAG_LOG << "is pass state, switch to state " << (int)stinf._ptNextState << '\n';
 				_previous = _current;
 				_current = stinf._ptNextState;
 			}
@@ -1290,10 +1350,13 @@ This function will be called by the signal handler of the event handler class ON
 					}
                 }
 			}
+//			SPAG_LOG << "stinf:\n" << stinf << '\n';
+
 #ifdef SPAG_ENABLE_LOGGING
 			_rtdata.logTransition( _current, ev_idx );
 #endif
 			runAction();                                                          // 3 - call the callback function
+			SPAG_P_END;
 		}
 #endif // SPAG_USE_SIGNALS
 ///@}
@@ -1323,7 +1386,7 @@ This function will be called by the signal handler of the event handler class ON
 			return _previous;
 		}
 
-		priv::StateInfo<ST,EV,CBA> getStateInfo( size_t idx ) const
+		priv::StateInfo<ST,EV,CBA>& getStateInfo( size_t idx )
 		{
 			assert( idx < nbStates() );
 			return _stateInfo[idx];
@@ -1467,13 +1530,14 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 */
 		void runAction() const
 		{
-			SPAG_LOG << "switching to state " << SPAG_P_CAST2IDX(_current)
+			SPAG_P_START;
+			SPAG_LOG << "switched to state " << SPAG_P_CAST2IDX(_current)
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[ SPAG_P_CAST2IDX(_current) ] << ")"
 #endif
 				<< ", starting action\n";
 			auto curr_idx = SPAG_P_CAST2IDX(_current);
-			auto stateInfo = _stateInfo[ curr_idx ];
+			auto& stateInfo = _stateInfo[ curr_idx ];
 
 			if( stateInfo._timerEvent._enabled )
 			{
@@ -1490,22 +1554,35 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				SPAG_LOG << "no callback provided\n";
 
 #ifdef SPAG_USE_SIGNALS
-			bool do_raise_sig = false;
-			if( stateInfo._isPassState )
-				do_raise_sig = true;
-			else
+			if( _isRunning )  // we need this, because the callback could have stopped the FSM, thus we must not generate a signal !
 			{
-				for( const auto& itr: stateInfo._innerTransList )
-					if( itr._isActive )
-						do_raise_sig = true;
+				bool do_raise_sig = false;
+				if( stateInfo._isPassState )
+				{
+					SPAG_LOG << "Is pass-state, raise signal\n";
+					do_raise_sig = true;
+				}
+				else
+				{
+					for( auto& itr: stateInfo._innerTransList )
+						if( itr._isActive )
+						{
+							SPAG_LOG << "IE is Active, raise signal\n";
+							do_raise_sig = true;
+							break;                    // no need to check the others
+						}
+				}
+				if( do_raise_sig )
+				{
+					SPAG_LOG_FLUSH;
+					_eventHandler->raiseSignal();
+					_eventHandler->timerCancel();
+				}
 			}
-			if( do_raise_sig )
-			{
-//				std::cout << "stateInfo._hasInternalTransition => raise signal!\n";
-				_eventHandler->raiseSignal();
-				_eventHandler->timerCancel();
-			}
+//			SPAG_LOG << "current state info:\n";
+//			std::cout << _stateInfo[ curr_idx ] << '\n';
 #endif
+			SPAG_P_END;
 		}
 
 		void printLineHeader(  std::ostream&, size_t idx, bool firstline_flag, size_t maxlength ) const;
@@ -1868,7 +1945,8 @@ SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
 			const auto &itr = stinf._innerTransList[j];
 			auto dst_st = SPAG_P_CAST2IDX(itr._destState);
 			auto i_ev   = SPAG_P_CAST2IDX(itr._innerEvent);
-			out  << "IT: E" << std::setw(2) << i_ev;
+			out  << "IT (" << (itr._isActive?'A':'I')
+				<< "): E" << std::setw(2) << i_ev;
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
 			priv::PrintEnumString( out, _strEvents[i_ev] );
@@ -1922,6 +2000,7 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg ) const
 	printStateConfig( out );
 	out << "---------------------\n";
 }
+
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_GENERATE_DOTFILE
 /// Saves in current folder a .dot file of the FSM, to be rendered with Graphviz
@@ -2152,7 +2231,7 @@ struct AsioWrapper
 	}
 
 /// Mandatory function for SpagFSM. Called only once, when FSM is started
-	void init( const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
+	void init( spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		SPAG_LOG << '\n';
 #ifdef SPAG_USE_SIGNALS
@@ -2169,10 +2248,12 @@ struct AsioWrapper
 		_io_service.run();          // blocking call !!!
 	}
 
-	void timerKill()
+/// terminates all pending events, timers events or signals
+	void kill()
 	{
 		SPAG_LOG << '\n';
 #ifdef SPAG_USE_SIGNALS
+		_signals.cancel();
 		_signals.clear();
 #endif
 		_io_service.stop();
@@ -2181,7 +2262,8 @@ struct AsioWrapper
 /// Timer callback function, called when timer expires.
 	void timerCallback( const boost::system::error_code& err_code, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm  )
 	{
-		SPAG_LOG << '\n';
+		SPAG_P_START;
+
 		switch( err_code.value() ) // check if called because of timeout, or because of canceling timeout operation
 		{
 			case boost::system::errc::operation_canceled:    // do nothing
@@ -2193,11 +2275,12 @@ struct AsioWrapper
 			default:                                         // all other values
 				SPAG_P_THROW_ERROR_RT( "boost::asio timer unexpected error: " + err_code.message() );
 		}
+		SPAG_P_END;
 	}
 /// Mandatory function for SpagFSM. Cancel the pending async timer
 	void timerCancel()
 	{
-		SPAG_LOG << '\n';
+//		SPAG_LOG << '\n';
 		_asioTimer->cancel_one();
 	}
 
@@ -2233,30 +2316,37 @@ struct AsioWrapper
 #ifdef SPAG_USE_SIGNALS
 /// This is a handler, automatically called by boost::io_service when an OS signal USR1 is detected.
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
-	void signalHandler( const boost::system::error_code& error, int signal_number, const spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
+	void signalHandler( const boost::system::error_code& err_code, int signal_number, spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
-		SPAG_LOG << "handling signal " << signal_number << " errorcode=" << error.message() << " current=" << fsm->currentState() << std::endl;
+		SPAG_P_START;
+
+		SPAG_LOG << "handling signal " << signal_number << " errorcode=" << err_code.message() << " current=" << fsm->currentState() << std::endl;
 		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
-		const auto& stateInfo = fsm->getStateInfo( st_idx );
+		auto& stateInfo = fsm->getStateInfo( st_idx );
 //		std::cout << "signal handler, processing " << stateInfo._innerTrans;
 //		assert( ( stateInfo._innerTrans._hasOne && stateInfo._innerTrans._isActive ) || stateInfo._isPassState );
 
+		SPAG_LOG << "BEFORE processInnerEvent(): " << stateInfo << '\n';
 		fsm->processInnerEvent( stateInfo );
+		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
 
-		_signals.async_wait(                                   // re-initialize signal handler
-			boost::bind(
-				&AsioWrapper<ST,EV,CBA>::signalHandler,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::signal_number,
-				fsm
-			)
-		);
+		if( err_code == 0 )
+			_signals.async_wait(                                   // re-initialize signal handler, only if the handler is not called whith a "cancel" message
+				boost::bind(
+					&AsioWrapper<ST,EV,CBA>::signalHandler,
+					this,
+					boost::asio::placeholders::error,
+					boost::asio::placeholders::signal_number,
+					fsm
+				)
+			);
+		SPAG_P_END;
 	}
 	void raiseSignal()
 	{
-		SPAG_LOG << '\n';
+		SPAG_P_START;
 		std::raise( SIGUSR1 );
+		SPAG_P_END;
 	}
 #endif
 };

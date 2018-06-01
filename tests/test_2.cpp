@@ -7,7 +7,7 @@
 #define SPAG_EMBED_ASIO_WRAPPER
 #define SPAG_ENUM_STRINGS
 #define SPAG_ENABLE_LOGGING
-//#define SPAG_PRINT_STATES
+#define SPAG_PRINT_STATES
 #define SPAG_USE_SIGNALS
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
@@ -22,9 +22,12 @@ int g_count = 0;
 
 void cb( int s )
 {
-	std::cout << "current state=" << s << " count=" << g_count << '\n';
-	if( g_count++ == 10 )
+	std::cout << "callback: current state=" << s << " count=" << g_count << '\n';
+	if( g_count++ == 5 )
+	{
+		std::cout << "activating inner event ev0\n";
 		fsm.activateInnerEvent( ev0 );
+	}
 }
 //-----------------------------------------------------------------------------------
 void configureFSM( fsm_t& fsm )
@@ -32,16 +35,17 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignCallbackAutoval( cb );
 
 //	fsm.assignGlobalTimeOut( st0 );
-	fsm.assignGlobalTimeOut( 400, "ms", st0 );
+//	fsm.assignGlobalTimeOut( 2, "sec", st0 );
+	fsm.assignGlobalTimeOut( 600, "ms", st0 );
 
-	fsm.assignTimeOut( st0, st2 );
+	fsm.assignTimeOut( st0, 1500, "ms", st2 );
 	fsm.assignTimeOut( st1, st2 );
 	fsm.assignTimeOut( st3, st4 );
 	fsm.assignTimeOut( st2, st4 );
 	fsm.assignTimeOut( st4, st0 );
 
-//	fsm.assignTimeOut( st2, 800, "ms", st0 );
 	fsm.assignInnerTransition( st0, ev0, st1 );
+	fsm.assignInnerTransition( st2, ev0, st3 );
 //	fsm.assignTransition( st2, st0 );
 
 
@@ -111,7 +115,7 @@ int main( int, char* argv[] )
 		dfo.showStateString = false;
 		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
 	}
-
+#if 0
 	try
 	{
 		fsm.start();
@@ -120,4 +124,5 @@ int main( int, char* argv[] )
 	{
 		std::cout << "Error: " << e.what() << '\n';
 	}
+#endif
 }

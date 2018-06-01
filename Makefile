@@ -83,8 +83,12 @@ demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
 # build and run the tests apps
-tests: $(EXEC_FILES_T)
-	for f in $(EXEC_FILES_T); do echo -e "\n***********************************\nRunning test programm $$f:"; ./$$f; done;
+test: $(EXEC_FILES_T)
+	for f in $(EXEC_FILES_T); \
+		do \
+			echo -e "\n***********************************\nRunning test program $$f:"; \
+			./$$f; \
+		done;
 
 doc: html/index.html src/html/index.html
 	-xdg-open html/index.html
