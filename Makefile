@@ -87,7 +87,8 @@ test: $(EXEC_FILES_T)
 	for f in $(EXEC_FILES_T); \
 		do \
 			echo -e "\n***********************************\nRunning test program $$f:"; \
-			./$$f; \
+			./$$f >stdout; \
+			cmp tests/$$(basename $$f).stdout stdout; \
 		done;
 
 doc: html/index.html src/html/index.html

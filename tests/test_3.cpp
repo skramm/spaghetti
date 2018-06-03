@@ -7,7 +7,7 @@
 #define SPAG_EMBED_ASIO_WRAPPER
 #define SPAG_ENUM_STRINGS
 #define SPAG_ENABLE_LOGGING
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 #define SPAG_USE_SIGNALS
 #define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
@@ -38,9 +38,8 @@ int main( int, char* argv[] )
 	fsm.assignCallbackAutoval( cb );
 	fsm.assignTransition( st1, st0 );
 
-	fsm.assignTimeOut( st0, 1, "sec", st1 );
+	fsm.assignTimeOut( st0, 100, "ms", st1 );
 	fsm.assignInnerTransition( st0, ev0, st1 );
-//	fsm.assignString2Event( ev0, "my_event" );
 
 	fsm.writeDotFile( "test_3" );
 	try
@@ -51,4 +50,5 @@ int main( int, char* argv[] )
 	{
 		std::cout << "Error: " << e.what() << '\n';
 	}
+//	fsm.printLoggedData( std::cout );
 }

@@ -184,7 +184,7 @@ enum PrintFlags
 };
 
 /// Timer units
-enum class DurUnit { ms, sec, min };
+enum class DurUnit : char { ms, sec, min };
 
 //-----------------------------------------------------------------------------------
 /// private namespace, so user code won't hit into this
@@ -198,9 +198,13 @@ timeUnitFromString( std::string str ) noexcept
 {
 	if( str == "ms" )
 		return std::make_pair( true, DurUnit::ms );
+	if( str == "msec" )
+		return std::make_pair( true, DurUnit::ms );
 	if( str == "sec" )
 		return std::make_pair( true, DurUnit::sec );
 	if( str == "min" )
+		return std::make_pair( true, DurUnit::min );
+	if( str == "mn" )
 		return std::make_pair( true, DurUnit::min );
 	return std::make_pair( false, DurUnit::min );
 }
