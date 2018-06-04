@@ -87,8 +87,8 @@ test: $(EXEC_FILES_T)
 	for f in $(EXEC_FILES_T); \
 		do \
 			echo -e "\n***********************************\nRunning test program $$f:"; \
-			./$$f >stdout; \
-			cmp tests/$$(basename $$f).stdout stdout; \
+			./$$f >$$(basename $$f).stdout; \
+			cmp tests/$$(basename $$f).stdout $$(basename $$f).stdout; \
 		done;
 
 doc: html/index.html src/html/index.html
@@ -136,7 +136,7 @@ diff:
 
 clean:
 	-rm $(OBJ_DIR)/*
-	-rm *.dot *.svg
+	-rm *.dot *.svg *.stdout
 	-rm diff.html
 
 cleandoc:

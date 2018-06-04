@@ -11,7 +11,7 @@
 
 #include "spaghetti.hpp"
 
-enum States { st0, st1, st2, NB_STATES };
+enum States { st0, st1, st2, st3, NB_STATES };
 enum Events { ev0, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, bool );
@@ -27,16 +27,12 @@ void configureFSM( fsm_t& fsm )
 		{ st2, "state_2" }
 	};
 	fsm.assignStrings2States( mstr_st );
-
-	std::map<Events,std::string> mstr_ev = {
-		{ ev0, "eveeeeent" }
-	};
-	fsm.assignStrings2Events( mstr_ev );
+	fsm.assignString2Event( ev0, "event" );
 }
 
 int main( int, char* argv[] )
 {
-	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+//	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
 

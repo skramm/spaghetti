@@ -19,22 +19,27 @@ SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
 fsm_t fsm;
 int g_count = 0;
+int g_ie_active = 3;
 
 void cb( int s )
 {
 	std::cout << "callback: current state=" << s << " count=" << g_count << std::endl;
-	if( g_count == 3 )
+	if( g_count == g_ie_active )
 	{
 		std::cout << "activating inner event ev0\n";
 		fsm.activateInnerEvent( ev0 );
 	}
-	if( g_count == 11 )
+	if( g_count == 6 )
 		fsm.stop();
 	g_count++;
 }
 
-int main( int, char* argv[] )
+int main( int argc, char* argv[] )
 {
+	if( argc > 1 )
+	{
+		g_ie_active = std::stoi( argv[1] );
+	}
 	fsm.assignCallbackAutoval( cb );
 	fsm.assignTransition( st1, st0 );
 
@@ -50,5 +55,5 @@ int main( int, char* argv[] )
 	{
 		std::cout << "Error: " << e.what() << '\n';
 	}
-//	fsm.printLoggedData( std::cout );
+	fsm.printLoggedData( std::cout );
 }

@@ -1,0 +1,17 @@
+
+* FSM Configuration: 
+ - Transition table:
+                 STATES:
+EVENTS           S00 S01 S02 S03
+---------------|----------------
+event      E00 | S01  .   .   .  
+*Timeout*   TO |  .  S02  .   .  
+
+ - State info:
+S00:init state| -
+S01:St-1      | TO: 4 sec => S02 (state_2)
+S02:state_2   | -
+S03:St-3      | -
+---------------------
+Spaghetti: Warning, state S03 (St-3) is unreachable
+Spaghetti: Warning, state S02 (state_2) is a dead-end

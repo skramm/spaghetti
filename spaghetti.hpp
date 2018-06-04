@@ -436,7 +436,7 @@ struct RunTimeData
 		_eventCounter.clear();
 	}
 	/// Print dynamic data (runtime data) to \c out
-	void printData( std::ostream& out, PrintFlags pflags ) const
+	void printData( std::ostream& out, PrintFlags pflags, char sep ) const
 	{
 		if( pflags & PrintFlags::stateCount )
 		{
@@ -499,9 +499,9 @@ event stored as size_t because we may pass values other than the ones in the enu
 			if( !_logfile.is_open() )
 				SPAG_P_THROW_ERROR_RT( "unable to open file " + _logfileName );
 
-			_logfile << "\n# FSM run history:\n#time" << sep << "event" << sep
+			_logfile << "\n# FSM run history:\n#time" << logfile_sep << "event" << logfile_sep
 #ifdef SPAG_ENUM_STRINGS
-				<< "event_string" << sep << "state" << sep << "state_string\n";
+				<< "event_string" << logfile_sep << "state" << logfile_sep << "state_string\n";
 #else
 				<< "state\n";
 #endif
@@ -519,8 +519,8 @@ event stored as size_t because we may pass values other than the ones in the enu
 // public data section
 //////////////////////////////////
 
-	std::string   _logfileName = "spaghetti.csv";
-	char sep = ';';
+	std::string _logfileName = "spaghetti.csv";
+	char logfile_sep = ';';
 
 //////////////////////////////////
 // private member function section
@@ -1404,15 +1404,16 @@ This function will be called by the signal handler of the event handler class ON
 		void printConfig( std::ostream& str, const char* msg=nullptr ) const;
 
 #ifdef SPAG_ENABLE_LOGGING
+/// Assigns a new name for the output log file (default is spaghetti.csv)
 		void setLogFilename( std::string fn ) const
 		{
 			assert( !fn.empty() );
 			_rtdata._logfileName = fn;
 		}
 /// Print dynamic data to \c str
-		void printLoggedData( std::ostream& str, PrintFlags pf=PrintFlags::all ) const
+		void printLoggedData( std::ostream& str, PrintFlags pf=PrintFlags::all, char sep = ';' ) const
 		{
-			_rtdata.printData( str, pf );
+			_rtdata.printData( str, pf, sep );
 		}
 #else
 		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
@@ -2415,9 +2416,9 @@ Check list here:
 
 
 
-\section ssec_devinfo Developper information
+\section sec_devinfo Developper information
 
-<b>Coding style</b>
+\subsection ssec_coding_style Coding style
 
 Most of it is pretty obvious by parsing the code, but here are some additional points:
 
@@ -2427,6 +2428,15 @@ Most of it is pretty obvious by parsing the code, but here are some additional p
  - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
  - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
  - To avoid name collisions, all the symbols defined here start with "SPAG_"
+
+\subsection ssec_testing Automated testing
+
+The makefile \c test target will build and launch the test programs, that are located in folder \c tests.
+This is very preliminar.
+At present, the testing consist in making sure a test program produces an output similar to a given reference
+(in the form of a file \c tests/XXXX.stdout).
+
+
 
 
 \subsection ssec_todos TODOS

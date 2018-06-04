@@ -10,8 +10,6 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 - Audience: C++ developper having to implement a FSM
 - Webpage: https://github.com/skramm/spaghetti
 - Manual : online here : https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
-- latest stable release: v0.8.1
-- roadmap: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_roadmap.md
 - Language: C++11
 - OS: any one, as long as you have a C++11 compiler
 - Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018.

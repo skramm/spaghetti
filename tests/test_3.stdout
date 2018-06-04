@@ -6,8 +6,14 @@ activating inner event ev0
 callback: current state=0 count=4
 callback: current state=1 count=5
 callback: current state=0 count=6
-callback: current state=1 count=7
-callback: current state=0 count=8
-callback: current state=1 count=9
-callback: current state=0 count=10
-callback: current state=1 count=11
+# State counters:
+0;St-0;4
+1;St-1;3
+
+# Event counters:
+0;Ev-0     ;1
+1;*Timeout*;2
+2;*  AAT  *;3
+
+# Ignored Events counters:
+0;Ev-0     ;0
