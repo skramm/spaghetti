@@ -9,7 +9,7 @@ event      E00 | S01  .   .   .
 
  - State info:
 S00:init state| -
-S01:St-1      | TO: 4 sec => S02 (state_2)
+S01:St-1      | TO: 1 sec => S02 (state_2)
 S02:state_2   | -
 S03:St-3      | -
 ---------------------

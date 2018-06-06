@@ -11,7 +11,6 @@ Homepage: https://github.com/skramm/spaghetti
 */
 
 #define SPAG_EMBED_ASIO_WRAPPER
-#define SPAG_GENERATE_DOTFILE
 #define SPAG_ENABLE_LOGGING
 #include "spaghetti.hpp"
 

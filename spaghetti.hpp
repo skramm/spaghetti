@@ -949,15 +949,19 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 			_stateInfo[ st_idx ]._timerEvent._enabled = false;
 		}
 
-/// Whatever state we are in, if the event \c ev occurs, we switch to state \c st
+/// Whatever state we are in, if the event \c ev occurs, we switch to state \c st.
+/// (Except fo state \c st, of course)
 		void assignTransition( EV ev, ST st )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			for( auto& e: _transitionMat[ ev ] )
-				e = st;
-			for( auto& e: _allowedMat[ ev ] )
-				e = 1;
+			for( auto& s: _transitionMat[ ev ] ) // for all columns (=states) in the line "ev"
+//				if( s != st )
+					s = st;
+			for( size_t i=0; i<_allowedMat[ ev ].size(); i++ )
+//			for( auto& b: _allowedMat[ ev ] )
+				if( i != SPAG_P_CAST2IDX(st) )
+					_allowedMat[ ev ][ i ] =  i == SPAG_P_CAST2IDX(st) ? 0 : 1;
 		}
 /// Allow all events of the transition matrix
 		void allowAllEvents()
@@ -1510,12 +1514,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 			return out;
 		}
 
-#ifdef SPAG_GENERATE_DOTFILE
-/// Generates in current folder a dot file corresponding to the FSM
 		void writeDotFile( std::string fn, DotFileOptions opt=DotFileOptions() ) const;
-#else
-		void writeDotFile( std::string, DotFileOptions=DotFileOptions() ) const {}
-#endif
 ///@}
 
 ///////////////////////////////////
@@ -2003,7 +2002,6 @@ SpagFSM<ST,EV,T,CBA>::printConfig( std::ostream& out, const char* msg ) const
 }
 
 //-----------------------------------------------------------------------------------
-#ifdef SPAG_GENERATE_DOTFILE
 /// Saves in current folder a .dot file of the FSM, to be rendered with Graphviz
 /**
 DO NOT give the extension in argument, is is added here.
@@ -2140,9 +2138,6 @@ if the svg file is loaded as an image inside the web page.
 #endif
 #endif
 }
-
-#endif // SPAG_GENERATE_DOTFILE
-
 //-----------------------------------------------------------------------------------
 namespace priv {
 

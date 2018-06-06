@@ -9,7 +9,6 @@
 #define SPAG_ENABLE_LOGGING
 #define SPAG_PRINT_STATES
 #define SPAG_USE_SIGNALS
-#define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
 enum States { st0, st1, st2, st3, st4, NB_STATES };

@@ -102,7 +102,10 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 <br>
 Default values are also generated when this option is enabled, in the form "St-x" and "Ev-x".
-* ```SPAG_GENERATE_DOTFILE``` : this enables the member function ```writeDotFile( std::string )```.
+
+* ```SPAG_GENERATE_DOTFILE``` : <br>
+DEPRECATED on 20180605:<br>
+this enables the member function ```writeDotFile( std::string )```.
 When called, it will generate in current folder a .dot file of the current configuration that can be used to produce an image of the corresponding graph, using the well-know tool Graphviz.
 For example, with
 ```

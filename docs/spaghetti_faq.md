@@ -45,11 +45,6 @@ Thus it is clearer to trigger an assert that will cleanly exit the program with 
 Other non critical errors will throw a
 [```std::runtime_error```](http://en.cppreference.com/w/cpp/error/runtime_error).
 
-- **Q**: *Why are certain functions (for example: ```writeDotFile()```) not always enabled? Why do I have to pass a build option to "activate" them?*<br/>
-**A**: The rationale is that this doesn't require editing your source code between "building up and testing" and "production" phases.
-In the first phase, you may need to produce that information, and in the second phase, you could want reduced memory footprint.
-So just disable the build option and the optional functions get reduced automatically to nothing.
-
 - **Q**: *What if I have more that a single argument to pass to my callback function?*<br/>
 **A**: You'll need to "pack it" in some class, or use a
 [```std::pair```](http://en.cppreference.com/w/cpp/utility/pair),

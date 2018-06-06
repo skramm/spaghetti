@@ -8,7 +8,6 @@ Homepage: https://github.com/skramm/spaghetti
 */
 
 #define SPAG_USE_ASIO_WRAPPER
-#define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
 //-----------------------------------------------------------------------------------

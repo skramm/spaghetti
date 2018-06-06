@@ -15,7 +15,6 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_EMBED_ASIO_WRAPPER
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
-#define SPAG_GENERATE_DOTFILE
 #include "spaghetti.hpp"
 
 // states and events are declared in file traffic_lights_common.hpp

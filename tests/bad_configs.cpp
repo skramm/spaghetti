@@ -20,7 +20,7 @@ SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, bool );
 void configureFSM( fsm_t& fsm )
 {
 	fsm.assignTransition( st0, ev0, st1 );
-	fsm.assignTimeOut( st1, 4, st2 );
+	fsm.assignTimeOut( st1, st2 );
 
 	std::map<States,std::string> mstr_st = {
 		{ st0, "init state" },

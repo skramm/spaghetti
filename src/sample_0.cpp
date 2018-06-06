@@ -69,6 +69,7 @@ int main( int, char* argv[] )
 		fsm.assignCallback( st_init, cb_func, "st0" );
 		fsm.assignCallback( st_one, cb_func, "st1" );
 		fsm.printConfig( std::cout );
+		fsm.writeDotFile( "sample_0" );
 		std::thread thread_ui( UI_thread<fsm_t>, &fsm );
 		fsm.start();  // blocking !
 		thread_ui.join();
