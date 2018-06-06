@@ -779,12 +779,12 @@ class SpagFSM
 			}
 		}
 
-/// Assigns a inner transition between \c st1 and \c st2, triggered by event \c ev
+/// Assigns a inner transition between \c st1 and \c st2, triggered by internal event \c ev
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
-		void assignInnerTransition( ST st1, EV ev, ST st2 )
+		void assignInnerTransition( ST st1, EV iev, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
-			auto ev_idx  = SPAG_P_CAST2IDX(ev);
+			auto ev_idx  = SPAG_P_CAST2IDX(iev);
 			SPAG_CHECK_LESS( st1_idx,              nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st2), nbStates() );
 			SPAG_CHECK_LESS( ev_idx,               nbEvents() );
@@ -793,34 +793,31 @@ class SpagFSM
 			if( stinf._isPassState )
 				SPAG_P_THROW_ERROR_CFG( "error, removing pass-state" ); /// \todo maybe a warning instead ?
 			 stinf._isPassState = false;
-			stinf._innerTransList.push_back( priv::InnerTransition<ST,EV>(ev, st2) );
+			stinf._innerTransList.push_back( priv::InnerTransition<ST,EV>(iev, st2) );
 			_transitionMat[ ev_idx ][st1_idx] = st2;
-			_allowedMat[    ev_idx ][st1_idx] = 1;
-//			std::cout << "assign to col " << st1_idx << " line " << ev << ": value=" <<st2 << '\n';
+			_allowedMat[    ev_idx ][st1_idx] = -1;
 		}
 
-/// Whatever state we are on, when event \c ev occurs, we switch to state \c st (except if we are already on that state...).
+/// Whatever state we are on, when internal event \c iev occurs, we will switch to state \c st (except if we are already on that state).
 /**
 To remove afterwards the inner events on some states, use \c disableInnerTransition()
 */
-		void assignInnerTransition( EV ev, ST st )
+		void assignInnerTransition( EV iev, ST st )
 		{
-			auto ev_idx = SPAG_P_CAST2IDX(ev);
+			auto ev_idx = SPAG_P_CAST2IDX(iev);
 			auto st_idx = SPAG_P_CAST2IDX(st);
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( ev_idx, nbEvents() );
 
+			assert( _stateInfo.size() == nbStates() );
 			for( size_t i=0; i<_stateInfo.size(); ++i )
 				if( i != st_idx )
 				{
-					if( !_stateInfo[i].holdsInnerTransition( ev, st ) )
+					if( !_stateInfo[i].holdsInnerTransition( iev, st ) )
 					{
-						_stateInfo[i]._innerTransList.push_back( priv::InnerTransition<ST,EV>( ev, st ) );
-/*						SPAG_LOG << "assigning inner trans to state " << i << " on event " << ev_idx
-#ifdef SPAG_ENUM_STRINGS
-						<< " (" << _strEvents[ev_idx] << ')'
-#endif
-						<< " size=" <<  _stateInfo[i]._innerTransList.size() << '\n';*/
+						_stateInfo[i]._innerTransList.push_back( priv::InnerTransition<ST,EV>( iev, st ) );
+						_transitionMat[ ev_idx ][i] = st;
+						_allowedMat   [ ev_idx ][i] = -1;
 					}
 				}
 		}
@@ -949,27 +946,28 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 			_stateInfo[ st_idx ]._timerEvent._enabled = false;
 		}
 
-/// Whatever state we are in, if the event \c ev occurs, we switch to state \c st.
-/// (Except fo state \c st, of course)
+/// Whatever state we are in, if the (external) event \c ev occurs, we switch to state \c st.
+/// (Except for state \c st, of course)
 		void assignTransition( EV ev, ST st )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			for( auto& s: _transitionMat[ ev ] ) // for all columns (=states) in the line "ev"
-//				if( s != st )
 					s = st;
 			for( size_t i=0; i<_allowedMat[ ev ].size(); i++ )
-//			for( auto& b: _allowedMat[ ev ] )
 				if( i != SPAG_P_CAST2IDX(st) )
-					_allowedMat[ ev ][ i ] =  i == SPAG_P_CAST2IDX(st) ? 0 : 1;
+					_allowedMat[ ev ][ i ] = (i == SPAG_P_CAST2IDX(st) ? 0 : 1);
 		}
+
 /// Allow all events of the transition matrix
+/// \todo change this: for internal events, the value must not be 1
 		void allowAllEvents()
 		{
 			for( auto& line: _allowedMat )
-				for( auto& e: line )
-					e = 1;
+				for( auto& col: line )
+					col = 1;
 		}
+
 /// Allow event \c ev when on state \c st
 /**
 \warning This does not assign a transition, it only changes things in the allowed transitions matrix.
@@ -980,12 +978,13 @@ Thus it is also not usable for inner transitions.
 			auto st_idx = SPAG_P_CAST2IDX(st);
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
-			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ st_idx ] = (what?1:0);
 
 #ifdef SPAG_USE_SIGNALS
 			if( _stateInfo[st_idx].holdsInnerTransition( ev, st ) )
 				throw std::runtime_error( "usage of allowEvent() not possible for inner events" );
 #endif // SPAG_USE_SIGNALS
+
+			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ st_idx ] = (what?1:0);
 		}
 
 #ifdef SPAG_USE_SIGNALS
@@ -1011,19 +1010,8 @@ to remove this event on some states
 					+ " has no inner transition"
 				);
 
-/** Erase-Remove Idiom, see
-- https://en.wikipedia.org/wiki/Erase%E2%80%93remove_idiom
-- http://skramm.blogspot.fr/2014/12/c-erasing-elements-of-stdvector-using.html
-*/
 			stinf._innerTransList.erase( it );
-
-/*				std::remove(
-					std::begin( stinf._innerTransList ),
-					std::end(   stinf._innerTransList ),
-					priv::InnerTransition<ST,EV>( ev, st )
-				),
-				std::end(   stinf._innerTransList )
-			);*/
+			_allowedMat[ev][st_from] = 0;
 		}
 #endif // SPAG_USE_SIGNALS
 
@@ -1231,22 +1219,13 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
 
-#if 0
-#ifdef SPAG_USE_SIGNALS
-			if( _eventInfo.find( ev ) != std::end( _eventInfo ) ) // if found, this means that this event is "special", thus should not be processed that way
-				SPAG_P_THROW_ERROR_RT(
-					"illegal processing of special event of id=" + std::to_string( SPAG_P_CAST2IDX(ev) )
-				);
-#endif
-#endif
-
 			auto ev_idx = SPAG_P_CAST2IDX( ev );
 #ifdef SPAG_ENUM_STRINGS
 			SPAG_LOG << "processing event " << ev_idx << ": \"" << _strEvents[ev_idx] << "\"\n";
 #else
 			SPAG_LOG << "processing event " << ev_idx << '\n';
 #endif
-			if( _allowedMat[ ev_idx ][ SPAG_P_CAST2IDX(_current) ] != 0 )
+			if( _allowedMat[ ev_idx ][ SPAG_P_CAST2IDX(_current) ] == 1 )
 			{
 				if( _stateInfo[ SPAG_P_CAST2IDX( _current ) ]._timerEvent._enabled )  // 1 - cancel the waiting timer, if any
 				{
@@ -1611,19 +1590,21 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)
 		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+
+/// Matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle external event, -1: internal event)
 		std::array<
 			std::array<char, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)
-		> _allowedMat;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
+		> _allowedMat;
 #else
-		std::vector<std::vector<ST>>       _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
-		std::vector<std::vector<char>>     _allowedMat;  ///< matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle event)
+		std::vector<std::vector<ST>>   _transitionMat;
+		std::vector<std::vector<char>> _allowedMat;
 #endif // SPAG_USE_ARRAY
 
 #ifdef SPAG_USE_ARRAY
-		std::array<priv::StateInfo<ST,EV,CBA>,static_cast<size_t>(ST::NB_STATES)>  _stateInfo;         ///< Holds for each state the details
+		std::array<priv::StateInfo<ST,EV,CBA>,static_cast<size_t>(ST::NB_STATES)> _stateInfo;         ///< Holds for each state the details
 #else
-		std::vector<priv::StateInfo<ST,EV,CBA>>  _stateInfo;         ///< Holds for each state the details
+		std::vector<priv::StateInfo<ST,EV,CBA>> _stateInfo;         ///< Holds for each state the details
 #endif
 
 #ifdef SPAG_USE_SIGNALS
@@ -1790,7 +1771,7 @@ SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
 		{
 			for( size_t k=0; k<nbEvents(); k++ )
 				if( SPAG_P_CAST2IDX( _transitionMat[k][i] ) == st )
-					if( _allowedMat[k][i] == 1 )
+					if( _allowedMat[k][i] != 0 )
 						return true;
 
 			if( _stateInfo[i]._timerEvent._enabled )
@@ -1812,7 +1793,6 @@ SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
 }
 //-----------------------------------------------------------------------------------
 /// Checks configuration for any illegal situation. Throws error if one is encountered.
-/// \todo correct: some states are flagged as unreachable, although they can be reached through inner events
 template<typename ST, typename EV,typename T,typename CBA>
 void
 SpagFSM<ST,EV,T,CBA>::doChecking() const
@@ -1863,7 +1843,7 @@ SpagFSM<ST,EV,T,CBA>::doChecking() const
 		{
 			for( size_t j=0; j<nbEvents(); j++ )
 				if( SPAG_P_CAST2IDX( _transitionMat[j][i] ) != i )   // if the transition leads to another state
-					if( _allowedMat[j][i] == 1 )                  // AND it is allowed
+					if( _allowedMat[j][i] != 0 )                  // AND it is allowed
 						foundValid = true;
 		}
 
@@ -2050,10 +2030,10 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "\n/* External events */\n";
 	for( size_t i=0; i<nbEvents(); i++ )
 		for( size_t j=0; j<nbStates(); j++ )
-			if( _allowedMat[i][j] )
+			if( _allowedMat[i][j] == 1 )
 			{
 #ifdef SPAG_USE_SIGNALS
-				if( !_stateInfo[j]._isPassState && _stateInfo[j]._innerTransList.empty() )
+				if( !_stateInfo[j]._isPassState )
 #endif
 				{
 					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
@@ -2430,22 +2410,5 @@ The makefile \c test target will build and launch the test programs, that are lo
 This is very preliminar.
 At present, the testing consist in making sure a test program produces an output similar to a given reference
 (in the form of a file \c tests/XXXX.stdout).
-
-
-
-
-\subsection ssec_todos TODOS
-
-
-\todo for enum to string automatic conversion, maybe use this ? :
-https://github.com/aantron/better-enums
-
-
-\todo add some tests, and write a sample to evaluation performance
-
-\todo Currently works using std::array as storage (see SPAG_USE_ARRAY).
-Shall we switch permanently ?
-If so, we will NOT be able to add states dynamically (not possible at present, but could be in future releases,
-if storage remains std::vector
 
 */
