@@ -70,7 +70,13 @@ struct TestClass
 //		fsm.assignTimeOut( st_PASS, 200, st_Red    );
 		fsm.assignTransition( st_PASS,  st_Red    );
 
+// either one work
+#if 0
 		fsm.assignCallback( std::bind( &TestClass::callback, this, std::placeholders::_1 ) );
+#else
+		SPAG_ASSIGN_MEMBER_CALLBACK_ALL( fsm, TestClass, callback );
+#endif
+
 		fsm.assignCallbackValue( st_Init,    "Init state" );
 		fsm.assignCallbackValue( st_Red,     "RED" );
 		fsm.assignCallbackValue( st_Orange,  "ORANGE" );

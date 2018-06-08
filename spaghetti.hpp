@@ -2333,6 +2333,16 @@ struct AsioWrapper
 
 } // namespace spag
 
+/// Shorthand to declare a member function as callback function.
+/// \warning needs to be done inside another class member function
+#define SPAG_ASSIGN_MEMBER_CALLBACK( fsm, State, ClassName, CallbackFunc ) \
+	fsm.assignCallback( State, std::bind( &ClassName::CallbackFunc, this, std::placeholders::_1 ) )
+
+/// Shorthand to declare a member function as callback function for all states.
+/// \warning needs to be done inside another class member function
+#define SPAG_ASSIGN_MEMBER_CALLBACK_ALL( fsm, ClassName, CallbackFunc ) \
+	fsm.assignCallback( std::bind( &ClassName::CallbackFunc, this, std::placeholders::_1 ) )
+
 /// Shorthand for declaring the type of FSM, without a timer
 #ifdef SPAG_USE_ASIO_WRAPPER
 	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
