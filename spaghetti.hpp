@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.8.4
+#define SPAG_VERSION 0.8.5
 
 #include <vector>
 #include <map>

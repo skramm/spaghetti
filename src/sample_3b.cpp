@@ -1,7 +1,7 @@
 /**
 \file sample_3b.cpp
 \brief Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable.
-Also demonstrates how user code can stop the running FSM (without using signals).
+Also demonstrates how user code can stop the running FSM, using signals.
 
 \image html sample_3.svg
 
@@ -22,6 +22,7 @@ enum Events { ev_1000, NB_EVENTS };
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
 fsm_t fsm;
+spag::DotFileOptions options;
 
 void cb_func( int v )
 {
@@ -32,7 +33,7 @@ void cb_func( int v )
 	}
 	static int c;
 	if( c < 5 )
-		fsm.writeDotFile( "sample_3b_" + std::to_string(c) );
+		fsm.writeDotFile( "sample_3b_" + std::to_string(c), options );
 	c++;
 	if( !(c%100) )
 		std::cout << "c=" << c << '\n';
@@ -43,7 +44,7 @@ void cb_func( int v )
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
-
+	options.showActiveState = true;
 	fsm.setTimerDefaultUnit( "ms" );
 
 	fsm.assignCallback( cb_func );
@@ -56,7 +57,7 @@ int main( int, char* argv[] )
 	fsm.assignInnerTransition( ev_1000, st_Final );
 	fsm.assignCallbackValue( st_Final, -1 );
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample_3b" );
+	fsm.writeDotFile( "sample_3b", options );
 
 	fsm.start();
 	std::cout << "FSM Stopped by inner event\n";

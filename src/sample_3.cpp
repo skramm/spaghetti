@@ -20,12 +20,13 @@ enum Events { NB_EVENTS };
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
 fsm_t fsm;
+spag::DotFileOptions options;
 
 void cb_func( int )
 {
 	static int c;
 	if( c < 5 )
-		fsm.writeDotFile( "sample_3_" + std::to_string(c) );
+		fsm.writeDotFile( "sample_3_" + std::to_string(c), options );
 	c++;
 	if( !(c%100) )
 		std::cout << "c=" << c << '\n';
@@ -36,6 +37,7 @@ void cb_func( int )
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+	options.showActiveState = true;
 
 	fsm.setTimerDefaultUnit( "ms" );
 
@@ -47,7 +49,7 @@ int main( int, char* argv[] )
 	fsm.assignTimeOut( st4, 5 , st0 );
 
 	fsm.printConfig( std::cout );
-	fsm.writeDotFile( "sample_3" );
+	fsm.writeDotFile( "sample_3", options );
 
 	fsm.start();
 	std::cout << "FSM Stopped by callback action\n";
