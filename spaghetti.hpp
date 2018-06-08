@@ -1085,17 +1085,45 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 		}
 
 #ifdef SPAG_ENUM_STRINGS
+	private:
+/// parses the strings and returns false if one of the strings is present more than once
+		bool checkUnicity( const std::vector<std::string>& v_str ) const
+		{
+#if 1
+			for( size_t i=0; i<v_str.size()-1; i++ )
+				for( size_t j=i+1; j<v_str.size(); j++ )
+					if( v_str[i] == v_str[j] )
+						return false;
+			return true;
+#else
+		template<typename Key>
+		bool checkUnicity( const std::map<Key,std::string>& strMap ) const
+		{
+			std::vector<Key> v_res;                        // this is the version to use if
+			for( const auto& pair1: strMap )               // we replace the container
+				for( const auto& pair2: strMap )           // for a std::map
+					if( pair1.second == pair2.second )     // (untested !)
+						v_res.push_back( pair1.first );
+			if( v_res.size() > 1 )
+				return false;
+			return true;
+#endif
+		}
+	public:
 /// Assign a string to an enum event value (available only if option SPAG_ENUM_STRINGS is enabled)
+/// \todo Replace the assert with something more user-friendly (same with the other functions)
 		void assignString2Event( EV ev, std::string str )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(ev), nbEvents() );
 			_strEvents[ SPAG_P_CAST2IDX(ev) ] = str;
+			assert( checkUnicity( _strEvents ) );
 		}
 /// Assign a string to an enum state value (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignString2State( ST st, std::string str )
 		{
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st), nbStates() );
 			_strStates[ SPAG_P_CAST2IDX(st) ] = str;
+			assert( checkUnicity( _strStates ) );
 		}
 /// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2Events( const std::vector<std::pair<EV,std::string>>& v_str )
@@ -1103,6 +1131,7 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			SPAG_CHECK_LESS( v_str.size(), nbEvents()+1 );
 			for( const auto& p: v_str )
 				assignString2Event( p.first, p.second );
+			assert( checkUnicity( _strEvents ) );
 		}
 /// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled)
 		void assignStrings2States( const std::vector<std::pair<ST,std::string>>& v_str )
@@ -1110,19 +1139,23 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			SPAG_CHECK_LESS( v_str.size(), nbStates()+1 );
 			for( const auto& p: v_str )
 				assignString2State( p.first, p.second );
+			assert( checkUnicity( _strStates ) );
 		}
 /// Assign strings to enum event values (available only if option SPAG_ENUM_STRINGS is enabled) - overload 1
 		void assignStrings2Events( std::map<EV,std::string>& m_str )
 		{
 			for( const auto& p: m_str )
 				assignString2Event( p.first, p.second );
+			assert( checkUnicity( _strEvents ) );
 		}
 /// Assign strings to enum state values (available only if option SPAG_ENUM_STRINGS is enabled) - overload 1
 		void assignStrings2States( std::map<ST,std::string>& m_str )
 		{
 			for( const auto& p: m_str )
 				assignString2State( p.first, p.second );
+			assert( checkUnicity( _strStates ) );
 		}
+/// Assigns to callback functions an argument value that is the state name (requires that callback argument is a string)
 		void assignCBValuesStrings()
 		{
 			static_assert( std::is_same<CBA,std::string>::value, "Error, unable to assign strings to callback values, callback type is not std::string\n" );

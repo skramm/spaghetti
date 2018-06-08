@@ -24,6 +24,7 @@ void configureFSM( fsm_t& fsm )
 
 	std::map<States,std::string> mstr_st = {
 		{ st0, "init state" },
+//		{ st0, "state_2" },
 		{ st2, "state_2" }
 	};
 	fsm.assignStrings2States( mstr_st );
