@@ -293,7 +293,6 @@ struct StateInfo
 
 #ifdef SPAG_USE_SIGNALS
 	bool                     _isPassState = false;
-	ST                       _ptNextState;   ///< only if _isPassState is true
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
 
 	friend std::ostream& operator << ( std::ostream& s, const StateInfo& si )
@@ -324,6 +323,7 @@ struct StateInfo
 			return false;
 		return true;
 	}
+
 #if 0 // unused
 /// Returns true if the set of internal transitions holds one using event \c ev
 	bool holdsInnerEvent( EV ev ) const
@@ -334,6 +334,7 @@ struct StateInfo
 		return false;
 	}
 #endif
+
 	typename std::vector<InnerTransition<ST,EV>>::iterator
 	findInnerEvent( EV ev )
 	{
@@ -571,9 +572,11 @@ resizemat( std::vector<std::vector<T>>& mat, std::size_t nb_lines, std::size_t n
 {
 	mat.resize( nb_lines );
 	for( auto& line: mat )
+	{
 		line.resize( nb_cols );
 		for( auto& elem: line )
 			elem = static_cast<T>(0);
+	}
 }
 #endif
 //-----------------------------------------------------------------------------------
@@ -602,7 +605,7 @@ struct NoTimer;
 /// Options for printing the dotfile, see SpagFSM::writeDotFile()
 struct DotFileOptions
 {
-	bool showActiveState = true;
+	bool showActiveState = false;
 	bool showTimeOuts    = true;
 	bool showInnerEvents = true;
 	bool showAAT         = true;
@@ -727,13 +730,13 @@ class SpagFSM
 		}
 
 #ifdef SPAG_USE_SIGNALS
-/// Assigns a transition to a "pass-state": once on state \c st1, the FSM will switch right away to \c st2
+/// Assigns a transition to a "pass-state" (AAT): once on state \c st1, the FSM will switch right away to \c st2
 /**
 \warning If a time out has previously been assigned to state \c st1, it will be removed
 
 \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 */
-		void assignTransition( ST st1, ST st2 )
+		void assignAAT( ST st1, ST st2 )
 		{
 			auto st1_idx = SPAG_P_CAST2IDX(st1);
 			auto st2_idx = SPAG_P_CAST2IDX(st2);
@@ -745,13 +748,12 @@ class SpagFSM
 					 + std::to_string( st1_idx ) + "and S" + std::to_string( st2_idx )
 				);
 
-//			for( auto& line: _transitionMat )
-//				line[ st1_idx ] = st2;
-//			for( auto& line: _allowedMat )
-//				line[ st1_idx ] = 1;
+			_transitionMat[ nbEvents()+1 ][st1_idx] = st2;
+			for( auto& line: _allowedMat ) // disable other transitions for that state
+				line[ st1_idx ] = 0;
+
 			auto& stinf = _stateInfo[st1_idx];
 			stinf._isPassState = true;
-			stinf._ptNextState = st2;
 
 			if( stinf._innerTransList.size() )
 				SPAG_P_LOG_ERROR << "warning, assign AAT transition from state "
@@ -826,7 +828,7 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 		void assignInnerTransition( EV ev, ST st )
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
-		void assignTransition( ST st1, ST st2 )
+		void assignAAT( ST st1, ST st2 )
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 #endif // SPAG_USE_SIGNALS
 
@@ -1346,9 +1348,10 @@ This function will be called by the signal handler of the event handler class ON
 #endif
 			if( stinf._isPassState )
 			{
-				SPAG_LOG << "is pass state, switch to state " << (int)stinf._ptNextState << '\n';
+				auto next = _transitionMat[ nbEvents()+1 ][_current];
+				SPAG_LOG << "is pass state, switch to state " << (int)next << '\n';
 				_previous = _current;
-				_current = stinf._ptNextState;
+				_current  = next;
 			}
 			else
 			{
@@ -1611,18 +1614,25 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #ifdef SPAG_ENABLE_LOGGING
 		mutable priv::RunTimeData<ST,EV> _rtdata;
 #endif
-		mutable ST                       _current  = static_cast<ST>(0);   ///< current state
-		mutable ST                       _previous = static_cast<ST>(0);   ///< previous state
-		mutable bool                     _isRunning = false;
-		mutable DurUnit                  _defaultTimerUnit  = DurUnit::sec;  ///< default timer units
-		mutable Duration                 _defaultTimerValue = 1;             ///< default timer value
-		mutable TIM*                     _eventHandler = nullptr;            ///< pointer on timer
+		mutable ST        _current           = static_cast<ST>(0);   ///< current state
+		mutable ST        _previous          = static_cast<ST>(0);   ///< previous state
+		mutable bool      _isRunning         = false;
+		mutable DurUnit   _defaultTimerUnit  = DurUnit::sec;         ///< default timer units
+		mutable Duration  _defaultTimerValue = 1;                    ///< default timer value
+		mutable TIM*      _eventHandler      = nullptr;              ///< pointer on timer
 
 #ifdef SPAG_USE_ARRAY
+	#ifdef SPAG_USE_SIGNALS
 		std::array<
 			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
-			static_cast<size_t>(EV::NB_EVENTS)
+			static_cast<size_t>(EV::NB_EVENTS)+2                   // + 2 is used to hold the AAT
 		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+	#else
+		std::array<
+			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
+			static_cast<size_t>(EV::NB_EVENTS)+1                  // +1 is used to hold the timeout events
+		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+	#endif
 
 /// Matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle external event, -1: internal event)
 		std::array<
@@ -1782,7 +1792,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 			for( size_t j=0; j<nbStates(); j++ )
 			{
 				if( _stateInfo[j]._isPassState )
-					out << 'S' << std::setw(2) << _stateInfo[j]._ptNextState;
+					out << 'S' << std::setw(2) << _transitionMat[ nbEvents()+1 ][j];
 				else
 					out << " . ";
 				out << spc_char;
@@ -1813,7 +1823,7 @@ SpagFSM<ST,EV,T,CBA>::isReachable( size_t st ) const
 
 #ifdef SPAG_USE_SIGNALS
 			if( _stateInfo[i]._isPassState )
-				if( SPAG_P_CAST2IDX( _stateInfo[i]._ptNextState ) == st )
+				if( _transitionMat[ nbEvents()+1 ][i] == st )
 					return true;
 
 			for( const auto& itr: _stateInfo[i]._innerTransList )
@@ -1984,10 +1994,10 @@ SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
 			else
 				print_content = true;
 
-			out << "AAT: => S" << std::setw(2) << SPAG_P_CAST2IDX( _transitionMat[0][i] );
+			out << "AAT: => S" << std::setw(2) << SPAG_P_CAST2IDX( _transitionMat[ nbEvents()+1 ][i] );
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
-			priv::PrintEnumString( out, _strStates[_transitionMat[0][i]] );
+			priv::PrintEnumString( out, _strStates[_transitionMat[ nbEvents()+1 ][i]] );
 			out << ')';
 #endif // SPAG_ENUM_STRINGS
 			out << '\n';
@@ -2096,7 +2106,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 				<< "\"];\n";
 #ifdef SPAG_USE_SIGNALS
 		if( _stateInfo[j]._isPassState && opt.showAAT )
-			f << j << " -> " << _transitionMat[0][j] << " [label=\"AAT\"];\n";
+			f << j << " -> " << _transitionMat[ nbEvents()+1 ][j] << " [label=\"AAT\"];\n";
 
 		if( opt.showInnerEvents )
 		{

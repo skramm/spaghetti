@@ -40,7 +40,7 @@ int main( int argc, char* argv[] )
 		g_ie_active = std::stoi( argv[1] );
 	}
 	fsm.assignCallbackAutoval( cb );
-	fsm.assignTransition( st1, st0 );
+	fsm.assignAAT( st1, st0 );
 
 	fsm.assignTimeOut( st0, 100, "ms", st1 );
 	fsm.assignInnerTransition( st0, ev0, st1 );

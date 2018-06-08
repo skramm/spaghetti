@@ -70,7 +70,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignTransition( st2, ev_2, st_err );
 	fsm.assignTransition( st3, ev_2, st_err );
 
-	fsm.assignTransition( st_err, st0 );   // st_err is a "pass state": no transition
+	fsm.assignAAT( st_err, st0 );   // st_err is a "pass state": Always Active Transition
 	fsm.assignInnerTransition( st1, ev_inner, st2 ); // dummy transition, just for error checking
 }
 

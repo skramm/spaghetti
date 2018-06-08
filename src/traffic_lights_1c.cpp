@@ -66,9 +66,9 @@ struct TestClass
 
 		fsm.assignInnerTransition( st_Red, ev_special, st_All );
 
-		fsm.assignTransition( st_Orange, st_PASS );
+		fsm.assignAAT( st_Orange, st_PASS );
 //		fsm.assignTimeOut( st_PASS, 200, st_Red    );
-		fsm.assignTransition( st_PASS,  st_Red    );
+		fsm.assignAAT( st_PASS,  st_Red    );
 
 // either one work
 #if 0
