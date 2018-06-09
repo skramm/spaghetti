@@ -605,6 +605,7 @@ struct NoTimer;
 /// Options for printing the dotfile, see SpagFSM::writeDotFile()
 struct DotFileOptions
 {
+	std::string nodeShape = "circle"; ///< Default shape for nodes. See https://www.graphviz.org/doc/info/shapes.html
 	bool showActiveState = false;
 	bool showTimeOuts    = true;
 	bool showInnerEvents = true;
@@ -2042,7 +2043,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "digraph G {\n"
 		<< "rankdir=LR;\n"
 		<< "edge[style=\"bold\"];\n"
-		<< "node[shape=\"circle\"];\n";
+		<< "node[shape=\"" << nodeShape << "\"];\n";
 	f << std::setfill( '0' );
 	f << "\n/* States (=nodes)*/\n";
 	for( size_t j=0; j<nbStates(); j++ )
