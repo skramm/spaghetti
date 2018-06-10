@@ -1,7 +1,6 @@
 /**
 \file turnstyle_2.cpp
 \brief Turnstyle example: similar to turnstyle_1.cp but with an added timeout.
-See https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 

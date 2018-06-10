@@ -13,12 +13,12 @@ The state switches to the next one and all the actions associated with that stat
 callback is executed, timeout (if any) is launched, ...
 
 But we cannot rely on this for "inner" event types.
-Oh well, actually, we could, by checking when arriving on a state if some condition is met, and if so, change again state, call associated callback function, and so on.
+Actually, we could, by checking when arriving on a state if some condition is met, and if so, change again state, call associated callback function, and so on.
 As you get it, there is a high risk of getting into an infinite recursion loop, that will quickly lead to a stack overflow.
 
 So those events are processed differently.
 
-Each state holds a ```InnerTransition``` struct, holding information on what inner event must be handled, and what state it will lead to.
+Each state holds a list of ```InnerTransition``` struct, that holds information on what inner event must be handled, and what state it will lead to.
 This structure gets assigned during configuration step by member function
 ```assignInnerTransition()```
 

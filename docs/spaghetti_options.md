@@ -54,7 +54,9 @@ boost::asio::io_service io_service;
 AsioWrapper asio( io_service );
 ```
 
-* ```SPAG_USE_SIGNALS``` : this is needed if you intend to have "Pass-states" and "inner events". It enables the data structures used to handle this.
+* ```SPAG_USE_SIGNALS``` : this is needed if you intend to have "Pass-states" and "inner events".
+It enables the data structures used to handle this.
+See section 7 in manual.
 
 ### 2 - Behavioral symbols
 

@@ -1,8 +1,8 @@
 /**
 \file sample_0.cpp
-\brief Demo of a running 2-states FSM with:
-- 1 hardware (keyboard) event to switch from initial state to other state (handled from a thread)
-- 1 timeout event to switch from second state to initial state
+\brief Demo of a running 2-states FSM with
+1 hardware (keyboard) event to switch from initial state to other state (handled from a thread),
+and 1 timeout event to switch from second state to initial state.
 
 Uses the embedded boost::asio timer
 

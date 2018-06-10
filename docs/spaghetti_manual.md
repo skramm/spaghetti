@@ -9,6 +9,7 @@ For a reference manual, run ```make doc```, then open
 ```html/index.html``` (needs doxygen).
 
 **Warning**: this manual is only preliminar, thus it might contain outdated-irrelevant-incorrect information at this state, please check source code also.
+**Feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback always appreciated!**
 
 ### Summary
 1. [Fundamental concepts](#concepts)
@@ -17,7 +18,9 @@ For a reference manual, run ```make doc```, then open
 1. [Showcase 3 : mixing timeout with hardware events](#showcase3)
 1. [Showcase 4 : adding network control](#showcase4)
 1. [Concurrent FSM](#concurrent)
-1. [Using inner events and pass states](spaghetti_inner_events.md)
+1. [Using inner events and pass states](#inner_events)
+   1. [Inner events](#inner_events)
+   1. [Pass states](#pass_states)
 1. [Additional stuff](#additional_stuff)
    1. [Configuration](#config)
    1. [Checking configuration](#checks)
@@ -71,19 +74,22 @@ But all these values are internally casted to integers, so you must not assign v
 
 Events can be of **three** types:
 
-1. "hardware" events (basically, it can be just a keyboard press): those are the ones you need to define in the enum above.
-But you can have none ! In that case, just define the events enum as:
+1. "hardware" events (basically, it can be just a keyboard press). You need to define in the enum above.
+But you can have none !
+In that case, just define the events enum as:
 ```C++
 	enum Events { NB_EVENTS }
 ```
 1. "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
 1. "internal events", that depend on some **inner** condition on your application.
 Say something like: "*if the state X is activated 3 times, then, once on state Y, switch immediately to state Z*".
+These must also be defined in the enum above.
 
 As described above, for the two latter cases you need to provide a special "timing/event handler" class, that will have some requirements.
 You will need to instanciate an object of that class, then assign it to the FSM in the configuration step.
 Fortunately, this is made easy for the usual case, no worry.<br>
 For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
+Take a look at the little sample in next section.
 
 <a name="showcase1"></a>
 ## 2 - Showcase 1: Hello World for FSM
@@ -199,7 +205,7 @@ enum Events { NB_EVENTS };
 
 You need to provide a Timer class that can be used by the FSM, and that provides **asynchronous** timeouts and an event waiting loop.
 
-Oh, wait, we'll talk about this later, fortunately Spaghetti provides an easy way to handle this.
+You can write your own, but it is obviously easier to use the one provided with this library.
 The only requirement is that you must have [Boost Asio](http://www.boost.org/doc/libs/release/libs/asio/) installed on your machine.
 As this is fairly common these days, lets assume this is okay.
 If not, if you are lucky enough to have a Debian-based OS (Ubuntu and other derivatives), just enter
@@ -438,11 +444,72 @@ You can then start all the needed FSM, then eventually start the event loop, usu
 
 This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
 
+<a name="inner_events"></a>
+## 7 - Using inner events and pass states
+
+### 7.1 Inner events
+
+In some situations, a FSM has to change its behavior depending on some of its internal characteristics.
+For example
+- "If state X has been activated 5 times, then switch to state Y instead of state Z"
+- "if some class member variable has value 10, then, when on state X, we want to switch to state Y instead of having a timeout leading to state Z"
+
+This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "external events".
+These latter ones are triggered by the user code: when they occur, the user code must call the member function ```processEvent()``` and thats it.
+The state switches to the next one and all the actions associated with that state are done:
+callback is executed, timeout (if any) is launched, ...
+
+But we cannot rely on this for "inner" event types.
+Actually, we could, by checking when arriving on a state if some condition is met, and if so, change again state, call associated callback function, and so on.
+As you get it, there is a high risk of getting into an infinite recursion loop, that will quickly lead to a stack overflow.
+
+So those events are processed differently.
+
+Each state holds a list of ```InnerTransition``` struct, that holds information on what inner event must be handled, and what state it will lead to.
+This structure gets assigned during configuration step by member function ```assignInnerTransition()```.
+
+At runtime, it is still the user-code responsability to call some member function, but this time it will/may be considered later.<br>
+Recall, with the other triggering member function ```processEvent()```, the processing takes place immediately:
+the FSM will check if that event is allowed on the current state, and will switch to the next state according to the transition matrix.<br>
+Here, we just notify the FSM that some inner event happened, and that it "might" be useful later, when on some other state.
+This is done by a call to ```activateInnerEvent()```.
+
+The function will actually only set the flag associated to that inner event to "true", so that it will be indeed processed when we arrive on the state.
+
+So how is this event processed, in a way that will not lead to a potential stack overflow?
+The key is using signals.
+When we arrive on a state, the function ```runAction()``` is always called.
+This function will, depending on the situation, start the timer, and/or run the callback.
+Now, it will also check if there is an inner event associated to that state, and if so, it will
+**raise a signal**, that will be handled **after completion** of the function, by a dedicated handler function.
+
+The signal handler will then itself call the ```processInnerEvent()``` member function,
+
+As this require the use of
+[signals](https://en.wikipedia.org%2Fwiki%2FSignal_%28IPC%29),
+thus this is available only if symbol ```SPAG_USE_SIGNALS``` (see [build options](spaghetti_options.md).)
+
+<a name="pass_states"></a>
+### 7.2 - Pass states
+
+Pass states are states having a single transition to the next state, that is always active.
+It is also handled using signals, so the symbol ```SPAG_USE_SIGNALS``` must also be defined.
+
+They appear in the config function output and on the graph with the string "AAT", meaning "Always Active Transition".
+
+They are defined using the member function
+```
+assignAAT( st1, st2 );
+```
+This will disable all other transitions that *may* have been assigned previously between these two states.
+
+See for example [src/sample_1b.cpp]( ../../../tree/master/src/sample_1b.cpp)
+
 <a name="additional_stuff"></a>
-## 7 - Additional features
+## 8 - Additional features
 
 <a name="config"></a>
-### 7.1 - Configuration of the FSM
+### 8.1 - Configuration of the FSM
 For FSM configuration, you can proceed as described above but it can be tedious for larger situations.
 Instead, you can also assign directly a </b>transition matrix</b>, with the events in lines, the states in columns, and each table cell defining the state
 to switch to.
@@ -497,7 +564,7 @@ You can also copy all the configuration from one instance of an FSM to another:
 	fsm_2.assignConfig( fsm_1 );
 ```
 <a name="checks"></a>
-### 7.2 - Checking configuration
+### 8.2 - Checking configuration
 
 At startup (when calling ```fsm.start()```), a general checking is done through a call of  ```fsm.doChecking()```.
 This is to make sure nothing wrong will happen.
@@ -513,7 +580,7 @@ These latter situations will not disable running the FSM, because they may occur
 where everything is not finished but the user wants to test things anyway.
 
 <a name="getters"></a>
-### 7.3 - FSM getters and other information
+### 8.3 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
  - ```nbStates()```: returns nb of states

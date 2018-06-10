@@ -42,7 +42,8 @@ Feedback welcome, please post issue on Github in case of any problems.
 - runtime logging capability
 - provided with some sample programs, see folder
 [src](https://github.com/skramm/spaghetti/tree/master/src)
-and src/html/index.html (once ref manual is build)
+and
+<a href="../src/html/index.html">Doxygen-build reference</a> (once ref manual is build)
 
 ### What's in this repo ?
 
