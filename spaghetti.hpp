@@ -2043,7 +2043,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "digraph G {\n"
 		<< "rankdir=LR;\n"
 		<< "edge[style=\"bold\"];\n"
-		<< "node[shape=\"" << nodeShape << "\"];\n";
+		<< "node[shape=\"" << opt.nodeShape << "\"];\n";
 	f << std::setfill( '0' );
 	f << "\n/* States (=nodes)*/\n";
 	for( size_t j=0; j<nbStates(); j++ )
