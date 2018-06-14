@@ -3,6 +3,8 @@
  - Homepage: https://github.com/skramm/spaghetti
  - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
 
+ Q&A:
+
 - **Q**: *What is the timing unit?*<br/>
 **A**: The values are stored as integer values with an associated ```DurUnit``` enumeration value, so you can select between seconds, milliseconds, and minutes, and this for each timeout value.<br>
 It is up to the Timer class to handle these (the provided optional timer class ```AsioWrapper``` does).
@@ -76,7 +78,7 @@ So the workaround is that you will need to use a *binding* trick. This is demons
 [```src/traffic_lights_1c.cpp```](../../../tree/master/src/traffic_lights_1c.cpp):
 ```C++
    fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )
-```
+```<br>
 Of course, you will need to include the header
 [```<functional>```](http://en.cppreference.com/w/cpp/utility/functional).
 
@@ -103,7 +105,7 @@ Post an issue if you feel that can be useful, it wouldn't be too hard to add tha
 This is demonstrated in ```src/sample_3.cpp```.
 
 - **Q**: *I need to track ignored events. How can I do that?*<br>
-**A**: First, these are logged (if logging is enable, of course), and you can print them once your FMS is stopped with ```printLoggedData()```.
+**A**: First, these are logged (if logging is enable, of course), and you can print them once your FSM is stopped with ```printLoggedData()```.
 Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs.
 See member function ```assignIgnoredEventsCallback()```.
 This is demonstrated in ```src/traffic_lights_common.hpp```:

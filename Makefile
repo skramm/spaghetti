@@ -76,7 +76,7 @@ help:
 	@echo " - cleandoc: erases doxygen-produced files"
 	@echo " - cleanall: the two above, and also erases the build demo programs"
 	@echo " - demo"
-	@echo " - doc (assumes doxygen installed)"
+	@echo " - doc: build ref. manual, using Doxygen (needs to be installed)"
 	@echo " - install: copies single file to $(DEST_PATH)"
 
 demo: $(EXEC_FILES)
@@ -95,7 +95,7 @@ doc: html/index.html src/html/index.html
 	-xdg-open html/index.html
 	@echo "- Done target $@"
 
-html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css
+html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css docs/*
 	@echo "* Processing Doxygen on main file"
 	doxygen doxyfile
 
