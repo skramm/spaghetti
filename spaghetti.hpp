@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.8.5
+#define SPAG_VERSION 0.8.6
 
 #include <vector>
 #include <map>
@@ -614,6 +614,7 @@ struct DotFileOptions
 	bool showStateString = true;
 	bool showEventIndex  = true;
 	bool showEventString = true;
+	bool showUnreachableStates = true;
 };
 
 //-----------------------------------------------------------------------------------
@@ -2045,31 +2046,35 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 		<< "edge[style=\"bold\"];\n"
 		<< "node[shape=\"" << opt.nodeShape << "\"];\n";
 	f << std::setfill( '0' );
-	f << "\n/* States (=nodes)*/\n";
+
+	f << "\n/* States (=nodes) */\n";
 	for( size_t j=0; j<nbStates(); j++ )
 	{
-		f << j << " [label=\"";
-		if( opt.showStateIndex )
-			f << 'S' << std::setw(2) << j;
-#ifdef SPAG_ENUM_STRINGS
-		if( opt.showStateString )
+		if( opt.showUnreachableStates || isReachable( j ) )
 		{
+			f << j << " [label=\"";
 			if( opt.showStateIndex )
-				f << '\n';
-			f << _strStates[j];
-		}
-#endif
-		f << '"';
+				f << 'S' << std::setw(2) << j;
+	#ifdef SPAG_ENUM_STRINGS
+			if( opt.showStateString )
+			{
+				if( opt.showStateIndex )
+					f << '\n';
+				f << _strStates[j];
+			}
+	#endif
+			f << '"';
 
-		if( j == 0 )                                // initial state
-			f << ",shape=doublecircle";
-		if( opt.showActiveState )
-			if( SPAG_P_CAST2IDX( currentState() ) == j )
-				f << ",style=filled,fillcolor=black,fontcolor=white";
-#if 0
-		f << ",URL=\"" << fname << ".html#node_" << j << "\"";
-#endif
-		f << "];\n";
+			if( j == 0 )                                // initial state
+				f << ",shape=doublecircle";
+			if( opt.showActiveState )
+				if( SPAG_P_CAST2IDX( currentState() ) == j )
+					f << ",style=filled,fillcolor=black,fontcolor=white";
+	#if 0
+			f << ",URL=\"" << fname << ".html#node_" << j << "\"";
+	#endif
+			f << "];\n";
+		}
 	}
 	f << "\n/* External events */\n";
 	for( size_t i=0; i<nbEvents(); i++ )
