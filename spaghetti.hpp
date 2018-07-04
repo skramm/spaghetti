@@ -618,7 +618,7 @@ struct DotFileOptions
 };
 
 //-----------------------------------------------------------------------------------
-/// A class holding data for a FSM, without the event loop
+/// Main class, holding data for a FSM, without the event loop
 /**
 types:
  - ST: an enum defining the different states.
@@ -1621,7 +1621,9 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		mutable bool      _isRunning         = false;
 		mutable DurUnit   _defaultTimerUnit  = DurUnit::sec;         ///< default timer units
 		mutable Duration  _defaultTimerValue = 1;                    ///< default timer value
-		mutable TIM*      _eventHandler      = nullptr;              ///< pointer on timer
+		mutable TIM*      _eventHandler      = nullptr;              ///< pointer on timer/ event-loop handling type
+
+//		mutable RunTimeParams _runTimeParams;
 
 #ifdef SPAG_USE_ARRAY
 	#ifdef SPAG_USE_SIGNALS
@@ -2351,9 +2353,9 @@ struct AsioWrapper
 //		std::cout << "signal handler, processing " << stateInfo._innerTrans;
 //		assert( ( stateInfo._innerTrans._hasOne && stateInfo._innerTrans._isActive ) || stateInfo._isPassState );
 
-		SPAG_LOG << "BEFORE processInnerEvent(): " << stateInfo << '\n';
+//		SPAG_LOG << "BEFORE processInnerEvent(): " << stateInfo << '\n';
 		fsm->processInnerEvent( stateInfo );
-		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
+//		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
 
 		if( err_code == 0 )
 			_signals.async_wait(                                   // re-initialize signal handler, only if the handler is not called whith a "cancel" message
