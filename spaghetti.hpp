@@ -2061,7 +2061,7 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 			if( opt.showStateString )
 			{
 				if( opt.showStateIndex )
-					f << '\n';
+					f << "\\n";
 				f << _strStates[j];
 			}
 	#endif

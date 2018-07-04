@@ -23,6 +23,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename=".travis.yml" />
 		<Unit filename="CHANGELOG" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
@@ -57,6 +58,7 @@
 		<Unit filename="tests/bad_configs.cpp" />
 		<Unit filename="tests/test_2.cpp" />
 		<Unit filename="tests/test_3.cpp" />
+		<Unit filename="tests/test_4.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />
