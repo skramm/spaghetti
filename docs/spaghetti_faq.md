@@ -67,9 +67,11 @@ You could make the FSM run into some invalid configuration, leading to undefined
 - **Q**: *How can I assign callback argument values in a more convenient way?
 I have a lot of states, and assigning these one by one (with ```assignCallbackValue()```) is tedious*<br/>
 **A**: If you have no special needs on the value of the callback arguments (i.e. you only need them to be different values),
-then you can use ```assignCallbackAutoval( cb )```, that will assign to all the states the callback function ```cb(int)```
+then you can use ```assignCallbackAutoval( cb )```.
+This will assign to all the states the callback function ```cb(int)```
 and will assign as callback argument value the **index** of the corresponding state.
 Of course, this requires that you have defined the FSM type with some kind of integer type as callback argument.
+But don't worry, if you don't, you will get a compiler error, this is checked at build time.
 
 - **Q**: *Can I have as callback function a class member function?*<br>
 **A**: Sure! This is of course useful so that the callback can handle some data.

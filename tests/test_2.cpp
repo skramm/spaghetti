@@ -1,8 +1,7 @@
 /**
 \file test_2.cpp
-\brief test2
+\brief Demo of the graph rendering options
 */
-
 
 #define SPAG_EMBED_ASIO_WRAPPER
 #define SPAG_ENUM_STRINGS
@@ -11,7 +10,7 @@
 #define SPAG_USE_SIGNALS
 #include "spaghetti.hpp"
 
-enum States { st0, st1, st2, st3, st4, NB_STATES };
+enum States { st0, st1, st2, st3, st4, st5, NB_STATES };
 enum Events { ev0, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
@@ -46,7 +45,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignInnerTransition( st0, ev0, st1 );
 	fsm.assignInnerTransition( st2, ev0, st3 );
 //	fsm.assignTransition( st2, st0 );
-
+	fsm.assignAAT( st1, st2 );
 
 	std::map<States,std::string> mstr_st = {
 		{ st0, "init state" },
@@ -76,7 +75,7 @@ int main( int, char* argv[] )
 
 	{
 		spag::DotFileOptions dfo;
-		dfo.showActiveState = false;
+		dfo.showActiveState = true;
 		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
 	}
 	{
@@ -114,6 +113,12 @@ int main( int, char* argv[] )
 		dfo.showStateString = false;
 		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
 	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.showUnreachableStates = false;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
+
 #if 0
 	try
 	{

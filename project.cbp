@@ -32,6 +32,7 @@
 		<Unit filename="docs/spaghetti_inner_events.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="docs/spaghetti_options.md" />
+		<Unit filename="docs/spaghetti_rendering.md" />
 		<Unit filename="docs/spaghetti_roadmap.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
@@ -55,10 +56,9 @@
 		<Unit filename="src/turnstyle_1.cpp" />
 		<Unit filename="src/turnstyle_2.cpp" />
 		<Unit filename="src/udp_server.hpp" />
-		<Unit filename="tests/bad_configs.cpp" />
+		<Unit filename="tests/test_1.cpp" />
 		<Unit filename="tests/test_2.cpp" />
 		<Unit filename="tests/test_3.cpp" />
-		<Unit filename="tests/test_4.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />
