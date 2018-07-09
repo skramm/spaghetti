@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.8.6
+#define SPAG_VERSION 0.9.0
 
 #include <vector>
 #include <map>
@@ -259,11 +259,10 @@ struct TimerEvent
 template<typename ST,typename EV>
 struct InnerTransition
 {
-	mutable bool _isActive = false;
 	ST      _destState;
 	EV      _innerEvent;
 
-	InnerTransition( EV ev, ST st ) :_isActive(false), _destState(st), _innerEvent(ev)
+	InnerTransition( EV ev, ST st ) : _destState(st), _innerEvent(ev)
 	{}
 	bool operator == ( const InnerTransition& it ) const
 	{
@@ -275,7 +274,7 @@ struct InnerTransition
 	}
 	friend std::ostream& operator << ( std::ostream& s, const InnerTransition& it )
 	{
-		s << "InnerTransition: isActive=" << it._isActive
+		s << "InnerTransition:"
 			<< " destState=" << (int)it._destState
 			<< " innerEvent=" << (int)it._innerEvent;// << '\n';
 		return s;
@@ -796,8 +795,9 @@ class SpagFSM
 			auto& stinf = _stateInfo[ st1_idx ];
 			if( stinf._isPassState )
 				SPAG_P_THROW_ERROR_CFG( "error, removing pass-state" ); /// \todo maybe a warning instead ?
-			 stinf._isPassState = false;
+			stinf._isPassState = false;
 			stinf._innerTransList.push_back( priv::InnerTransition<ST,EV>(iev, st2) );
+			_innerEventFlag[iev] = false;
 			_transitionMat[ ev_idx ][st1_idx] = st2;
 			_allowedMat[    ev_idx ][st1_idx] = -1;
 		}
@@ -1302,15 +1302,9 @@ then we need to raise the signal right away! (instead of waiting)
 			SPAG_P_START;
 
 			bool found = false;
-			size_t c=0;
-			for( auto& st: _stateInfo )      // iterate all the states
-				for( auto& inner: st._innerTransList )
-					if( inner._innerEvent == ev )
-					{
-						inner._isActive = true;
-						found = true;
-						c++;
-					}
+			if( _innerEventFlag.count( ev ) )
+				found = true;
+
 			if( !found )
 				throw std::runtime_error(
 					"request for activating event "
@@ -1321,11 +1315,12 @@ then we need to raise the signal right away! (instead of waiting)
 					+ ", but not found"
 				);
 
+			 _innerEventFlag[ ev ] = true;
 			SPAG_LOG << "activating event " << SPAG_P_CAST2IDX(ev)
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strEvents[ SPAG_P_CAST2IDX(ev) ] << ')'
 #endif
-				<< " on " << c << " state(s), current state is " << (int)currentState()
+				<< " current state is " << (int)currentState()
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[ currentState() ] << ')'
 #endif
@@ -1357,20 +1352,22 @@ This function will be called by the signal handler of the event handler class ON
 			}
 			else
 			{
-                for( const auto& innerTrans: stinf._innerTransList )
-                {
-					if( innerTrans._isActive )              // if several inner transitions
-					{                                       // are active, we process the
-						SPAG_LOG << "Found active inner trans\n";
-						_previous = _current;               // first one that is found
+				for( const auto& innerTrans: stinf._innerTransList )
+				{
+					if( _innerEventFlag.count( innerTrans._innerEvent ) == 0 )       // step 1: check that the event is correctly registered in map
+						SPAG_P_THROW_ERROR_RT( "Unable to find inner event" );     /// \todo expand user message
+
+
+					if( _innerEventFlag[ innerTrans._innerEvent ] )   // step 2 : check if given event assigned has been activated
+					{
+						_previous = _current;
 						_current = innerTrans._destState;
 #ifdef SPAG_ENABLE_LOGGING
 						ev_idx   = innerTrans._innerEvent;
 #endif
-						innerTrans._isActive = false;       // deactivate event
-						break;
+						_innerEventFlag[ innerTrans._innerEvent ] = false;       // deactivate event
 					}
-                }
+				}
 			}
 //			SPAG_LOG << "stinf:\n" << stinf << '\n';
 
@@ -1583,7 +1580,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				else
 				{
 					for( auto& itr: stateInfo._innerTransList )
-						if( itr._isActive )
+						if( _innerEventFlag.at( itr._innerEvent) )
 						{
 							SPAG_LOG << "IE is Active, raise signal\n";
 							do_raise_sig = true;
@@ -1654,6 +1651,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #else
 		std::vector<priv::StateInfo<ST,EV,CBA>> _stateInfo;         ///< Holds for each state the details
 #endif
+		mutable std::map<EV,bool> _innerEventFlag;
 
 #ifdef SPAG_USE_SIGNALS
 //		std::map<EV,ST> _eventInfo; ///< holds for inner event the state it is assigned to
@@ -1973,7 +1971,7 @@ SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
 			const auto &itr = stinf._innerTransList[j];
 			auto dst_st = SPAG_P_CAST2IDX(itr._destState);
 			auto i_ev   = SPAG_P_CAST2IDX(itr._innerEvent);
-			out  << "IT (" << (itr._isActive?'A':'I')
+			out  << "IT (" << ( _innerEventFlag.at(itr._innerEvent)?'A':'I')
 				<< "): E" << std::setw(2) << i_ev;
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
@@ -2352,7 +2350,6 @@ struct AsioWrapper
 		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
 		auto& stateInfo = fsm->getStateInfo( st_idx );
 //		std::cout << "signal handler, processing " << stateInfo._innerTrans;
-//		assert( ( stateInfo._innerTrans._hasOne && stateInfo._innerTrans._isActive ) || stateInfo._isPassState );
 
 		SPAG_LOG << "BEFORE processInnerEvent(): " << stateInfo << '\n';
 		fsm->processInnerEvent( stateInfo );

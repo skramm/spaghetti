@@ -38,10 +38,16 @@ static std::mutex* getSingletonMutex()
 //-----------------------------------------------------------------------------------
 void cb( int s )
 {
-	std::cout << "callback: current state=" << s << " count=" << g_count << std::endl;
+	{
+		std::lock_guard<std::mutex> lock(*g_mutex);
+		std::cout << "callback: current state=" << s << " count=" << g_count << std::endl;
+	}
 	if( g_count == g_ie_active )
 	{
-		std::cout << "activating inner event ev0\n";
+		{
+			std::lock_guard<std::mutex> lock(*g_mutex);
+			std::cout << "activating inner event ev0\n";
+		}
 		fsm.activateInnerEvent( internal );
 	}
 
@@ -58,9 +64,7 @@ void UI_thread( const FSM* fsm )
     {
 		{
 			std::lock_guard<std::mutex> lock(*g_mutex);
-			std::string msg = "enter key (iter="+ std::to_string( ++iter ) + "): ";
-//			std::cout << "enter key (iter=" << ++iter << "): ";
-			std::cout << msg;
+			std::cout << std::string( "enter key (iter="+ std::to_string( ++iter ) + "): " );
 		}
 		char key;
 		std::cin >> key;
@@ -93,10 +97,6 @@ int main( int argc, char* argv[] )
 
 	fsm.assignTransition( st3, ev1, st1 );
 	fsm.assignTransition( st3, ev2, st2 );
-
-
-
-//	fsm.assignTimeOut( st0, 100, "ms", st1 );
 
 	fsm.writeDotFile( "test_4" );
 	try
