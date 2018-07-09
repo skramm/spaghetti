@@ -43,7 +43,7 @@ LDFLAGS += -lboost_system -lboost_thread -pthread
 .SUFFIXES:
 
 # list of targets that are NOT files
-.PHONY: all clean cleanall doc show diff tests
+.PHONY: all clean cleanall doc show diff test
 
 SHELL=/bin/bash
 
@@ -55,7 +55,7 @@ OBJ_DIR=obj
 
 HEADER_FILES := $(wildcard $(SRC_DIR)/*.h*)
 SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
-SRC_FILES_T  := $(wildcard $(SRC_DIR_T)/*.cpp)
+SRC_FILES_T  := $(wildcard $(SRC_DIR_T)/testA_*.cpp)
 OBJ_FILES    := $(patsubst $(SRC_DIR)/%.cpp,   $(OBJ_DIR)/%.o, $(SRC_FILES))
 OBJ_FILES_T  := $(patsubst $(SRC_DIR_T)/%.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES_T))
 EXEC_FILES   := $(patsubst $(SRC_DIR)/%.cpp,   $(BIN_DIR)/%,   $(SRC_FILES))

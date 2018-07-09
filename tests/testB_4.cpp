@@ -50,6 +50,8 @@ void cb( int s )
 		}
 		fsm.activateInnerEvent( internal );
 	}
+	if( g_count == 10 )
+		fsm.stop();
 
 	g_count++;
 }
