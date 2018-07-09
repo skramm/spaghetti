@@ -813,6 +813,8 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			SPAG_CHECK_LESS( ev_idx, nbEvents() );
 
+			_innerEventFlag[iev] = false;
+
 			assert( _stateInfo.size() == nbStates() );
 			for( size_t i=0; i<_stateInfo.size(); ++i )
 				if( i != st_idx )
@@ -1301,11 +1303,7 @@ then we need to raise the signal right away! (instead of waiting)
 		{
 			SPAG_P_START;
 
-			bool found = false;
-			if( _innerEventFlag.count( ev ) )
-				found = true;
-
-			if( !found )
+			if( 0 == _innerEventFlag.count( ev ) )
 				throw std::runtime_error(
 					"request for activating event "
 					+ std::to_string( SPAG_P_CAST2IDX(ev) )
@@ -1580,12 +1578,13 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				else
 				{
 					for( auto& itr: stateInfo._innerTransList )
-						if( _innerEventFlag.at( itr._innerEvent) )
-						{
-							SPAG_LOG << "IE is Active, raise signal\n";
-							do_raise_sig = true;
-							break;                    // no need to check the others
-						}
+						if( _innerEventFlag.count( itr._innerEvent ) ) // if event is registered
+							if( _innerEventFlag.at( itr._innerEvent ) ) // and active
+							{
+								SPAG_LOG << "IE is Active, raise signal\n";
+								do_raise_sig = true;
+								break;                    // no need to check the others
+							}
 				}
 				if( do_raise_sig )
 				{
@@ -1971,7 +1970,8 @@ SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
 			const auto &itr = stinf._innerTransList[j];
 			auto dst_st = SPAG_P_CAST2IDX(itr._destState);
 			auto i_ev   = SPAG_P_CAST2IDX(itr._innerEvent);
-			out  << "IT (" << ( _innerEventFlag.at(itr._innerEvent)?'A':'I')
+			out << "IT ("
+//				<< ( _innerEventFlag.at(itr._innerEvent)?'A':'I')
 				<< "): E" << std::setw(2) << i_ev;
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
