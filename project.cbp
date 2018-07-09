@@ -59,6 +59,7 @@
 		<Unit filename="tests/test_1.cpp" />
 		<Unit filename="tests/test_2.cpp" />
 		<Unit filename="tests/test_3.cpp" />
+		<Unit filename="tests/test_4.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />

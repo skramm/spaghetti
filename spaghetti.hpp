@@ -1361,6 +1361,7 @@ This function will be called by the signal handler of the event handler class ON
                 {
 					if( innerTrans._isActive )              // if several inner transitions
 					{                                       // are active, we process the
+						SPAG_LOG << "Found active inner trans\n";
 						_previous = _current;               // first one that is found
 						_current = innerTrans._destState;
 #ifdef SPAG_ENABLE_LOGGING
@@ -2353,9 +2354,9 @@ struct AsioWrapper
 //		std::cout << "signal handler, processing " << stateInfo._innerTrans;
 //		assert( ( stateInfo._innerTrans._hasOne && stateInfo._innerTrans._isActive ) || stateInfo._isPassState );
 
-//		SPAG_LOG << "BEFORE processInnerEvent(): " << stateInfo << '\n';
+		SPAG_LOG << "BEFORE processInnerEvent(): " << stateInfo << '\n';
 		fsm->processInnerEvent( stateInfo );
-//		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
+		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
 
 		if( err_code == 0 )
 			_signals.async_wait(                                   // re-initialize signal handler, only if the handler is not called whith a "cancel" message
