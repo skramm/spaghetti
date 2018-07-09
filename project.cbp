@@ -29,7 +29,6 @@
 		<Unit filename="README.md" />
 		<Unit filename="docs/spaghetti_changelog.md" />
 		<Unit filename="docs/spaghetti_faq.md" />
-		<Unit filename="docs/spaghetti_inner_events.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="docs/spaghetti_options.md" />
 		<Unit filename="docs/spaghetti_rendering.md" />
