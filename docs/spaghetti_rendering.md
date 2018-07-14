@@ -48,5 +48,16 @@ For example:
 	fsm.writeDotFile( "myDotFile", dfo );
 ```
 
+The test file tests/testA_2.cpp does a demo of these options.
+It has unreachable states to show how these can be removed from the rendering.
+This can be useful when handling a complex situation where you would want to printout a rendering while FSM is partially configured.
+
+| Default | showActiveState=true |
+| --------|----------------------|
+| ![test2_00](test_2_00.svg) | ![test2_00](test_2_01.svg) |
+
+
+https://github.com/skramm/spaghetti/blob/master/docs/
+
 
 --- Copyright S. Kramm - 2018 ---

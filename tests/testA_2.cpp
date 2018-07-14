@@ -10,8 +10,8 @@
 #define SPAG_USE_SIGNALS
 #include "spaghetti.hpp"
 
-enum States { st0, st1, st2, st3, st4, st5, NB_STATES };
-enum Events { ev0, NB_EVENTS };
+enum States { st0, st1, st2, st3, st4, st5, st6, NB_STATES };
+enum Events { ev0, ev1, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, int );
 
@@ -33,7 +33,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignCallbackAutoval( cb );
 
 //	fsm.assignGlobalTimeOut( st0 );
-//	fsm.assignGlobalTimeOut( 2, "sec", st0 );
+
 	fsm.assignGlobalTimeOut( 600, "ms", st0 );
 
 	fsm.assignTimeOut( st0, 1500, "ms", st2 );
@@ -45,6 +45,7 @@ void configureFSM( fsm_t& fsm )
 	fsm.assignInnerTransition( st0, ev0, st1 );
 	fsm.assignInnerTransition( st2, ev0, st3 );
 //	fsm.assignTransition( st2, st0 );
+	fsm.assignTransition( st6, ev1, st0 );
 	fsm.assignAAT( st1, st2 );
 
 	std::map<States,std::string> mstr_st = {

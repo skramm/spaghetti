@@ -768,17 +768,17 @@ class SpagFSM
 					<< stinf._innerTransList.size() << " inner transition(s) previously assigned to this state\n";
 			stinf._innerTransList.clear();
 
-			auto& te = stinf._timerEvent;
-			if( te._enabled )
+			auto& tev = stinf._timerEvent;
+			if( tev._enabled )
 			{
 				SPAG_P_LOG_ERROR << "warning, removal of timeout of "
-					<< te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
+					<< tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit )
 					<< " on state S" << std::setfill('0') << std::setw(2) << SPAG_P_CAST2IDX(st1)
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" << _strStates[st1_idx] << ')'
 #endif
 					<< '\n';
-				te._enabled = false;
+				tev._enabled = false;
 			}
 		}
 
@@ -869,18 +869,18 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 			for( size_t i=0; i<nbStates(); i++ )
 				if( i != SPAG_P_CAST2IDX(st_final) )
 				{
-					auto te = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;
-					if( te._enabled )
+					auto tev = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;
+					if( tev._enabled )
 					{
 						SPAG_P_LOG_ERROR << " warning, removal of previously assigned timeout leading from state " << i
 #ifdef SPAG_ENUM_STRINGS
 							<< " (" << _strStates[i] << ')'
 #endif
-							<< " to state " << te._nextState
+							<< " to state " << tev._nextState
 #ifdef SPAG_ENUM_STRINGS
-							<< " (" << _strStates.at( SPAG_P_CAST2IDX(te._nextState)) << ')'
+							<< " (" << _strStates.at( SPAG_P_CAST2IDX(tev._nextState)) << ')'
 #endif
-							<< " after " << te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit ) << '\n';
+							<< " after " << tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit ) << '\n';
 					}
 					assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
 				}
@@ -1945,15 +1945,15 @@ SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
 		bool print_content = false;
 
 		const auto& stinf = _stateInfo[i];
-		const auto& te = stinf._timerEvent;
-		if( te._enabled )
+		const auto& tev = stinf._timerEvent;
+		if( tev._enabled )
 		{
 			print_content = true;
-			out << "TO: " <<  te._duration << ' ' << priv::stringFromTimeUnit( te._durUnit )
-				<< " => S" << std::setw(2) << SPAG_P_CAST2IDX( te._nextState );
+			out << "TO: " <<  tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit )
+				<< " => S" << std::setw(2) << SPAG_P_CAST2IDX( tev._nextState );
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";
-			priv::PrintEnumString( out, _strStates[te._nextState] );
+			priv::PrintEnumString( out, _strStates[tev._nextState] );
 			out << ')';
 #endif // SPAG_ENUM_STRINGS
 			out << '\n';
@@ -2085,52 +2085,58 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 #ifdef SPAG_USE_SIGNALS
 				if( !_stateInfo[j]._isPassState )
 #endif
-				{
-					f << j << " -> " << _transitionMat[i][j] << " [label=\"";
-					if( opt.showEventIndex )
-						f << 'E' << std::setw(2) << i;
-#ifdef SPAG_ENUM_STRINGS
-					if( opt.showEventString )
+					if( isReachable( j ) || opt.showUnreachableStates )
 					{
+						f << j << " -> " << _transitionMat[i][j] << " [label=\"";
 						if( opt.showEventIndex )
-							f << ':';
-						f << _strEvents[i];
-					}
+							f << 'E' << std::setw(2) << i;
+#ifdef SPAG_ENUM_STRINGS
+						if( opt.showEventString )
+						{
+							if( opt.showEventIndex )
+								f << ':';
+							f << _strEvents[i];
+						}
 #endif
-					f << "\"];\n";
-				}
+						f << "\"];\n";
+					}
 			}
 
 	f << "\n/* Inner events and timeout transitions */\n";
 	for( size_t j=0; j<nbStates(); j++ )
 	{
-		const auto& te = _stateInfo[j]._timerEvent;
-		if( te._enabled && opt.showTimeOuts )
-			f << j << " -> " << te._nextState
-				<< " [label=\"TO:"
-				<< te._duration
-				<< priv::stringFromTimeUnit( te._durUnit )
-				<< "\"];\n";
+		const auto& tev = _stateInfo[j]._timerEvent;
+		if( tev._enabled && opt.showTimeOuts )
+			if( isReachable( j ) || opt.showUnreachableStates )
+				f << j << " -> " << tev._nextState
+					<< " [label=\"TO:"
+					<< tev._duration
+					<< priv::stringFromTimeUnit( tev._durUnit )
+					<< "\"];\n";
 #ifdef SPAG_USE_SIGNALS
 		if( _stateInfo[j]._isPassState && opt.showAAT )
-			f << j << " -> " << _transitionMat[ nbEvents()+1 ][j] << " [label=\"AAT\"];\n";
+			if( isReachable( j ) || opt.showUnreachableStates )
+				f << j << " -> " << _transitionMat[ nbEvents()+1 ][j] << " [label=\"AAT\"];\n";
 
 		if( opt.showInnerEvents )
 		{
 			for( const auto& itr: _stateInfo[j]._innerTransList )
 			{
-				f << j << " -> " << SPAG_P_CAST2IDX( itr._destState ) << " [label=\"";
-				if( opt.showEventIndex )
-					f << "IE" << std::setw(2) << SPAG_P_CAST2IDX( itr._innerEvent );
-#ifdef SPAG_ENUM_STRINGS
-				if( opt.showEventString )
+				if( isReachable( j ) || opt.showUnreachableStates )
 				{
+					f << j << " -> " << SPAG_P_CAST2IDX( itr._destState ) << " [label=\"";
 					if( opt.showEventIndex )
-						f << ':';
-					f << _strEvents.at(itr._innerEvent);
-				}
+						f << "IE" << std::setw(2) << SPAG_P_CAST2IDX( itr._innerEvent );
+#ifdef SPAG_ENUM_STRINGS
+					if( opt.showEventString )
+					{
+						if( opt.showEventIndex )
+							f << ':';
+						f << _strEvents.at(itr._innerEvent);
+					}
 #endif // SPAG_ENUM_STRINGS
-				f << "\"];\n";
+					f << "\"];\n";
+				}
 			}
 		}
 #endif // SPAG_USE_SIGNALS
