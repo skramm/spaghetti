@@ -54,10 +54,20 @@ This can be useful when handling a complex situation where you would want to pri
 
 | Default | showActiveState=true |
 | --------|----------------------|
-| ![test2_00](test_2_00.svg) | ![test2_00](test_2_01.svg) |
 
+|  |   |
+|-----------------------|----------------------------|
+| Default               | ![test2_00](test_2_00.svg) |
+| showActiveState=true  | ![test2_00](test_2_01.svg) |
+| showInnerEvents=false | ![test2_00](test_2_02.svg) |
+| showAAT=false         | ![test2_00](test_2_03.svg) |
+| showTimeOuts=false    | ![test2_00](test_2_04.svg) |
+| showEventIndex=false  | ![test2_00](test_2_05.svg) |
+| showEventString=false | ![test2_00](test_2_06.svg) |
+| showStateIndex=false  | ![test2_00](test_2_07.svg) |
+| showStateString=false | ![test2_00](test_2_08.svg) |
+| showUnreachableStates=false | ![test2_00](test_2_09.svg) |
 
-https://github.com/skramm/spaghetti/blob/master/docs/
 
 
 --- Copyright S. Kramm - 2018 ---
