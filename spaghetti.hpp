@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.9.0
+#define SPAG_VERSION 0.9.1
 
 #include <vector>
 #include <map>
@@ -337,7 +337,6 @@ struct StateInfo
 	typename std::vector<InnerTransition<ST,EV>>::iterator
 	findInnerEvent( EV ev )
 	{
-//		for( const auto& it: _innerTransList )
 		for(
 			auto it=std::begin(_innerTransList);
 			it != std::end(_innerTransList);
@@ -1650,7 +1649,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #else
 		std::vector<priv::StateInfo<ST,EV,CBA>> _stateInfo;         ///< Holds for each state the details
 #endif
-		mutable std::map<EV,bool> _innerEventFlag;
+		mutable std::map<EV,bool> _innerEventFlag; ///< holds the activation flag for each inner event
 
 #ifdef SPAG_USE_SIGNALS
 //		std::map<EV,ST> _eventInfo; ///< holds for inner event the state it is assigned to
@@ -1971,7 +1970,7 @@ SpagFSM<ST,EV,T,CBA>::printStateConfig( std::ostream& out ) const
 			auto dst_st = SPAG_P_CAST2IDX(itr._destState);
 			auto i_ev   = SPAG_P_CAST2IDX(itr._innerEvent);
 			out << "IT ("
-//				<< ( _innerEventFlag.at(itr._innerEvent)?'A':'I')
+				<< ( _innerEventFlag.at(itr._innerEvent)?'A':'I')
 				<< "): E" << std::setw(2) << i_ev;
 #ifdef SPAG_ENUM_STRINGS
 			out << " (";

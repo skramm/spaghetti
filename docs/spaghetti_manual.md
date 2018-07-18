@@ -23,6 +23,7 @@ For a reference manual, run ```make doc```, then open
    1. [Pass states](#pass_states)
 1. [Additional stuff](#additional_stuff)
    1. [Configuration](#config)
+   1. [Printing Configuration](#printconfig)
    1. [Checking configuration](#checks)
    1. [FSM getters and other information](#getters)
 1. [Build options](spaghetti_options.md)
@@ -565,8 +566,58 @@ You can also copy all the configuration from one instance of an FSM to another:
 // copy config of fsm_1 to fsm_2
 	fsm_2.assignConfig( fsm_1 );
 ```
+
+<a name="printconfig"></a>
+### 8.2 - Printing Configuration of the FSM
+
+You can printout the whole configuration of the FSM with a member function:
+```C++
+	fsm_t fsm;
+	 // do the configuration
+	fsm.printConfig( std::cout, "my Config" );
+```
+The second argument is optional.
+
+This will print out both the transition table and the state information. For example, consider this, produced with
+```$ bin/testA_2```:
+
+```
+* FSM Configuration:
+ - Transition table:
+                 STATES:
+EVENTS           S00 S01 S02 S03 S04 S05 S06
+---------------|----------------------------
+my_event   E00 | S01  .  S03  .   .   .   .  
+Ev-1       E01 |  .   .   .   .   .   .  S00
+*Timeout*   TO | S02  .  S04 S04 S00 S00 S00
+*  AAT  *  AAT |  .  S02  .   .   .   .   .  
+
+ - State info:
+S00:init state| TO: 1500 ms => S02 (state_2)
+   :          | IT (I): E00 (my_event) => S01 (St-1)
+S01:St-1      | AAT: => S02 (state_2)
+S02:state_2   | TO: 600 ms => S04 (St-4)
+   :          | IT (I): E00 (my_event) => S03 (St-3)
+S03:St-3      | TO: 600 ms => S04 (St-4)
+S04:St-4      | TO: 600 ms => S00 (init state)
+S05:St-5      | TO: 600 ms => S00 (init state)
+S06:St-6      | TO: 600 ms => S00 (init state)
+---------------------
+Spaghetti: Warning, state S05 (St-5) is unreachable
+Spaghetti: Warning, state S06 (St-6) is unreachable
+```
+
+The transition table is pretty much simple to understand: for each state (columns), it shows the next state, depending on the event (lines).
+
+The second part shows, for each state, the "special events".
+We can see that on state S00 (named here "init state"), a timeout will occur after 1.5 s. and switch to state S02.
+But this state also has an Internal Transition (IT), currently Inactive (thus the (I)).
+It will be triggered by the internal event E00 (named "my_event"), and switching to state S01 will occur.
+
+State S01 is a "Pass State": when activated, it will switch immediately to state S02.
+
 <a name="checks"></a>
-### 8.2 - Checking configuration
+### 8.3 - Checking configuration
 
 At startup (when calling ```fsm.start()```), a general checking is done through a call of  ```fsm.doChecking()```.
 This is to make sure nothing wrong will happen.
@@ -582,7 +633,7 @@ These latter situations will not disable running the FSM, because they may occur
 where everything is not finished but the user wants to test things anyway.
 
 <a name="getters"></a>
-### 8.3 - FSM getters and other information
+### 8.4 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
  - ```nbStates()```: returns nb of states
