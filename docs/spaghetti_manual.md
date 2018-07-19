@@ -608,13 +608,14 @@ Spaghetti: Warning, state S06 (St-6) is unreachable
 ```
 
 The transition table is pretty much simple to understand: for each state (columns), it shows the next state, depending on the event (lines).
+It has a line for Timeouts, where we can see that all the states have a timeout assigned, except state S01, that has an "Always Active" transition.
 
 The second part shows, for each state, the "special events".
 We can see that on state S00 (named here "init state"), a timeout will occur after 1.5 s. and switch to state S02.
 But this state also has an Internal Transition (IT), currently Inactive (thus the (I)).
 It will be triggered by the internal event E00 (named "my_event"), and switching to state S01 will occur.
 
-State S01 is a "Pass State": when activated, it will switch immediately to state S02.
+State S01 is a "Pass State": it has a "Always Active Transition" (AAT), so when activated, it will switch immediately to state S02.
 
 <a name="checks"></a>
 ### 8.3 - Checking configuration
@@ -643,6 +644,7 @@ Some self-explaining member function that can be useful in user code:
  - ```timeOutDuration( EN_States st )```: returns duration of timeout on state ```st```, as a std::pair (Duration, DurUnit)
 
 Other stuff:
+- The version of the library is in the symbol ```SPAG_VERSION```.
 - Printing the configuration:
 The member function ```printConfig()``` will print the current configuration, for example:
 ```C++
