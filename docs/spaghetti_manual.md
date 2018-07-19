@@ -587,10 +587,10 @@ This will print out both the transition table and the state information. For exa
                  STATES:
 EVENTS           S00 S01 S02 S03 S04 S05 S06
 ---------------|----------------------------
-my_event   E00 | S01  .  S03  .   .   .   .  
+my_event   E00 | S01  .  S03  .   .   .   .
 Ev-1       E01 |  .   .   .   .   .   .  S00
 *Timeout*   TO | S02  .  S04 S04 S00 S00 S00
-*  AAT  *  AAT |  .  S02  .   .   .   .   .  
+*  AAT  *  AAT |  .  S02  .   .   .   .   .
 
  - State info:
 S00:init state| TO: 1500 ms => S02 (state_2)
@@ -644,7 +644,10 @@ Some self-explaining member function that can be useful in user code:
  - ```timeOutDuration( EN_States st )```: returns duration of timeout on state ```st```, as a std::pair (Duration, DurUnit)
 
 Other stuff:
-- The version of the library is in the symbol ```SPAG_VERSION```.
+- The version of the library is in the symbol ```SPAG_VERSION```, can be printed with:
+```C++
+std::cout << "version=" << SPAG_VERSION << '\n';
+```
 - Printing the configuration:
 The member function ```printConfig()``` will print the current configuration, for example:
 ```C++

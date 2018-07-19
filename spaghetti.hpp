@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION 0.9.1
+#define SPAG_VERSION "0.9.1"
 
 #include <vector>
 #include <map>
@@ -1472,7 +1472,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		{
 			std::string yes(" = yes\n"), no(" = no\n");
 			std::string out( "Spaghetti version " );
-			out += SPAG_STRINGIZE( SPAG_VERSION );
+			out += SPAG_VERSION;
 			out += "\nBuild options:\n";
 
 			out += SPAG_P_STRINGIZE2( SPAG_USE_ASIO_WRAPPER );
