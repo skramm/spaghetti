@@ -84,6 +84,7 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
 Exiting...
 ```
 If this symbol is not defined, regular checking is done with the classical ```assert()```. As usual, this checking can be removed by defining the symbol ```NDEBUG```.
+
 * ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++
@@ -99,22 +100,22 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 	};
 	fsm.assignStrings2Events( v_str );
 ```
-(and similarly with ```assignStrings2States()``` for states.)
+It also possible to provide a std::map:
+```C++
+	std::map<EVENT,std::string> map_str = {
+		{ ev_Reset,      "Reset" },
+		{ ev_WarningOn,  "Warning On" },
+		{ ev_WarningOff, "Warning Off" }
+	};
+	fsm.assignStrings2Events( map_str );
+```
+This works similarly for states.
 <br>
 These strings will then be printed out when calling the ```printConfig()``` and ```printData()``` member function.
 <br>
-Default values are also generated when this option is enabled, in the form "St-x" and "Ev-x".
-
-* ```SPAG_GENERATE_DOTFILE``` : <br>
-DEPRECATED on 20180605:<br>
-this enables the member function ```writeDotFile( std::string )```.
-When called, it will generate in current folder a .dot file of the current configuration that can be used to produce an image of the corresponding graph, using the well-know tool Graphviz.
-For example, with
-```
-$ dot -Tsvg inputfile.dot >outputfile.svg
-```
-
-
+Default values are generated when this option is enabled, in the form "St-x" and "Ev-x".
+<br>
+You can also access these strings at runtime with ```fsm.getString( some_event_enum_value )```.
 
 
 --- Copyright S. Kramm - 2018 ---
