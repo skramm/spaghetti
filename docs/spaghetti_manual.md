@@ -76,19 +76,22 @@ But all these values are internally casted to integers, so you must not assign v
 
 Events can be of **three** types:
 
-1. "hardware" events (basically, it can be just a keyboard press). You need to define in the enum above.
+1. *hardware events* (basically, it can be just a keyboard press).
+You need to define them in the enum above.
 But you can have none !
 In that case, just define the events enum as:
 ```C++
 	enum Events { NB_EVENTS }
 ```
-1. "time out" events, when you want to switch from state A to state B after 'x' seconds. There are handled separately.
-1. "internal events", that depend on some **inner** condition on your application.
+1. *time out events*, when you want to switch from state A to state B after 'x' seconds.
+There are handled separately:
+you **must not** add an enumerator for these.
+1. *internal events*, that depend on some **inner** condition on your application.
 Say something like: "*if the state X is activated 3 times, then, once on state Y, switch immediately to state Z*".
-These must also be defined in the enum above.
+These **must** also be defined in the enum above.
 
-As described above, for the two latter cases you need to provide a special "timing/event handler" class, that will have some requirements.
-You will need to instanciate an object of that class, then assign it to the FSM in the configuration step.
+As described above, for the two latter cases you need to provide a special "timing/event handler" class that will have some requirements.
+You will need to instanciate an object of that class, then **assign** it to the FSM in the configuration step.
 Fortunately, this is made easy for the usual case, no worry.<br>
 For the other events, it is up to your code to detect these, and then call some Spaghetti member function.
 Take a look at the little sample in next section.
@@ -110,7 +113,7 @@ Then, create the FSM data type, using a conveniency macro:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-This means you create the type ```fsm_t``` (the macro is actually a typedef), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
+This means you create the type ```fsm_t``` (this macro is actually a typedef), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
 
 Now, you can instanciate the fsm:
 
@@ -490,7 +493,7 @@ The signal handler will then itself call the ```processInnerEvent()``` member fu
 
 As this require the use of
 [signals](https://en.wikipedia.org%2Fwiki%2FSignal_%28IPC%29),
-thus this is available only if symbol ```SPAG_USE_SIGNALS``` (see [build options](spaghetti_options.md).)
+thus this is available only if symbol ```SPAG_USE_SIGNALS``` is defined (see [build options](spaghetti_options.md).)
 
 <a name="pass_states"></a>
 ### 7.2 - Pass states
@@ -667,9 +670,15 @@ This will print out, in a CSV style:
  You can pass to this function a second parameter, to specify **what** data you want:
  - ```PrintFlags::stateCount``` : print state counters
  - ```PrintFlags::eventCount``` : print event counters
+ - ```PrintFlags::ignoredEvents``` : print ignored counters
   - ```PrintFlags::all```: all of the above (default value)
 <br>
 These flags can be "OR-ed" to have several ones active.
+For example:
+```C++
+fsm.printLoggedData( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
+```
+
 
 Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
