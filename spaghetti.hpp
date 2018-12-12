@@ -613,6 +613,9 @@ struct DotFileOptions
 	bool showEventIndex  = true;
 	bool showEventString = true;
 	bool showUnreachableStates = true;
+	bool fixedNodeWidth  = false;
+	std::string nodeWidth = "1.5";  ///< used only if \c fixedNodeWidth is true
+
 };
 
 //-----------------------------------------------------------------------------------
@@ -2044,7 +2047,10 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 	f << "digraph G {\n"
 		<< "rankdir=LR;\n"
 		<< "edge[style=\"bold\"];\n"
-		<< "node[shape=\"" << opt.nodeShape << "\"];\n";
+		<< "node[shape=\"" << opt.nodeShape << "\"";
+	if( opt.fixedNodeWidth )
+		f << ",fixedsize=true,width=" << opt.nodeWidth;
+	f << "];\n";
 	f << std::setfill( '0' );
 
 	f << "\n/* States (=nodes) */\n";

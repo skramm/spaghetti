@@ -36,7 +36,7 @@ Feedback welcome, please post issue on Github in case of any problems.
 ### Main features
 
 - single-file header-only library, just fetch the file ```spaghetti.hpp``` and store it on your machine somewhere where your compiler can find it
-- C++11, no dependencies other than standard library
+- C++11, no dependencies other than standard library (please [read this](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md#1---fundamental-concepts) carefully)
 - ease of use and performance
 - [full manual included](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md)
 - runtime logging capability

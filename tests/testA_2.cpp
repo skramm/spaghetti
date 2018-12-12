@@ -119,6 +119,11 @@ int main( int, char* argv[] )
 		dfo.showUnreachableStates = false;
 		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
 	}
+	{
+		spag::DotFileOptions dfo;
+		dfo.fixedNodeWidth = true;
+		WRITE_INCREMENTAL_DOT_FILE( fsm, dfo );
+	}
 
 #if 0
 	try

@@ -38,6 +38,7 @@ showStateString = true
 showEventIndex  = true
 showEventString = true
 showUnreachableStates = true
+fixedNodeWidth = false
 ```
 If you want to change one of these, instanciate it, change one of the members value, and call the function by adding the options.
 For example:
@@ -64,7 +65,19 @@ This can be useful when handling a complex situation where you would want to pri
 | showStateIndex=false  | ![test2_00](test_2_07.svg) |
 | showStateString=false | ![test2_00](test_2_08.svg) |
 | showUnreachableStates=false | ![test2_00](test_2_09.svg) |
+| fixedNodeWidth=true   | ![test2_00](test_2_10.svg) |
 
+When rendering with Graphviz, the size of the nodes are set automatically.
+If you prefer a fixed size, then you can set `fixedNodeWidth` to true, and assign the requested size (in inches) with `nodeWidth`.
+The default value is "1.5".
+For example:
+
+```C++
+	spag::DotFileOptions dfo;
+	dfo.fixedNodeWidth = true;
+	dfo.nodeWidth = "1.2";
+	fsm.writeDotFile( "myDotFile", dfo );
+```
 
 
 --- Copyright S. Kramm - 2018 ---
