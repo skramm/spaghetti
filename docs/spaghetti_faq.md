@@ -58,7 +58,7 @@ But you can always use anything, say an integer, and ignore its value.
 
 - **Q**: *Can I pass the FSM object itself as callback argument?*<br/>
 **A**: No, as the callback argument is a template parameter of the FSM. You would get into some infinite recursion...
-But you can then make the FSM object global, so the callbacks can access it.s
+But you can then make the FSM object global, so the callback functions can access it.
 This is demonstrated in sample program
 [```src/sample_3.cpp```](../../../tree/master/src/sample_3.cpp).<br>
 But **be careful**, because in that case, no checking will be done on what you will change on the configuration of the FSM structure.
@@ -78,11 +78,16 @@ But don't worry, if you don't, you will get a compiler error, this is checked at
 The only technical issue is that you cannot store a non-static function into a ```std::function``` object.
 So the workaround is that you will need to use a *binding* trick. This is demonstrated in
 [```src/traffic_lights_1c.cpp```](../../../tree/master/src/traffic_lights_1c.cpp):
+
 ```C++
    fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )
-```<br>
-Of course, you will need to include the header
-[```<functional>```](http://en.cppreference.com/w/cpp/utility/functional).
+```
+
+Fortunately, you can use two helper macros to avoid that uglyness:
+- to assign the function `CallbackFunc` belonging to class `Class` to the fsm state `State`:<br>
+`SPAG_ASSIGN_MEMBER_CALLBACK( fsm, State, Class, CallbackFunc )`
+- to assign that function to all the states of the fsm:<br>
+`SPAG_ASSIGN_MEMBER_CALLBACK_ALL( fsm, ClassName, CallbackFunc )`
 
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
@@ -107,9 +112,9 @@ Post an issue if you feel that can be useful, it wouldn't be too hard to add tha
 This is demonstrated in ```src/sample_3.cpp```.
 
 - **Q**: *I need to track ignored events. How can I do that?*<br>
-**A**: First, these are logged (if logging is enable, of course), and you can print them once your FSM is stopped with ```printLoggedData()```.
+**A**: First, these are logged (if logging is enable, of course, see [`SPAG_ENABLE_LOGGING`](spaghetti_options.md) ), and you can print them once your FSM is stopped with ```printLoggedData()```.
 Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs.
-See member function ```assignIgnoredEventsCallback()```.
+See member function ```assignIgnoredEventsCallback()```.<br>
 This is demonstrated in ```src/traffic_lights_common.hpp```:
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state, the callback function is triggered.
 
