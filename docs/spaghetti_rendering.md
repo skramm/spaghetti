@@ -39,8 +39,9 @@ showEventIndex  = true
 showEventString = true
 showUnreachableStates = true
 fixedNodeWidth = false
+useColorsEventType = true
 ```
-If you want to change one of these, instanciate it, change one of the members value, and call the function by adding the options.
+If you want to change one of these, instanciate this object, change one of the members value, and call the function by adding the options.
 For example:
 
 ```C++
@@ -56,16 +57,17 @@ This can be useful when handling a complex situation where you would want to pri
 | Option |   |
 |-----------------------|----------------------------|
 | Default               | ![test2_00](test_2_00.svg) |
-| showActiveState=true  | ![test2_00](test_2_01.svg) |
-| showInnerEvents=false | ![test2_00](test_2_02.svg) |
-| showAAT=false         | ![test2_00](test_2_03.svg) |
-| showTimeOuts=false    | ![test2_00](test_2_04.svg) |
-| showEventIndex=false  | ![test2_00](test_2_05.svg) |
-| showEventString=false | ![test2_00](test_2_06.svg) |
-| showStateIndex=false  | ![test2_00](test_2_07.svg) |
-| showStateString=false | ![test2_00](test_2_08.svg) |
-| showUnreachableStates=false | ![test2_00](test_2_09.svg) |
-| fixedNodeWidth=true   | ![test2_00](test_2_10.svg) |
+| showActiveState=true  | ![test2_01](test_2_01.svg) |
+| showInnerEvents=false | ![test2_02](test_2_02.svg) |
+| showAAT=false         | ![test2_03](test_2_03.svg) |
+| showTimeOuts=false    | ![test2_04](test_2_04.svg) |
+| showEventIndex=false  | ![test2_05](test_2_05.svg) |
+| showEventString=false | ![test2_06](test_2_06.svg) |
+| showStateIndex=false  | ![test2_07](test_2_07.svg) |
+| showStateString=false | ![test2_08](test_2_08.svg) |
+| showUnreachableStates=false | ![test2_09](test_2_09.svg) |
+| fixedNodeWidth=true         | ![test2_10](test_2_10.svg) |
+| useColorsEventType=false    | ![test2_11](test_2_11.svg) |
 
 When rendering with Graphviz, the size of the nodes are set automatically.
 If you prefer a fixed size, then you can set `fixedNodeWidth` to true, and assign the requested size (in inches) with `nodeWidth`.
@@ -79,5 +81,12 @@ For example:
 	fsm.writeDotFile( "myDotFile", dfo );
 ```
 
+The edges are colored depending on their type
+- external event: black
+- time out event: blue
+- Internal event: red
+- Always Active Transition (AAT): green
+
+This can be disabled by setting `useColorsEventType` to `false`.
 
 --- Copyright S. Kramm - 2018 ---

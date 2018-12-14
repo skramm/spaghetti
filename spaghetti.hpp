@@ -615,6 +615,7 @@ struct DotFileOptions
 	bool showUnreachableStates = true;
 	bool fixedNodeWidth  = false;
 	std::string nodeWidth = "1.5";  ///< used only if \c fixedNodeWidth is true
+	bool useColorsEventType = true;
 
 };
 
@@ -2113,16 +2114,25 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 		const auto& tev = _stateInfo[j]._timerEvent;
 		if( tev._enabled && opt.showTimeOuts )
 			if( isReachable( j ) || opt.showUnreachableStates )
+			{
 				f << j << " -> " << tev._nextState
 					<< " [label=\"TO:"
 					<< tev._duration
 					<< priv::stringFromTimeUnit( tev._durUnit )
-					<< "\"];\n";
+					<< "\"";
+				if( opt.useColorsEventType )
+					f << ",color=blue";
+				f << "];\n";
+			}
 #ifdef SPAG_USE_SIGNALS
 		if( _stateInfo[j]._isPassState && opt.showAAT )
 			if( isReachable( j ) || opt.showUnreachableStates )
-				f << j << " -> " << _transitionMat[ nbEvents()+1 ][j] << " [label=\"AAT\"];\n";
-
+			{
+				f << j << " -> " << _transitionMat[ nbEvents()+1 ][j] << " [label=\"AAT\"";
+				if( opt.useColorsEventType )
+					f << ",color=green";
+				f << "];\n";
+			}
 		if( opt.showInnerEvents )
 		{
 			for( const auto& itr: _stateInfo[j]._innerTransList )
@@ -2139,8 +2149,11 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 							f << ':';
 						f << _strEvents.at(itr._innerEvent);
 					}
+					f << '"';
 #endif // SPAG_ENUM_STRINGS
-					f << "\"];\n";
+					if( opt.useColorsEventType )
+						f << ",color=red";
+					f << "];\n";
 				}
 			}
 		}
