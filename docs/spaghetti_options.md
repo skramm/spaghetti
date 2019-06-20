@@ -27,7 +27,7 @@ There are two types of symbols:
 
 Theses options/symbols must be chosen carefully, depending on what you need:
 
-* ```SPAG_USE_ASIO_WRAPPER``` : this enables the usage of a included event handling class: ```AsioWrapper```, that fits nicely for timeout events.
+* ```SPAG_USE_ASIO_WRAPPER``` : this enables the usage of an included event handling class: ```AsioWrapper```, that fits nicely for timeout events.
 It is provided as an option as it brings in a dependency to the Boost libraries, which might not be wanted by end user.
 It is automatically activated if ```SPAG_EMBED_ASIO_WRAPPER``` (see below) is defined.<br>
 If you do not define this symbol, then you may not use timers and inner events, unless you provide your own event handling class.
@@ -83,7 +83,8 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
  - EVENT::NB_EVENTS value=8
 Exiting...
 ```
-If this symbol is not defined, regular checking is done with the classical ```assert()```. As usual, this checking can be removed by defining the symbol ```NDEBUG```.
+If this symbol is \b not defined, regular checking is still done with the classical ```assert()```.
+As usual, this checking can be removed by defining the symbol ```NDEBUG```.
 
 * ```SPAG_ENUM_STRINGS``` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
@@ -91,7 +92,8 @@ You can provide a string either individually with
 	fsm.assignString2Event( ev_MyEvent, "something happened" );
 	fsm.assignString2State( st_Arizona, "Arizona state" );
 ```
-or globally, by providing a vector of pairs(enum values, string). For example:
+or globally, by providing a vector of pairs (enum values, string).
+For example:
 ```C++
 	std::vector<std::pair<EVENT,std::string>> v_str = {
 		{ ev_Reset,      "Reset" },
@@ -100,7 +102,7 @@ or globally, by providing a vector of pairs(enum values, string). For example:
 	};
 	fsm.assignStrings2Events( v_str );
 ```
-It also possible to provide a std::map:
+It also possible to provide a `std::map`:
 ```C++
 	std::map<EVENT,std::string> map_str = {
 		{ ev_Reset,      "Reset" },

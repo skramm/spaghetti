@@ -461,7 +461,8 @@ For example
 - "if some class member variable has value 10, then, when on state X, we want to switch to state Y instead of having a timeout leading to state Z"
 
 This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "external events".
-These latter ones are triggered by the user code: when they occur, the user code must call the member function ```processEvent()``` and thats it.
+These latter ones are triggered by the user code:
+when they occur, the user code must call the member function ```processEvent()``` and thats it.
 The state switches to the next one and all the actions associated with that state are done:
 callback is executed, timeout (if any) is launched, ...
 
@@ -663,11 +664,11 @@ If your FSM is able to stop (after a call to ```stop()```), you can printout the
 fsm.printLoggedData( std::cout );
 ```
 This will print out, in a CSV style:
- - the state counters (how many of times they were activated)
+ - the state counters (how many times the states have been activated).
  - the event counters. This also include the number of timeouts, and the number of "Always Active" transitions that were encountered.
  - a timed log of the transitions from one state to another.
 
- You can pass to this function a second parameter, to specify **what** data you want:
+ You can pass to this function an optional second parameter, to specify **what** data you want:
  - ```PrintFlags::stateCount``` : print state counters
  - ```PrintFlags::eventCount``` : print event counters
  - ```PrintFlags::ignoredEvents``` : print ignored counters

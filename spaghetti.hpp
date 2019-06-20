@@ -846,13 +846,13 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			assignGlobalTimeOut( _defaultTimerValue, _defaultTimerUnit, st_final );
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final, using default timer units
+/// Assigns an timeout event on \b all states except \c st_final, using duration \c dur and default timer unit.
 		void assignGlobalTimeOut( Duration dur, ST st_final )
 		{
 			assignGlobalTimeOut( dur, _defaultTimerUnit, st_final );
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final, using unit \c durUnit
+/// Assigns an timeout event on \b all states except \c st_final, using duration \c dur and unit \c durUnit
 		void assignGlobalTimeOut( Duration dur, std::string durUnit, ST st_final )
 		{
 			auto tu = priv::timeUnitFromString( durUnit );
@@ -1308,7 +1308,7 @@ then we need to raise the signal right away! (instead of waiting)
 
 			if( 0 == _innerEventFlag.count( ev ) )
 				throw std::runtime_error(
-					"request for activating event "
+					"request to activate event "
 					+ std::to_string( SPAG_P_CAST2IDX(ev) )
 #ifdef SPAG_ENUM_STRINGS
 					+ " (" + _strEvents[ SPAG_P_CAST2IDX(ev) ] + ")"
