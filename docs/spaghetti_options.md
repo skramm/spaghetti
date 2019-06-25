@@ -1,10 +1,24 @@
 
-## Spaghetti: Build options
+## Spaghetti: Build information
 
 - Homepage: https://github.com/skramm/spaghetti
 - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
 
-Several symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
+This pages summarizes how to build a program that uses this library, and how to build the provided samples.
+
+### Building the samples
+
+
+All the provided samples can be build with
+```make demo```
+(this implies you have Boost::asio installed)
+
+
+### Build options
+
+Spaghetti itself is a header-only single file library, thus there is nothing to build:
+just "include" that file in your program and your done.
+However, several symbols can change the behavior of the library and/or add additional capabilities, you can define them either by adding them in your makefile
 (with GCC, its ```-DSPAG_SOME_SYMBOL``` ), or by hardcoding in your program, BEFORE including the library file, like this:
 
 ```C++
@@ -20,10 +34,13 @@ std::cout << fsm_t::buildOptions()
 ```
 
 There are two types of symbols:
-* some add up some feature, but your program will compile anyway, whether the symbol is defined or not,
-* some change the inner structure of the classes: you need to define them based on what you need, your program won't compile if you do not have the right one.
+* Behavioral symbols: these add up some feature, but your program will compile anyway, whether the symbol is defined or not,
+* Structural symbols: these change the inner structure of the classes:
+you need to define them based on the FSM architecture, as described above.
+Incorrect usage might make your program fail to compile.
 
-### 1 - Structural change symbols
+
+### 1 - Structural symbols
 
 Theses options/symbols must be chosen carefully, depending on what you need:
 

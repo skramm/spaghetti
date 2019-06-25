@@ -30,7 +30,7 @@ For a reference manual, run ```make doc```, then open
 1. [Graphical Rendering of the FSM](spaghetti_rendering.md)
 1. [FAQ](spaghetti_faq.md)
 
-Before you can get started, all you need is to download and install the file ```spaghetti.hpp``` to a location where your compiler can find it
+Before you can get started, all you need is to download and install the file ```spaghetti.hpp``` to a location where your compiler can find it.
 On Linux, ```/usr/local/include``` is usually pretty good.
 You can do that manually, or with ```sudo make install```.
 Then you can create a program.

@@ -839,20 +839,20 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 #endif // SPAG_USE_SIGNALS
 
-/// Assigns an timeout event leading to state \c st_final, on \b all states except \c st_final,
+/// Assigns a timeout event leading to state \c st_final, on \b all states except \c st_final,
 /// using default timer unit and default timer duration value
 		void assignGlobalTimeOut( ST st_final )
 		{
 			assignGlobalTimeOut( _defaultTimerValue, _defaultTimerUnit, st_final );
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final, using duration \c dur and default timer unit.
+/// Assigns a timeout event on \b all states except \c st_final, using duration \c dur and default timer unit.
 		void assignGlobalTimeOut( Duration dur, ST st_final )
 		{
 			assignGlobalTimeOut( dur, _defaultTimerUnit, st_final );
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final, using duration \c dur and unit \c durUnit
+/// Assigns a timeout event on \b all states except \c st_final, using duration \c dur and unit \c durUnit
 		void assignGlobalTimeOut( Duration dur, std::string durUnit, ST st_final )
 		{
 			auto tu = priv::timeUnitFromString( durUnit );
@@ -861,7 +861,7 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 			assignGlobalTimeOut( dur, tu.second, st_final );
 		}
 
-/// Assigns an timeout event on \b all states except \c st_final, using unit \c durUnit
+/// Assigns a timeout event on \b all states except \c st_final, using unit \c durUnit
 /**
 After this, on all the states except \c st_final, if \c duration expires, the FSM will switch to \c st_final
 (where there may or may not be a timeout assigned)
@@ -889,7 +889,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 				}
 		}
 
-/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
+/// Assigns a timeout event on state \c st_curr, will switch to event \c st_next
 /**
 Duration will be:
  - if a timeout has been \b previously assigned to \c st_curr, then its value will be retained.
@@ -907,14 +907,14 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 				_stateInfo[ st_idx ]._timerEvent = priv::TimerEvent<ST>( st_next, _defaultTimerValue, _defaultTimerUnit );
 		}
 
-/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next
+/// Assigns a timeout event on state \c st_curr, will switch to event \c st_next
 /// Duration will be \c dur, with the default unit
 		void assignTimeOut( ST st_curr, Duration dur, ST st_next )
 		{
 			assignTimeOut( st_curr, dur, _defaultTimerUnit, st_next );
 		}
 
-/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next. With units
+/// Assigns a timeout event on state \c st_curr, will switch to event \c st_next. With units
 		void assignTimeOut( ST st_curr, Duration dur, DurUnit unit, ST st_next )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
@@ -923,7 +923,7 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, unit );
 		}
 
-/// Assigns an timeout event on state \c st_curr, will switch to event \c st_next. With units as strings
+/// Assigns a timeout event on state \c st_curr, will switch to event \c st_next. With units as strings
 		void assignTimeOut( ST st_curr, Duration dur, std::string unit, ST st_next )
 		{
 			auto tu = priv::timeUnitFromString( unit );
@@ -955,7 +955,7 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 			_stateInfo[ st_idx ]._timerEvent._enabled = false;
 		}
 
-/// Whatever state we are in, if the (external) event \c ev occurs, we switch to state \c st.
+/// Whatever state we are on, if the (external) event \c ev occurs, we switch to state \c st.
 /// (Except for state \c st, of course)
 		void assignTransition( EV ev, ST st )
 		{

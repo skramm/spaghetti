@@ -1,6 +1,6 @@
 /**
 \file turnstyle_2.cpp
-\brief Turnstyle example: similar to turnstyle_1.cp but with an added timeout.
+\brief Turnstyle example: similar to turnstyle_1.cpp but with an added timeout.
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 

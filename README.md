@@ -49,5 +49,5 @@ and
 
 Besides the main file ```spaghetti.hpp```, the repo also holds documentation, [FAQ](docs/spaghetti_faq.md), and several samples in ```src``` folder.
 All of this comes with all that is needed to build these on a standard Linux machine (makefile, build folders, ...).
-If you clone the repo, just run  ```make demo``` to build the programs (assuming you have Boost installed, as some samples rely on it).
+If you clone the repo, just run  ```make demo``` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
 You'll find the corresponding binaries in  the ```bin``` folder.
