@@ -1,7 +1,7 @@
 ## Time out related functions
 
-- Homepage: https://github.com/skramm/spaghetti
-- Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
+- [Homepage](https://github.com/skramm/spaghetti)
+- [Manual](spaghetti_manual.md)
 
 These member functions will assign a timeout to all the states except one.
 The types used here are:
@@ -16,13 +16,12 @@ Please read [this for more info on how to use timeouts](spaghetti_manual.md#show
 
 ### List of functions
 
-### Single Timeout on a state
+### 1 - Single Timeout on a state
 
 ```C++
-void assignTimeOut( ST st_curr, ST st_next )
+void assignTimeOut( ST st_curr, ST st_next );
 ```
-Assigns a timeout event on state \c st_curr, will switch to event \c st_next.
-
+Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
 Duration value will depend on the situation:
  - if a timeout has been previously assigned to `st_curr`, then its value will be retained.
  - if not, the default value and units will be used.
@@ -30,7 +29,7 @@ Duration value will depend on the situation:
 See `setTimerDefaultValue()` and `setTimerDefaultUnit()`
 
 ```C++
-void assignTimeOut( ST st_curr, Duration dur, ST st_next )
+void assignTimeOut( ST st_curr, Duration dur, ST st_next );
 ```
 Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
 Duration will be `dur`, with the current default unit.
@@ -46,16 +45,15 @@ void assignTimeOut( ST st_curr, Duration dur, std::string unit, ST st_next );
 Assigns a timeout event of duration `dur` with unit `unit` expressed as a string on state `st_curr`, will switch to event `st_next`.
 
 
-
-### Global Timeout on all states
+### 2 - Global operations
 
 ```C++
-void clearTimeOuts()
+void clearTimeOuts();
 ```
 Removes all the timeouts
 
 ```C++
-void assignGlobalTimeOut( ST st_final )
+void assignGlobalTimeOut( ST st_final );
 ```
 Assigns a timeout event leading to state ```st_final```, on **all** states except ```st_final```,
 using default timer unit and default timer duration value.
