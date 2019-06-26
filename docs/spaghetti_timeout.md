@@ -10,7 +10,49 @@ The types used here are:
 - DurUnit : an enum holding three values:
 ```DurUnit::ms```, ```DurUnit::sec```, ```DurUnit::min```
 
+The duration unit can also be expressed as a string, the allowed values are "ms", "sec" and "min".
+
+Please read [this for more info on how to use timeouts](spaghetti_manual.md#showcase2).
+
 ### List of functions
+
+### Single Timeout on a state
+
+```C++
+void assignTimeOut( ST st_curr, ST st_next )
+```
+Assigns a timeout event on state \c st_curr, will switch to event \c st_next.
+
+Duration value will depend on the situation:
+ - if a timeout has been previously assigned to `st_curr`, then its value will be retained.
+ - if not, the default value and units will be used.
+
+See `setTimerDefaultValue()` and `setTimerDefaultUnit()`
+
+```C++
+void assignTimeOut( ST st_curr, Duration dur, ST st_next )
+```
+Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
+Duration will be `dur`, with the current default unit.
+
+```C++
+void assignTimeOut( ST st_curr, Duration dur, DurUnit unit, ST st_next );
+```
+Assigns a timeout event of duration `dur` with unit `unit` on state `st_curr`, will switch to event `st_next`.
+
+```C++
+void assignTimeOut( ST st_curr, Duration dur, std::string unit, ST st_next );
+```
+Assigns a timeout event of duration `dur` with unit `unit` expressed as a string on state `st_curr`, will switch to event `st_next`.
+
+
+
+### Global Timeout on all states
+
+```C++
+void clearTimeOuts()
+```
+Removes all the timeouts
 
 ```C++
 void assignGlobalTimeOut( ST st_final )
