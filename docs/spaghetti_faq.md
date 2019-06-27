@@ -1,7 +1,9 @@
 # Spaghetti Manual: FAQ
 
- - Homepage: https://github.com/skramm/spaghetti
- - Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
+
+- [Homepage](https://github.com/skramm/spaghetti)
+- [Manual](spaghetti_manual.md)
+
 
  Q&A:
 
@@ -128,4 +130,4 @@ So you got it.
 
 
 
---- Copyright S. Kramm - 2018 ---
+--- Copyright S. Kramm - 2018-2019 ---

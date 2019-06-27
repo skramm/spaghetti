@@ -1,8 +1,8 @@
 
 ## Spaghetti: Build information
 
-- Homepage: https://github.com/skramm/spaghetti
-- Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
+- [Homepage](https://github.com/skramm/spaghetti)
+- [Manual](spaghetti_manual.md)
 
 This pages summarizes how to build a program that uses this library, and how to build the provided samples.
 
@@ -137,4 +137,4 @@ Default values are generated when this option is enabled, in the form "St-x" and
 You can also access these strings at runtime with ```fsm.getString( some_event_enum_value )```.
 
 
---- Copyright S. Kramm - 2018 ---
+--- Copyright S. Kramm - 2018-2019 ---

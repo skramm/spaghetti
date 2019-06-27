@@ -78,3 +78,5 @@ Assigns a timeout event on **all** states except ```st_final```, using duration 
 void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final );
 ```
 Assigns a timeout event on **all** states except ```st_final```, using duration ```dur``` and unit ```durUnit```.
+
+--- Copyright S. Kramm - 2018-2019 ---

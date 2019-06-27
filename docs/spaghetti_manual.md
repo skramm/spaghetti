@@ -2,6 +2,7 @@
 
 Homepage: https://github.com/skramm/spaghetti
 
+
 This page demonstrates usage of the library through several showcases, and gives additional details.
 All the example are included and runnable in the src folder, just ```make demo``` (or ```make demo -j4``` to make things quicker), then run ```bin/program_name```.
 
@@ -101,8 +102,8 @@ Take a look at the little sample in next section.
 <a name="showcase1"></a>
 ## 2 - Showcase 1: Hello World for FSM
 
-In this example, we show the "Hello World" of FSM, which is the "Turnstyle" FSM
-(see [WP link)](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile).
+In this example, we show the "Hello World" of FSM, which is the "Turnstyle" FSM,
+see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile).
 
 First, create enums for states and events:
 
@@ -115,7 +116,7 @@ Then, create the FSM data type, using a conveniency macro:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-This means you create the type ```fsm_t``` (this macro is actually a typedef), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
+This means you create the type ```fsm_t``` (this is actually a typedef of the templated class `SpagFSM`), using ```States``` and ```Events```, with callback functions having a ```bool``` as argument.
 
 Now, you can instanciate the fsm:
 
@@ -125,7 +126,7 @@ int main()
 	fsm_t fsm;
 ```
 
-Next, you need to configure your FSM, that is define what event in what state will trigger switching to what other state.
+Next, you need to configure your FSM: define what event in what state will trigger switching to what other state.
 With this simple example, you just do:
 ```C++
 	fsm.assignTransition( st_Locked,   ev_Coin, st_Unlocked );
@@ -141,6 +142,7 @@ In this case it is the same for all, but you can have a different function for e
 You don't even need to provide a callback function, it is always optional:
 some states can have one while others won't.
 The only constraint is that they must have the same signature.
+In the present case, we assign to the two states the function `cb_func`, and give the argument value:
 
 ```C++
 	fsm.assignCallback( st_Locked,   cb_func, true );
@@ -616,7 +618,8 @@ Spaghetti: Warning, state S06 (St-6) is unreachable
 The transition table is pretty much simple to understand: for each state (columns), it shows the next state, depending on the event (lines).
 It has a line for Timeouts, where we can see that all the states have a timeout assigned, except state S01, that has an "Always Active" transition.
 
-The second part shows, for each state, the "special events".
+The second part shows, for each state, the "special events"
+(Time-outs, Internal events, Always Active Transitions).
 We can see that on state S00 (named here "init state"), a timeout will occur after 1.5 s. and switch to state S02.
 But this state also has an Internal Transition (IT), currently Inactive (thus the (I)).
 It will be triggered by the internal event E00 (named "my_event"), and switching to state S01 will occur.
@@ -643,23 +646,17 @@ where everything is not finished but the user wants to test things anyway.
 ### 8.4 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
- - ```nbStates()```: returns nb of states
- - ```nbEvents()```: returns nb of events (only "hardware" an "inner" ones, not timeouts).
- - ```currentState()```: returns current state
- - ```previousState()```: returns previous state
- - ```timeOutDuration( EN_States st )```: returns duration of timeout on state ```st```, as a std::pair (Duration, DurUnit)
+ - ```size_t nbStates()```: returns nb of states
+ - ```size_t nbEvents()```: returns nb of events (only "hardware" an "inner" ones, not timeouts).
+ - ```ST currentState()```: returns current state (`ST` being the enum you have used to declare the FSM type)
+ - ```ST previousState()```: returns previous state
+ - ```timeOutDuration( EN_States st )```: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
 
 Other stuff:
 - The version of the library is in the symbol ```SPAG_VERSION```, can be printed with:
 ```C++
 std::cout << "version=" << SPAG_VERSION << '\n';
 ```
-- Printing the configuration:
-The member function ```printConfig()``` will print the current configuration, for example:
-```C++
-fsm.printConfig( std::cout );
-```
-
 - Printing runtime data:
 If your FSM is able to stop (after a call to ```stop()```), you can printout the runtime data with
 ```C++
@@ -678,14 +675,14 @@ This will print out, in a CSV style:
 <br>
 These flags can be "OR-ed" to have several ones active.
 For example:
+
 ```C++
 fsm.printLoggedData( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
 ```
 
-
-Please note that if the symbol ```SPAG_ENUM_STRINGS``` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
+Please note that if the symbol `SPAG_ENUM_STRINGS` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
 Also see how these functions are used in the provided sample programs.
 
 
 
---- Copyright S. Kramm - 2018 ---
+--- Copyright S. Kramm - 2018-2019 ---

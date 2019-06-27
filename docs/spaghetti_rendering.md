@@ -1,8 +1,8 @@
 
 ### FSM graph rendering
 
-- Homepage: https://github.com/skramm/spaghetti
-- Manual: https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md
+- [Homepage](https://github.com/skramm/spaghetti)
+- [Manual](spaghetti_manual.md)
 
 This library does not produce graphical rendering of the state machine.
 But it provides a function to generate a [standard dot file](https://en.wikipedia.org/wiki/DOT_%28graph_description_language%29), that can be used to generate the corresponding image, using [Graphviz](https://www.graphviz.org/).
@@ -90,4 +90,5 @@ The edges are colored depending on their type
 
 This can be disabled by setting `useColorsEventType` to `false`.
 
---- Copyright S. Kramm - 2018 ---
+
+--- Copyright S. Kramm - 2018-2019 ---
