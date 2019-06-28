@@ -9,7 +9,8 @@
 
 - **Q**: *What is the timing unit?*<br/>
 **A**: The values are stored as integer values with an associated ```DurUnit``` enumeration value, so you can select between seconds, milliseconds, and minutes, and this for each timeout value.<br>
-It is up to the Timer class to handle these (the provided optional timer class ```AsioWrapper``` does).
+It is up to the Timer class to handle these
+(the provided optional timer class ```AsioWrapper``` does).
 The default value is "seconds".<br>
 When you add the following configuration line, it will be considered as 5 seconds.
 ```C++

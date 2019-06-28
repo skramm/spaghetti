@@ -28,7 +28,7 @@ However, several symbols can change the behavior of the library and/or add addit
 
 They all start with these 5 characters: ```SPAG_```
 
-You can printout at runtime the build options with this static function (once you have defined the type ```fsm_t```):
+You can printout at runtime the build options with this static function (once you have defined the type ```fsm_t```, see [manual](spaghetti_manual.md#showcase1)):
 ```C++
 std::cout << fsm_t::buildOptions()
 ```
@@ -36,7 +36,7 @@ std::cout << fsm_t::buildOptions()
 There are two types of symbols:
 * Behavioral symbols: these add up some feature, but your program will compile anyway, whether the symbol is defined or not,
 * Structural symbols: these change the inner structure of the classes:
-you need to define them based on the FSM architecture, as described above.
+you need to define them based on the desired FSM architecture, as described in manual.
 Incorrect usage might make your program fail to compile.
 
 

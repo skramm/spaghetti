@@ -3,6 +3,9 @@
 - [Homepage](https://github.com/skramm/spaghetti)
 - [Manual](spaghetti_manual.md)
 
+This page describes the member functions that can be used to configure timeouts.
+This implies that an event-handler class is available, see [manual](spaghetti_manual.md) and [build options](spaghetti_options.md).
+
 These member functions will assign a timeout to all the states except one.
 The types used here are:
 - ST : the enumerator used for states
