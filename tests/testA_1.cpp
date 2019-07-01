@@ -1,5 +1,5 @@
 /**
-\file bad_configs.cpp
+\file testA_1.cpp
 \brief some test case to check configuration
 */
 

@@ -2,4 +2,5 @@
 *.layout
 *.svg
 *.dot
+*.stdout
 

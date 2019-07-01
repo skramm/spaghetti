@@ -1,5 +1,5 @@
 /**
-\file test_4.cpp
+\file testB_4.cpp
 \brief testing unique inner event handled in different states
 */
 

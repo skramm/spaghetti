@@ -1,5 +1,5 @@
 /**
-\file test_2.cpp
+\file testA_2.cpp
 \brief Demo of the graph rendering options
 */
 

@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION "0.9.1"
+#define SPAG_VERSION "0.9.2"
 
 #include <vector>
 #include <map>
@@ -692,18 +692,44 @@ class SpagFSM
 ///@{
 
 /// Assigns allowed event matrix
-		void assignEventMatrix( const std::vector<std::vector<char>>& mat )
+/**
+Allowed types for \c T:
+ - \c std::vector<std::vector<A>>
+ - \c std::array<std::array<A,N1>,N2> (with N1 the number of states, N2 the number of events)
+
+Type \c A can be \c bool, \c char, \c uchar, ...
+*/
+		template<typename T>
+		void assignEventMat( const T& mat )
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
-			_allowedMat = mat;
+
+			auto li_out = std::begin( _allowedMat );
+			for( auto li_in : mat )
+			{
+				std::copy( std::begin(li_in), std::end(li_in), std::begin(*li_out) );
+				li_out++;
+			}
 		}
 
-		void assignTransitionMat( const std::vector<std::vector<ST>>& mat )
+/// Assigns transition matrix
+/**
+Allowed types for \c T:
+ - \c std::vector<std::vector<ST>>
+ - \c std::array<std::array<ST,N1>,N2> (with N1 the number of states, N2 the number of events)
+*/
+		template<typename T>
+		void assignTransitionMat( const T& mat )
 		{
 			SPAG_CHECK_EQUAL( mat.size(),    nbEvents() );
 			SPAG_CHECK_EQUAL( mat[0].size(), nbStates() );
-			_transitionMat = mat;
+			auto li_out = std::begin( _transitionMat );
+			for( auto li_in : mat )
+			{
+				std::copy( std::begin(li_in), std::end(li_in), std::begin(*li_out) );
+				li_out++;
+			}
 		}
 
 /// Assigns an external transition event \c ev to switch from state \c st1 to state \c st2

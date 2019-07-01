@@ -6,7 +6,6 @@
 This page describes the member functions that can be used to configure timeouts.
 This implies that an event-handler class is available, see [manual](spaghetti_manual.md) and [build options](spaghetti_options.md).
 
-These member functions will assign a timeout to all the states except one.
 The types used here are:
 - ST : the enumerator used for states
 - Duration : unsigned integer value
@@ -55,31 +54,33 @@ void clearTimeOuts();
 ```
 Removes all the timeouts
 
+The following member functions will assign a timeout to all the states except one.
+
 ```C++
 void assignGlobalTimeOut( ST st_final );
 ```
-Assigns a timeout event leading to state ```st_final```, on **all** states except ```st_final```,
+Assigns a timeout event leading to state ```st_final```, on all states except ```st_final```,
 using default timer unit and default timer duration value.
 
 ```C++
 void assignGlobalTimeOut( ST st_final );
 ```
-Assigns a timeout event leading to state ```st_final``` on **all** states except ```st_final```, using default timer unit and default timer duration value.
+Assigns a timeout event leading to state ```st_final``` on all states except ```st_final```, using default timer unit and default timer duration value.
 
 ```C++
 void assignGlobalTimeOut( Duration dur, ST st_final );
 ```
-Assigns a timeout event on **all** states except ```st_final```, using duration ```dur``` and default timer unit.
+Assigns a timeout event on all states except ```st_final```, using duration ```dur``` and default timer unit.
 
 ```C++
 void assignGlobalTimeOut( Duration dur, std::string durUnit, ST st_final );
 ```
-Assigns a timeout event on **all** states except ```st_final```, using duration ```dur``` and unit ```durUnit``` (expressed as a string value).
+Assigns a timeout event on all states except ```st_final```, using duration ```dur``` and unit ```durUnit``` (expressed as a string value).
 
 
 ```C++
 void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final );
 ```
-Assigns a timeout event on **all** states except ```st_final```, using duration ```dur``` and unit ```durUnit```.
+Assigns a timeout event on all states except ```st_final```, using duration ```dur``` and unit ```durUnit```.
 
 --- Copyright S. Kramm - 2018-2019 ---

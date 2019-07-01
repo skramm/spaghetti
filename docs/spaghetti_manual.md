@@ -541,7 +541,7 @@ You can build a "matrix" (vector of vector) holding that information and assign 
 However, this doesn't take into account the fact that some of the transitions from one state to another may or may not be allowed.
 So you also need to provide an **authorization matrix**, that defines what can and what cannot be done.
 
-This is done with the member function ```assignEventMatrix()```.
+This is done with the member function ```assignEventMat()```.
 For example and with the above code, if we want to disable transitionning from state st2 to st0 when event ev2 occurs, it will be this:
 ```C++
 	std::vector<std::vector<char>> eventMat = {
@@ -549,9 +549,12 @@ For example and with the above code, if we want to disable transitionning from s
 /* ev1 */  { 1 ,   1 ,   1 },
 /* ev2 */  { 1 ,   1 ,   0 }
 	};
-	fsm.assignEventMatrix( eventMat );
+	fsm.assignEventMat( eventMat );
 ```
-As you can see, '1' means transition is allowed, '0' means it is disabled.
+As you expect, '1' (or any other non-null value) means transition is allowed, '0' means it is disabled.
+
+This will produce this state machine:
+![sample_FSM](doc_fig1.svg)
 
 However, in such a situation, it would be simpler to use the following two member functions:
 ```C++
