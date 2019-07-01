@@ -71,12 +71,12 @@ help:
 	@echo "This is not a program but a header-only library. Therefore, it is not supposed to be build."
 	@echo -e "If you want to build the sample programs, try target 'demo'.\n"
 	@echo "* Available targets:"
-	@echo " - demo": build the provided demo programs (needs Boost installed)
+	@echo " - demo: builds the provided demo programs (needs Boost installed)"
 	@echo " - clean: erases demo object files"
 	@echo " - cleandoc: erases doxygen-produced files"
 	@echo " - cleanall: the two above, and also erases the build demo programs"
 	@echo " - doc: build ref. manual, using Doxygen (needs to be installed)"
-	@echo " - install: copies single file to $(DEST_PATH)"
+	@echo " - install: copies single file header to $(DEST_PATH)"
 
 demo: $(EXEC_FILES)
 	@echo "- Done target $@"
