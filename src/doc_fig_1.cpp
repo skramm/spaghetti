@@ -30,14 +30,25 @@ int main( int, char* argv[] )
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
-
+{
 	std::vector<std::vector<States>> trMat = {
 //           st0 - st1 - st2
 /* ev1 */  { st1 , st2 , st0 },
 /* ev2 */  { st0 , st0 , st0 }
 	};
 	fsm.assignTransitionMat( trMat );
+}
 
+{
+	std::array<std::array<States,3>,2> trMat = {{
+//           st0 - st1 - st2
+/* ev1 */  { st1 , st2 , st0 },
+/* ev2 */  { st0 , st0 , st0 }
+	}};
+	fsm.assignTransitionMat( trMat );
+}
+
+// passing as bool
 {
 	std::vector<std::vector<bool>> eventMat = {
 //          st0 - st1 - st2
@@ -47,6 +58,7 @@ int main( int, char* argv[] )
 	fsm.assignEventMat( eventMat );
 }
 
+// passing as unsigned char
 {
 	std::vector<std::vector<unsigned char>> eventMat = {
 //          st0 - st1 - st2

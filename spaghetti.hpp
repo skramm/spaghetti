@@ -715,6 +715,8 @@ Type \c A can be \c bool, \c char, \c uchar, ...
 
 /// Assigns transition matrix
 /**
+Copying of elements is done because the input matrix can be a \c std::vector, or an \c std::array
+
 Allowed types for \c T:
  - \c std::vector<std::vector<ST>>
  - \c std::array<std::array<ST,N1>,N2> (with N1 the number of states, N2 the number of events)
