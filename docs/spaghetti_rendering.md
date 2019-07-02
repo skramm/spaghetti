@@ -50,7 +50,7 @@ For example:
 	fsm.writeDotFile( "myDotFile", dfo );
 ```
 
-The included test file ```tests/testA_2.cpp``` does a demo of these options.
+The included test file `tests/testA_2.cpp` does a demo of these options.
 It has unreachable states to show how these can be removed from the rendering.
 This can be useful when handling a complex situation where you would want to printout a rendering while FSM is partially configured.
 The table below shows for the same FSM different renderings, when one option changes from the default value.

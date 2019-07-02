@@ -897,23 +897,35 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 		void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final )
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
-			for( size_t i=0; i<nbStates(); i++ )
-				if( i != SPAG_P_CAST2IDX(st_final) )
+
+			for( size_t i=0; i<nbStates(); i++ )                                 // iterate on all the states
+				if( i != SPAG_P_CAST2IDX(st_final) )                             // and for all of them, except the designated one,
 				{
-					auto tev = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;
-					if( tev._enabled )
-					{
-						SPAG_P_LOG_ERROR << " warning, removal of previously assigned timeout leading from state " << i
-#ifdef SPAG_ENUM_STRINGS
-							<< " (" << _strStates[i] << ')'
-#endif
-							<< " to state " << tev._nextState
-#ifdef SPAG_ENUM_STRINGS
-							<< " (" << _strStates.at( SPAG_P_CAST2IDX(tev._nextState)) << ')'
-#endif
-							<< " after " << tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit ) << '\n';
+					auto tev = _stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent;   // get its "timer event" data.
+
+#ifdef SPAG_USE_SIGNALS
+					if( _stateInfo[ SPAG_P_CAST2IDX( i ) ]._isPassState )        // if it has already been assigned an AAT, then
+					{                                                            //  issue a warning and process next one.
+						SPAG_P_LOG_ERROR << " warning: state " << i
+							<< " is a pass state (holds an AAT), time out not assigned\n";
 					}
-					assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
+					else
+#endif
+					{
+						if( tev._enabled )
+						{
+							SPAG_P_LOG_ERROR << " warning, removal of previously assigned timeout leading from state " << i
+	#ifdef SPAG_ENUM_STRINGS
+								<< " (" << _strStates[i] << ')'
+	#endif
+								<< " to state " << tev._nextState
+	#ifdef SPAG_ENUM_STRINGS
+								<< " (" << _strStates.at( SPAG_P_CAST2IDX(tev._nextState)) << ')'
+	#endif
+								<< " after " << tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit ) << '\n';
+						}
+						assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
+					}
 				}
 		}
 
@@ -2492,34 +2504,5 @@ struct AsioWrapper
 Check list here:
 <a href="../src/html/files.html" target="_blank">sample programs</a>.
 
-
-
-\subsection ssec_related Possibly related software
-
- - Boost MSM: http://www.boost.org/doc/libs/release/libs/msm/
- - Boost Statechart: http://www.boost.org/doc/libs/release/libs/statechart/
- - tinyFSM: https://github.com/digint/tinyfsm
-
-
-
-\section sec_devinfo Developper information
-
-\subsection ssec_coding_style Coding style
-
-Most of it is pretty obvious by parsing the code, but here are some additional points:
-
-- TABS for indentation, SPACE for spacing
-- Identifiers
- - \c camelCaseIsUsed for functions, variables
- - class/struct member data is prepended with '_' ( \c _thisIsADataMember )
- - Types are \c CamelCase (UpperCase first letter). Example: \c ThisIsAType
- - To avoid name collisions, all the symbols defined here start with "SPAG_"
-
-\subsection ssec_testing Automated testing
-
-The makefile \c test target will build and launch the test programs, that are located in folder \c tests.
-This is very preliminar.
-At present, the testing consist in making sure a test program produces an output similar to a given reference
-(in the form of a file \c tests/XXXX.stdout).
 
 */

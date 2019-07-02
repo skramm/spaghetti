@@ -121,7 +121,6 @@ show:
 	@echo SRC_FILES_T=$(SRC_FILES_T)
 	@echo OBJ_FILES=$(OBJ_FILES)
 	@echo OBJ_FILES_T=$(OBJ_FILES_T)
-#	@echo OPT_ALL=$(OPT_ALL)
 	@echo EXEC_FILES=$(EXEC_FILES)
 	@echo EXEC_FILES_T=$(EXEC_FILES_T)
 	@echo DOT_FILES=$(DOT_FILES)

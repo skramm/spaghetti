@@ -59,12 +59,6 @@ The following member functions will assign a timeout to all the states except on
 ```C++
 void assignGlobalTimeOut( ST st_final );
 ```
-Assigns a timeout event leading to state ```st_final```, on all states except ```st_final```,
-using default timer unit and default timer duration value.
-
-```C++
-void assignGlobalTimeOut( ST st_final );
-```
 Assigns a timeout event leading to state ```st_final``` on all states except ```st_final```, using default timer unit and default timer duration value.
 
 ```C++

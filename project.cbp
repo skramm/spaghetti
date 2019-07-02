@@ -28,6 +28,7 @@
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
 		<Unit filename="docs/spaghetti_changelog.md" />
+		<Unit filename="docs/spaghetti_devinfo.md" />
 		<Unit filename="docs/spaghetti_faq.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="docs/spaghetti_options.md" />
@@ -60,6 +61,7 @@
 		<Unit filename="tests/testA_1.cpp" />
 		<Unit filename="tests/testA_2.cpp" />
 		<Unit filename="tests/testA_3.cpp" />
+		<Unit filename="tests/testA_4.cpp" />
 		<Unit filename="tests/testB_4.cpp" />
 		<Extensions>
 			<envvars />

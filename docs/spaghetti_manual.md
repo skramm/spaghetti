@@ -30,6 +30,7 @@ For a reference manual, run ```make doc```, then open
 1. [Build options](spaghetti_options.md)
 1. [Graphical Rendering of the FSM](spaghetti_rendering.md)
 1. [Summary of time-out related functions](spaghetti_timeout.md)
+1. [Developper information](spaghetti_devinfo.md)
 1. [FAQ](spaghetti_faq.md)
 
 
