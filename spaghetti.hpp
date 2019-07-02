@@ -907,6 +907,9 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 					if( _stateInfo[ SPAG_P_CAST2IDX( i ) ]._isPassState )        // if it has already been assigned an AAT, then
 					{                                                            //  issue a warning and process next one.
 						SPAG_P_LOG_ERROR << " warning: state " << i
+	#ifdef SPAG_ENUM_STRINGS
+							<< " (" << _strStates[i] << ')'
+	#endif
 							<< " is a pass state (holds an AAT), time out not assigned\n";
 					}
 					else
