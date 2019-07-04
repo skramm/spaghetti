@@ -10,3 +10,7 @@
  2019-07-02:
   - fixed bug: when assigning a global timeout, states having already an AAT will not be assigned the timeout.
   - moved dev info into markdown page
+
+  2019-07-04:
+   - clarified manual on logging capabilities
+   - fixed build failure

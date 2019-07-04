@@ -12,6 +12,9 @@ Homepage: https://github.com/skramm/spaghetti
 
 #define SPAG_USE_ASIO_WRAPPER
 #define SPAG_EXTERNAL_EVENT_LOOP
+
+#define SPAG_ENABLE_LOGGING
+
 //#define SPAG_ENUM_STRINGS
 //#define SPAG_FRIENDLY_CHECKING
 #include "spaghetti.hpp"

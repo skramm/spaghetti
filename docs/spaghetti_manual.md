@@ -4,10 +4,9 @@ Homepage: https://github.com/skramm/spaghetti
 
 
 This page demonstrates usage of the library through several showcases, and gives additional details.
-All the example are included and runnable in the src folder, just ```make demo``` (or ```make demo -j4``` to make things quicker), then run ```bin/program_name```.
+All the example are included and runnable in the src folder, just `make demo` (or `make demo -j4` to make things quicker), then run `bin/program_name`.
 
-For a reference manual, run ```make doc```, then open
-```html/index.html``` (needs doxygen).
+For a reference manual, run `make doc`, then open `html/index.html` (needs doxygen).
 
 **Warning**: this manual is only preliminar, thus it might contain outdated-irrelevant-incorrect information at this state, please check source code also.
 **Feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback always appreciated!**
@@ -29,14 +28,15 @@ For a reference manual, run ```make doc```, then open
    1. [FSM getters and other information](#getters)
 1. [Build options](spaghetti_options.md)
 1. [Graphical Rendering of the FSM](spaghetti_rendering.md)
+1. [Runtime logging](spaghetti_logging.md)
 1. [Summary of time-out related functions](spaghetti_timeout.md)
 1. [Developper information](spaghetti_devinfo.md)
 1. [FAQ](spaghetti_faq.md)
 
 
-Before you can get started, all you need is to download and install the file ```spaghetti.hpp``` to a location where your compiler can find it.
-On Linux, ```/usr/local/include``` is usually pretty good.
-You can do that manually, or with ```sudo make install```.
+Before you can get started, all you need is to download and install the file `spaghetti.hpp` to a location where your compiler can find it.
+On Linux, `/usr/local/include` is usually pretty good.
+You can do that manually, or with `sudo make install`.
 Then you can create a program.
 Or, you can clone the whole repo to have a look at the provided examples.
 
@@ -386,7 +386,7 @@ So here, we demonstrate another use case: we will use the provided asio-based ti
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 ```
-This macro also defines the class ```AsioEL``` ("boost::Asio Event Loop") that you will need to instanciate (see below).
+This macro also defines the class `AsioEL` ("boost::Asio Event Loop") that you will need to instanciate (see below).
 
 The server will inherit from some generic UDP server (also included):
 ```C++
@@ -445,13 +445,13 @@ For details, check the source file:
 ## 6 - Running Concurrent FSM
 
 When using a timer associated with the FSM, the default behavior is that starting the FSM will be a blocking function.
-If you need to run several FSMs concurrently, then you need to handle the event loop separately, and the ```start()``` function must not be blocking.
+If you need to run several FSMs concurrently, then you need to handle the event loop separately, and the `start()` function must not be blocking.
 This implies that the Timer class must not hold the timer.
 
-To use the provided Event loop class ```AsioEL``` in this situation, you need to define the symbol ```SPAG_EXTERNAL_EVENT_LOOP```.
+To use the provided Event loop class `AsioEL` in this situation, you need to define the symbol `SPAG_EXTERNAL_EVENT_LOOP`.
 This will change the class behavior, it will not embed the Boost::asio event loop structure (aka "io_service" or "io_context"),
 it is now up to your code to provide it.
-You can then start all the needed FSM, then eventually start the event loop, usually with something looking like: ```io_service.run()```
+You can then start all the needed FSM, then eventually start the event loop, usually with something looking like: `io_service.run()`
 
 This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/src/sample_2.cpp).<br>
 
@@ -467,7 +467,7 @@ For example
 
 This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "external events".
 These latter ones are triggered by the user code:
-when they occur, the user code must call the member function ```processEvent()``` and thats it.
+when they occur, the user code must call the member function `processEvent()` and thats it.
 The state switches to the next one and all the actions associated with that state are done:
 callback is executed, timeout (if any) is launched, ...
 
@@ -484,7 +484,7 @@ At runtime, it is still the user-code responsability to call some member functio
 Recall, with the other triggering member function ```processEvent()```, the processing takes place immediately:
 the FSM will check if that event is allowed on the current state, and will switch to the next state according to the transition matrix.<br>
 Here, we just notify the FSM that some inner event happened, and that it "might" be useful later, when on some other state.
-This is done by a call to ```activateInnerEvent()```.
+This is done by a call to `activateInnerEvent()`.
 
 The function will actually only set the flag associated to that inner event to "true", so that it will be indeed processed when we arrive on the state.
 
@@ -505,7 +505,7 @@ thus this is available only if symbol ```SPAG_USE_SIGNALS``` is defined (see [bu
 ### 7.2 - Pass states
 
 Pass states are states having a single transition to the next state, that is always active.
-It is also handled using signals, so the symbol ```SPAG_USE_SIGNALS``` must also be defined.
+It is also handled using signals, so the symbol `SPAG_USE_SIGNALS` must also be defined.
 
 They appear in the config function output and on the graph with the string "AAT", meaning "Always Active Transition".
 
@@ -525,9 +525,9 @@ See for example [src/sample_1b.cpp]( ../../../tree/master/src/sample_1b.cpp)
 For FSM configuration, you can proceed as described above but it can be tedious for larger situations.
 Instead, you can also assign directly a </b>transition matrix</b>, with the events in lines, the states in columns, and each table cell defining the state
 to switch to.
-This is done with the member function ```assignTransitionMat()```.
+This is done with the member function `assignTransitionMat()`.
 
-For example, say you have a 3 states (```st0,st1,st2```) and 2 events (```ev1,ev2```)
+For example, say you have a 3 states (`st0,st1,st2`) and 2 events (`ev1,ev2`)
 and you want to switch from each of the states to the next one if the "event 1" occurs, and switch back to initial state if "event 2" occurs.
 You can build a "matrix" (vector of vector) holding that information and assign it to the FSM.
 
@@ -542,7 +542,7 @@ You can build a "matrix" (vector of vector) holding that information and assign 
 However, this doesn't take into account the fact that some of the transitions from one state to another may or may not be allowed.
 So you also need to provide an **authorization matrix**, that defines what can and what cannot be done.
 
-This is done with the member function ```assignEventMat()```.
+This is done with the member function `assignEventMat()`.
 For example and with the above code, if we want to disable transitionning from state st2 to st0 when event ev2 occurs, it will be this:
 ```C++
 	std::vector<std::vector<char>> eventMat = {
@@ -591,7 +591,7 @@ You can printout the whole configuration of the FSM with a member function:
 The second argument is optional.
 
 This will print out both the transition table and the state information. For example, consider this, produced with
-```$ bin/testA_2```:
+`$ bin/testA_2`:
 
 ```
 * FSM Configuration:
@@ -633,7 +633,7 @@ State S01 is a "Pass State": it has a "Always Active Transition" (AAT), so when 
 <a name="checks"></a>
 ### 8.3 - Checking configuration
 
-At startup (when calling ```fsm.start()```), a general checking is done through a call of  ```fsm.doChecking()```.
+At startup (when calling `fsm.start()`), a general checking is done through a call of  `fsm.doChecking()`.
 This is to make sure nothing wrong will happen.
 This function can either throw an error in case of an invalid situation, or just print out a warning.
 
@@ -650,43 +650,17 @@ where everything is not finished but the user wants to test things anyway.
 ### 8.4 - FSM getters and other information
 Some self-explaining member function that can be useful in user code:
 
- - ```size_t nbStates()```: returns nb of states
- - ```size_t nbEvents()```: returns nb of events (only "hardware" an "inner" ones, not timeouts).
- - ```ST currentState()```: returns current state (`ST` being the enum you have used to declare the FSM type)
- - ```ST previousState()```: returns previous state
- - ```timeOutDuration( EN_States st )```: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
+ - `size_t nbStates()`: returns nb of states
+ - `size_t nbEvents()`: returns nb of events (only "hardware" and "inner" ones, not timeouts)
+ - `ST currentState()`: returns current state (`ST` being the enum you have used to declare the FSM type)
+ - `ST previousState()`: returns previous state
+ - `timeOutDuration( EN_States st )```: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
 
 Other stuff:
-- The version of the library is in the symbol ```SPAG_VERSION```, can be printed with:
+- The version of the library is in the symbol `SPAG_VERSION`, can be printed with:
 ```C++
 std::cout << "version=" << SPAG_VERSION << '\n';
 ```
-- Printing runtime data:
-If your FSM is able to stop (after a call to ```stop()```), you can printout the runtime data with
-```C++
-fsm.printLoggedData( std::cout );
-```
-This will print out, in a CSV style:
- - the state counters (how many times the states have been activated).
- - the event counters. This also include the number of timeouts, and the number of "Always Active" transitions that were encountered.
- - a timed log of the transitions from one state to another.
-
- You can pass to this function an optional second parameter, to specify **what** data you want:
- - ```PrintFlags::stateCount``` : print state counters
- - ```PrintFlags::eventCount``` : print event counters
- - ```PrintFlags::ignoredEvents``` : print ignored counters
-  - ```PrintFlags::all```: all of the above (default value)
-<br>
-These flags can be "OR-ed" to have several ones active.
-For example:
-
-```C++
-fsm.printLoggedData( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
-```
-
-Please note that if the symbol `SPAG_ENUM_STRINGS` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
-Also see how these functions are used in the provided sample programs.
-
 
 
 --- Copyright S. Kramm - 2018-2019 ---

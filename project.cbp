@@ -58,11 +58,15 @@
 		<Unit filename="src/turnstyle_1.cpp" />
 		<Unit filename="src/turnstyle_2.cpp" />
 		<Unit filename="src/udp_server.hpp" />
+		<Unit filename="tests/readme.txt" />
 		<Unit filename="tests/testA_1.cpp" />
+		<Unit filename="tests/testA_1.stdout" />
 		<Unit filename="tests/testA_2.cpp" />
+		<Unit filename="tests/testA_2.stdout" />
 		<Unit filename="tests/testA_3.cpp" />
-		<Unit filename="tests/testA_4.cpp" />
+		<Unit filename="tests/testA_3.stdout" />
 		<Unit filename="tests/testB_4.cpp" />
+		<Unit filename="tests/testB_5.cpp" />
 		<Extensions>
 			<envvars />
 			<code_completion />

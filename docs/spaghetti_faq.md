@@ -14,7 +14,7 @@ It is up to the Timer class to handle these
 The default value is "seconds".<br>
 When you add the following configuration line, it will be considered as 5 seconds.
 ```C++
-	fsm.assignTimeOut( st_Red, 5, st_Green  );
+	fsm.assignTimeOut( st_Red, 5, st_Green );
 ```
 Actually, it uses the current default timer unit.
 This one can be changed any time, for example to milliseconds, with the following command (which will **not** change the settings of already assigned timeouts):
@@ -24,13 +24,13 @@ This one can be changed any time, for example to milliseconds, with the followin
 Other possible values are ```sec```,```min```.
 Alternatively, you can also give the units when defining Timeouts. This will for example define a 5 minutes Timeout:
 ```C++
-	fsm.assignTimeOut( st_Red, 5, spag::DurUnit::min, st_Green  );
+	fsm.assignTimeOut( st_Red, 5, spag::DurUnit::min, st_Green );
 ```
-Oh, and if for some reason (templated function in a header, as in ```src/traffic_lights_common.hpp```) you don't have access to the ```DurUnit``` type, you can also use string values:
+Oh, and if for some reason (templated function in a header, as in `src/traffic_lights_common.hpp`) you don't have access to the `DurUnit` type, you can also use string values:
 ```C++
-	fsm.assignTimeOut( st_Red, 5, "min", st_Green  );
+	fsm.assignTimeOut( st_Red, 5, "min", st_Green );
 ```
-Internally, the timing is handled through the C++11 ```chrono``` library
+Internally, the timing is handled through the C++11 `chrono` library
 [duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
 - **Q**: *How does this library differ from the other ones?*<br/>
@@ -52,10 +52,10 @@ Other non critical errors will throw a
 
 - **Q**: *What if I have more that a single argument to pass to my callback function?*<br/>
 **A**: You'll need to "pack it" in some class, or use a
-[```std::pair```](http://en.cppreference.com/w/cpp/utility/pair),
-or a [```std::tuple```](http://en.cppreference.com/w/cpp/utility/tuple).
+[`std::pair`](http://en.cppreference.com/w/cpp/utility/pair),
+or a [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple).
 
-- **Q**: *Can I use a callback function with a void parameter ( ```void my_callback()```)*<br/>
+- **Q**: *Can I use a callback function with a void parameter ( `void my_callback()`)*<br/>
 **A**: No, unfortunately. This is because void is not a type, you can't pass it as template argument.
 But you can always use anything, say an integer, and ignore its value.
 
@@ -70,7 +70,7 @@ You could make the FSM run into some invalid configuration, leading to undefined
 - **Q**: *How can I assign callback argument values in a more convenient way?
 I have a lot of states, and assigning these one by one (with ```assignCallbackValue()```) is tedious*<br/>
 **A**: If you have no special needs on the value of the callback arguments (i.e. you only need them to be different values),
-then you can use ```assignCallbackAutoval( cb )```.
+then you can use `assignCallbackAutoval( cb )`.
 This will assign to all the states the callback function ```cb(int)```
 and will assign as callback argument value the **index** of the corresponding state.
 Of course, this requires that you have defined the FSM type with some kind of integer type as callback argument.

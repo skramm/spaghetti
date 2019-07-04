@@ -1,5 +1,5 @@
 /**
-\file testA_4.cpp
+\file testB_5.cpp
 \brief test of the warning when assigning a global time out when one of the states has an AAT (=is a pass state)
 */
 
@@ -34,14 +34,4 @@ int main( int argc, char* argv[] )
 
 	fsm.assignGlobalTimeOut( 100, "ms", st2 );
 
-/*	try
-	{
-		fsm.start();
-	}
-	catch( const std::exception& e )
-	{
-		std::cout << "Error: " << e.what() << '\n';
-	}
-*/
-//	fsm.printLoggedData( std::cout );
 }

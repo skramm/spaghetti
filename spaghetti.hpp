@@ -350,6 +350,11 @@ struct StateInfo
 };
 //-----------------------------------------------------------------------------------
 /// Private, helper function
+/**
+Used to format nicely with (fixed-spacing font) the configuration data.
+
+This function will print out the string \c str and fill in with spaces until we reach the \c maxlength value
+*/
 inline
 void
 PrintEnumString( std::ostream& out, std::string str, size_t maxlength=0 )
@@ -392,7 +397,7 @@ template<typename ST,typename EV>
 struct RunTimeData
 {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/// a state-change event, used for logging
+/// A state-change event, used for logging
 	struct StateChangeEvent
 	{
 		size_t _state;
@@ -434,7 +439,7 @@ struct RunTimeData
 		_stateCounter.clear();
 		_eventCounter.clear();
 	}
-	/// Print dynamic data (runtime data) to \c out
+	/// Print event/states counters to \c out
 	void printData( std::ostream& out, PrintFlags pflags, char sep ) const
 	{
 		if( pflags & PrintFlags::stateCount )
@@ -443,10 +448,10 @@ struct RunTimeData
 			for( size_t i=0; i<_stateCounter.size(); i++ )
 			{
 				out << i << sep,
-#ifdef SPAG_ENUM_STRINGS
+	#ifdef SPAG_ENUM_STRINGS
 				priv::PrintEnumString( out, _strStates[i], _maxlength_s );
 				out << sep;
-#endif
+	#endif
 				out << _stateCounter[i] << '\n';
 			}
 		}
@@ -457,10 +462,10 @@ struct RunTimeData
 			for( size_t i=0; i<_eventCounter.size(); i++ )
 			{
 				out << i << sep;
-#ifdef SPAG_ENUM_STRINGS
+	#ifdef SPAG_ENUM_STRINGS
 				priv::PrintEnumString( out, _strEvents[i], _maxlength_e );
 				out << sep;
-#endif
+	#endif
 				out << _eventCounter[i] << '\n';
 			}
 		}
@@ -471,10 +476,10 @@ struct RunTimeData
 			for( size_t i=0; i<_ignoredEvents.size(); i++ )
 			{
 				out << i << sep;
-#ifdef SPAG_ENUM_STRINGS
+	#ifdef SPAG_ENUM_STRINGS
 				priv::PrintEnumString( out, _strEvents[i], _maxlength_e );
 				out << sep;
-#endif
+	#endif
 				out << _ignoredEvents[i] << '\n';
 			}
 		}
@@ -482,7 +487,11 @@ struct RunTimeData
 
 /// Logs a transition from current state to state \c st, that was produced by event \c ev
 /**
-event stored as size_t because we may pass values other than the ones in the enum (timeout and Always Active transitions)
+This will both:
+- increment the event and state counters
+- log the transition in the logfile
+
+Events are passed as \c size_t because we may pass values other than the ones in the enum (timeout and Always Active transitions)
 */
 	void logTransition( ST st, size_t ev_idx )
 	{
@@ -498,14 +507,16 @@ event stored as size_t because we may pass values other than the ones in the enu
 			if( !_logfile.is_open() )
 				SPAG_P_THROW_ERROR_RT( "unable to open file " + _logfileName );
 
-			_logfile << "\n# FSM run history:\n#time" << logfile_sep << "event" << logfile_sep
-#ifdef SPAG_ENUM_STRINGS
-				<< "event_string" << logfile_sep << "state" << logfile_sep << "state_string\n";
-#else
-				<< "state\n";
-#endif
+			_logfile << "\n# FSM runtime history\n#index" << _sepChar << "time" << _sepChar << "event-Id" << _sepChar
+	#ifdef SPAG_ENUM_STRINGS
+				<< "event_string" << _sepChar << "state-Id" << _sepChar << "state_string\n";
+	#else
+				<< "state-Id\n";
+	#endif
 		}
+
 		print2LogFile( _logfile, StateChangeEvent{ st_idx, ev_idx, std::chrono::high_resolution_clock::now() - _startTime } );
+		_logfile.flush();
 	}
 
 	void logIgnoredEvent( size_t ev_idx )
@@ -515,30 +526,25 @@ event stored as size_t because we may pass values other than the ones in the enu
 	}
 
 //////////////////////////////////
-// public data section
-//////////////////////////////////
-
-	std::string _logfileName = "spaghetti.csv";
-	char logfile_sep = ';';
-
-//////////////////////////////////
 // private member function section
 //////////////////////////////////
 
 	private:
-	void print2LogFile( std::ofstream& f,  const StateChangeEvent sce ) const
+	void print2LogFile( std::ofstream& f, const StateChangeEvent sce ) const
 	{
-		char sep(';');
-		f << sce._elapsed.count() << sep << sce._event << sep;
-
-#ifdef SPAG_ENUM_STRINGS
-		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
-		f << sep;
-#endif
-		f << sce._state << sep;
-#ifdef SPAG_ENUM_STRINGS
-		priv::PrintEnumString( f, _strStates[sce._state], _maxlength_s );
-#endif
+		static size_t c;
+		f << std::setw(6) << std::setfill('0') << ++c
+			<< _sepChar << sce._elapsed.count() << _sepChar << sce._event << _sepChar;
+		std::cout << "c=" << c << '\n';
+	#ifdef SPAG_ENUM_STRINGS
+//		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
+		f << _strEvents[sce._event] << _sepChar;
+	#endif
+		f << sce._state << _sepChar;
+	#ifdef SPAG_ENUM_STRINGS
+//		priv::PrintEnumString( f, _strStates[sce._state], _maxlength_s );
+		f << _strStates[sce._state];
+	#endif
 		f << '\n';
 	}
 
@@ -553,14 +559,18 @@ event stored as size_t because we may pass values other than the ones in the enu
 		std::ofstream _logfile;
 		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)> _ignoredEvents;
 
-#ifdef SPAG_ENUM_STRINGS
+	#ifdef SPAG_ENUM_STRINGS
 		const std::vector<std::string>& _strEvents; ///< reference on vector of strings of events
 		const std::vector<std::string>& _strStates; ///< reference on vector of strings of states
-		size_t _maxlength_e;
-		size_t _maxlength_s;
-#endif
+		size_t _maxlength_e;                        ///< hold maximum length of the event strings
+		size_t _maxlength_s;                        ///< hold maximum length of the state strings
+	#endif
+
+	std::string _logfileName = "spaghetti.csv";
+	char _sepChar = ';';          ///< log file separator
 };
-#endif
+#endif // SPAG_ENABLE_LOGGING
+
 //-----------------------------------------------------------------------------------
 #ifndef SPAG_USE_ARRAY
 /// helper template function (unused if SPAG_USE_ARRAY defined)
