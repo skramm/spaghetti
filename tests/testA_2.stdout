@@ -2,20 +2,23 @@
 * FSM Configuration: 
  - Transition table:
                  STATES:
-EVENTS           S00 S01 S02 S03 S04 S05
----------------|------------------------
-my_event   E00 | S01  .  S03  .   .   .  
-*Timeout*   TO | S02 S02 S04 S04 S00 S00 
-*  AAT  *  AAT |  .   .   .   .   .   .  
+EVENTS           S00 S01 S02 S03 S04 S05 S06
+---------------|----------------------------
+my_event   E00 | S01  .  S03  .   .   .   .  
+Ev-1       E01 |  .   .   .   .   .   .  S00 
+*Timeout*   TO | S02  .  S04 S04 S00 S00 S00 
+*  AAT  *  AAT |  .  S02  .   .   .   .   .  
 
  - State info:
 S00:init state| TO: 1500 ms => S02 (state_2)
    :          | IT (I): E00 (my_event) => S01 (St-1)
-S01:St-1      | TO: 600 ms => S02 (state_2)
+S01:St-1      | AAT: => S02 (state_2)
 S02:state_2   | TO: 600 ms => S04 (St-4)
    :          | IT (I): E00 (my_event) => S03 (St-3)
 S03:St-3      | TO: 600 ms => S04 (St-4)
 S04:St-4      | TO: 600 ms => S00 (init state)
 S05:St-5      | TO: 600 ms => S00 (init state)
+S06:St-6      | TO: 600 ms => S00 (init state)
 ---------------------
 Spaghetti: Warning, state S05 (St-5) is unreachable
+Spaghetti: Warning, state S06 (St-6) is unreachable

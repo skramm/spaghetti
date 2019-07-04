@@ -535,7 +535,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 		static size_t c;
 		f << std::setw(6) << std::setfill('0') << ++c
 			<< _sepChar << sce._elapsed.count() << _sepChar << sce._event << _sepChar;
-		std::cout << "c=" << c << '\n';
+//		std::cout << "c=" << c << '\n';
 	#ifdef SPAG_ENUM_STRINGS
 //		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
 		f << _strEvents[sce._event] << _sepChar;
