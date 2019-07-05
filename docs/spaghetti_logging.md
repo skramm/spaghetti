@@ -39,6 +39,9 @@ Assuming you ave access to the FSM object (say, you have a separate thread to ac
 `fsm.clearCounters()`.
 This does not reset the timestamp, only the counters.
 
+You can also fetch at runtime the counter values with a call to `fsm.getCounters()`.
+This will return an object of type `Counters`, which hold a copy of the internal values.
+
 
 ### 2 - History of events and state changes
 

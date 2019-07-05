@@ -120,8 +120,7 @@ and you can print them once your FSM is stopped with `printCounters()`.
 Second, to see them during runtime, you can assign to the a generic callback function that will be called every time an ignored event occurs,
 with `assignIgnoredEventsCallback()`.
 This callback needs to have this signature:
-`void cb_ign( States st, Events ev )`.
-
+`void cb_ign( States st, Events ev )`.<br>
 This will bring information on when and why this happened, for instance you can do something like this:
 ```C++
 void cb_ign( States st, Events ev )

@@ -187,6 +187,23 @@ enum PrintFlags
 enum class DurUnit : char { ms, sec, min };
 
 //-----------------------------------------------------------------------------------
+#ifdef SPAG_ENABLE_LOGGING
+/// states and events counters
+struct Counters
+{
+	Counters( size_t nb_states, size_t nb_events_tot )
+	{
+		_stateCounter.resize( nb_states );
+		_eventCounter.resize( nb_events_tot );
+		_ignoredEvents.resize( nb_events_tot-2 );  // because we don't need the last two elements
+	}
+	std::vector<size_t> _stateCounter;   ///< per state counter
+	std::vector<size_t> _eventCounter;   ///< per event counter
+	std::vector<size_t> _ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
+};
+#endif
+
+//-----------------------------------------------------------------------------------
 /// private namespace, so user code won't hit into this
 namespace priv {
 
@@ -425,23 +442,17 @@ struct RunTimeData
 		_stateCounter[0] = 1; // because we start on state 0, so it starts at 1
 	}
 
-	void alloc( size_t nbStates, size_t nbEvents )
-	{
-//		_stateCounter.resize( nbStates,   0 );
-//		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass-states")
-	}
-
-/*	void incrementInitState()
-	{
-//		assert( _stateCounter.size() );
-		_stateCounter[0] = 1;
-	}*/
-
 	void clear()
 	{
 		_stateCounter.fill( 0 );
 		_eventCounter.fill( 0 );
 		_ignoredEvents.fill( 0 );
+	}
+/// Returns a copy of all the counters.
+	Counters buildCounters() const
+	{
+		Counters cnt( _stateCounter.size(), _eventCounter.size() );
+		return cnt;
 	}
 	/// Print event/states counters to \c out
 	void printData( std::ostream& out, PrintFlags pflags, char sep ) const
@@ -539,7 +550,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 		static size_t c;
 		f << std::setw(6) << std::setfill('0') << ++c
 			<< _sepChar << sce._elapsed.count() << _sepChar << sce._event << _sepChar;
-		std::cout << "c=" << c << '\n';
+//		std::cout << "c=" << c << '\n';
 	#ifdef SPAG_ENUM_STRINGS
 		f << _strEvents[sce._event] << _sepChar;
 	#endif
@@ -555,8 +566,6 @@ Events are passed as \c size_t because we may pass values other than the ones in
 //////////////////////////////////
 
 	private:
-//		std::vector<size_t>  _stateCounter;    ///< per state counter
-//		std::vector<size_t>  _eventCounter;
 		std::array<size_t,static_cast<size_t>(ST::NB_STATES)>   _stateCounter;   ///< per state counter
 		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)+2> _eventCounter;   ///< per event counter
 		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)>   _ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
@@ -675,10 +684,6 @@ class SpagFSM
 			priv::resizemat( _transitionMat, nbEvents(), nbStates() );
 			priv::resizemat( _allowedMat, nbEvents(), nbStates() );
 			_stateInfo.resize( nbStates() );    // states information
-#endif
-
-#ifdef SPAG_ENABLE_LOGGING
-			_rtdata.alloc( nbStates(), nbEvents() );
 #endif
 
 #ifdef SPAG_ENUM_STRINGS
@@ -1266,10 +1271,6 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			_rtdata.init();
 #endif
 			_isRunning = true;
-
-//#ifdef SPAG_ENABLE_LOGGING
-//			_rtdata.incrementInitState();
-//#endif
 			runAction();
 
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
@@ -1493,6 +1494,11 @@ This function will be called by the signal handler of the event handler class ON
 		{
 			_rtdata.printData( str, pf, sep );
 		}
+
+		const Counters& getCounters() const
+		{
+			return _rtdata.buildCounters();
+		}
 		void clearCounters()
 		{
 			_rtdata.clear();
@@ -1500,6 +1506,8 @@ This function will be called by the signal handler of the event handler class ON
 #else
 		void printCounters( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 		void setLogFilename( std::string fn ) const {}
+//		const priv::RunTimeData& getCounters() const {}
+		void clearCounters() {}
 #endif // SPAG_ENABLE_LOGGING
 
 /// Sets the timer default value. See assignTimeOut()
