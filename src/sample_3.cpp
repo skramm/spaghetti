@@ -29,10 +29,12 @@ void cb_func( int )
 		fsm.writeDotFile( "sample_3_" + std::to_string(c), options );
 	c++;
 	if( !(c%100) )
+	{
 		std::cout << "c=" << c << '\n';
+		fsm.getCounters().print( std::cout );
+	}
 	if( c>1000 )
 		fsm.stop();
-
 }
 
 int main( int, char* argv[] )

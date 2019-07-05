@@ -57,6 +57,8 @@ int main( int, char* argv[] )
 	fsm_A.assignEventHandler( &asio_A );
 	fsm_B.assignEventHandler( &asio_B );
 
+	fsm_A.setLogFileName( "spaghetti_A.csv" );
+	fsm_B.setLogFileName( "spaghetti_B.csv" );
 	try
 	{
 		fsm_A.start();  // non-blocking: external event loop !

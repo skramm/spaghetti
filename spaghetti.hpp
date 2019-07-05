@@ -174,7 +174,7 @@ typedef size_t Duration;
 namespace spag {
 
 //------------------------------------------------------------------------------------
-/// Used in \ref SpagFSM<>::printCounters() as second argument
+/// Used in \ref SpagFSM<>::Counters::print() as second argument
 enum PrintFlags
 {
 	stateCount  = 0x01
@@ -189,19 +189,42 @@ enum class DurUnit : char { ms, sec, min };
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_ENABLE_LOGGING
 /// states and events counters
+/**
+If strings enabled, then we pass these to the constructor, else we only pass the number of states and events
+*/
 struct Counters
 {
-	Counters( size_t nb_states, size_t nb_events_tot )
+#ifdef SPAG_ENUM_STRINGS
+	Counters( const std::vector<std::string>& strStates, const std::vector<std::string>& strEvents )
+		: _strStates( strStates )
+		, _strEvents( strEvents )
 	{
-		_stateCounter.resize( nb_states );
-		_eventCounter.resize( nb_events_tot );
-		_ignoredEvents.resize( nb_events_tot-2 );  // because we don't need the last two elements
-	}
-	std::vector<size_t> _stateCounter;   ///< per state counter
-	std::vector<size_t> _eventCounter;   ///< per event counter
-	std::vector<size_t> _ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
-};
+		auto nb_states = strStates.size();
+		auto nb_events = strEvents.size();
+#else
+	Counters( size_t nb_states, size_t nb_events )
+	{
 #endif
+		assert( nb_states ); /// \todo remove this once tested
+		assert( nb_events );
+		stateCounter.resize(  nb_states );
+		eventCounter.resize(  nb_events );
+		ignoredEvents.resize( nb_events-2 );  // because we don't need the last two elements
+	}
+
+	void print( std::ostream& out=std::cout, PrintFlags pf=PrintFlags::all, char sep = ';' ) const;
+
+	std::vector<size_t> stateCounter;   ///< per state counter
+	std::vector<size_t> eventCounter;   ///< per event counter
+	std::vector<size_t> ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
+
+#ifdef SPAG_ENUM_STRINGS
+	private:
+		const std::vector<std::string> _strStates;
+		const std::vector<std::string> _strEvents;
+#endif
+};
+#endif // SPAG_ENABLE_LOGGING
 
 //-----------------------------------------------------------------------------------
 /// private namespace, so user code won't hit into this
@@ -383,6 +406,7 @@ PrintEnumString( std::ostream& out, std::string str, size_t maxlength=0 )
 		for( size_t i=0; i<maxlength-str.size(); i++ )
 			out << ' ';
 }
+
 //-----------------------------------------------------------------------------------
 /// Helper function, returns max length of string in vector
 /**
@@ -407,6 +431,68 @@ getMaxLength( const T& v_str )
 	}
 	return maxlength;
 }
+
+} // namespace priv
+
+//-----------------------------------------------------------------------------------
+#ifdef SPAG_ENABLE_LOGGING
+/// Holds the values of the counters, can be fetched with \c fsm.getCounters()
+/**
+Also holds the string (if option enabled), for nice printing
+*/
+void
+Counters::print( std::ostream& out, PrintFlags pf, char sep ) const
+{
+#ifdef SPAG_ENUM_STRINGS
+	auto maxlength_e = priv::getMaxLength( _strEvents );
+	auto maxlength_s = priv::getMaxLength( _strStates );
+#endif
+	if( pf & PrintFlags::stateCount )
+	{
+		out << "# State counters:\n";
+		for( size_t i=0; i<stateCounter.size(); i++ )
+		{
+			out << i << sep,
+
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _strStates[i], maxlength_s );
+			out << sep;
+#endif
+			out << stateCounter[i] << '\n';
+		}
+	}
+
+	if( pf & PrintFlags::eventCount )
+	{
+		out << "\n# Event counters:\n";
+		for( size_t i=0; i<eventCounter.size(); i++ )
+		{
+			out << i << sep;
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _strEvents[i], maxlength_e );
+			out << sep;
+#endif
+			out << eventCounter[i] << '\n';
+		}
+	}
+
+	if( pf & PrintFlags::ignoredEvents && ignoredEvents.size()>0 )
+	{
+		out << "\n# Ignored Events counters:\n";
+		for( size_t i=0; i<ignoredEvents.size(); i++ )
+		{
+			out << i << sep;
+#ifdef SPAG_ENUM_STRINGS
+			priv::PrintEnumString( out, _strEvents[i], maxlength_e );
+			out << sep;
+#endif
+			out << ignoredEvents[i] << '\n';
+		}
+	}
+}
+#endif // SPAG_ENABLE_LOGGING
+
+namespace priv {
 //------------------------------------------------------------------------------------
 /// Holds the FSM dynamic data: current state, and logged data (if enabled at build, see symbol \c SPAG_ENABLE_LOGGING)
 #ifdef SPAG_ENABLE_LOGGING
@@ -425,14 +511,8 @@ struct RunTimeData
 
 	public:
 #ifdef SPAG_ENUM_STRINGS
-	void init()
-	{
-		_maxlength_e = priv::getMaxLength( _strEvents );
-		_maxlength_s = priv::getMaxLength( _strStates );
-	}
-
 	RunTimeData( const std::vector<std::string>& str_events, const std::vector<std::string>& str_states )
-		: _strEvents(str_events), _strStates( str_states )
+		: _strEvents_R(str_events), _strStates_R( str_states )
 #else
 	RunTimeData()
 #endif
@@ -451,53 +531,17 @@ struct RunTimeData
 /// Returns a copy of all the counters.
 	Counters buildCounters() const
 	{
+#ifdef SPAG_ENUM_STRINGS
+		Counters cnt( _strStates_R, _strEvents_R );
+#else
 		Counters cnt( _stateCounter.size(), _eventCounter.size() );
+#endif
+
+		std::copy( std::begin(_stateCounter),  std::end(_stateCounter),  std::begin(cnt.stateCounter) );
+		std::copy( std::begin(_eventCounter),  std::end(_eventCounter),  std::begin(cnt.eventCounter) );
+		std::copy( std::begin(_ignoredEvents), std::end(_ignoredEvents), std::begin(cnt.ignoredEvents) );
+
 		return cnt;
-	}
-	/// Print event/states counters to \c out
-	void printData( std::ostream& out, PrintFlags pflags, char sep ) const
-	{
-		if( pflags & PrintFlags::stateCount )
-		{
-			out << "# State counters:\n";
-			for( size_t i=0; i<_stateCounter.size(); i++ )
-			{
-				out << i << sep,
-	#ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strStates[i], _maxlength_s );
-				out << sep;
-	#endif
-				out << _stateCounter[i] << '\n';
-			}
-		}
-
-		if( pflags & PrintFlags::eventCount )
-		{
-			out << "\n# Event counters:\n";
-			for( size_t i=0; i<_eventCounter.size(); i++ )
-			{
-				out << i << sep;
-	#ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strEvents[i], _maxlength_e );
-				out << sep;
-	#endif
-				out << _eventCounter[i] << '\n';
-			}
-		}
-
-		if( pflags & PrintFlags::ignoredEvents )
-		{
-			out << "\n# Ignored Events counters:\n";
-			for( size_t i=0; i<_ignoredEvents.size(); i++ )
-			{
-				out << i << sep;
-	#ifdef SPAG_ENUM_STRINGS
-				priv::PrintEnumString( out, _strEvents[i], _maxlength_e );
-				out << sep;
-	#endif
-				out << _ignoredEvents[i] << '\n';
-			}
-		}
 	}
 
 /// Logs a transition from current state to state \c st, that was produced by event \c ev
@@ -522,7 +566,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 			if( !_logfile.is_open() )
 				SPAG_P_THROW_ERROR_RT( "unable to open file " + _logfileName );
 
-			_logfile << "\n# FSM runtime history\n#index" << _sepChar << "time" << _sepChar << "event-Id" << _sepChar
+			_logfile << "# FSM runtime history\n#index" << _sepChar << "time" << _sepChar << "event-Id" << _sepChar
 	#ifdef SPAG_ENUM_STRINGS
 				<< "event_string" << _sepChar << "state-Id" << _sepChar << "state_string\n";
 	#else
@@ -547,16 +591,15 @@ Events are passed as \c size_t because we may pass values other than the ones in
 	private:
 	void print2LogFile( std::ofstream& f, const StateChangeEvent sce ) const
 	{
-		static size_t c;
-		f << std::setw(6) << std::setfill('0') << ++c
+		f << std::setw(6) << std::setfill('0') << _logIndex++
 			<< _sepChar << sce._elapsed.count() << _sepChar << sce._event << _sepChar;
 //		std::cout << "c=" << c << '\n';
 	#ifdef SPAG_ENUM_STRINGS
-		f << _strEvents[sce._event] << _sepChar;
+		f << _strEvents_R[sce._event] << _sepChar;
 	#endif
 		f << sce._state << _sepChar;
 	#ifdef SPAG_ENUM_STRINGS
-		f << _strStates[sce._state];
+		f << _strStates_R[sce._state];
 	#endif
 		f << '\n';
 	}
@@ -566,6 +609,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 //////////////////////////////////
 
 	private:
+		mutable size_t _logIndex = 0;
 		std::array<size_t,static_cast<size_t>(ST::NB_STATES)>   _stateCounter;   ///< per state counter
 		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)+2> _eventCounter;   ///< per event counter
 		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)>   _ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
@@ -574,14 +618,13 @@ Events are passed as \c size_t because we may pass values other than the ones in
 		std::ofstream _logfile;
 
 	#ifdef SPAG_ENUM_STRINGS
-		const std::vector<std::string>& _strEvents; ///< reference on vector of strings of events
-		const std::vector<std::string>& _strStates; ///< reference on vector of strings of states
-		size_t _maxlength_e;                        ///< hold maximum length of the event strings
-		size_t _maxlength_s;                        ///< hold maximum length of the state strings
+		const std::vector<std::string>& _strEvents_R; ///< reference on vector of strings of events
+		const std::vector<std::string>& _strStates_R; ///< reference on vector of strings of states
 	#endif
 
-	std::string _logfileName = "spaghetti.csv";
-	char _sepChar = ';';          ///< log file separator
+		char _sepChar = ';';          ///< log file separator
+	public:
+		std::string _logfileName = "spaghetti.csv";
 };
 #endif // SPAG_ENABLE_LOGGING
 
@@ -1267,9 +1310,6 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 
 			doChecking();
 
-#if (defined SPAG_ENABLE_LOGGING) && (defined SPAG_ENUM_STRINGS)
-			_rtdata.init();
-#endif
 			_isRunning = true;
 			runAction();
 
@@ -1484,18 +1524,13 @@ This function will be called by the signal handler of the event handler class ON
 
 #ifdef SPAG_ENABLE_LOGGING
 /// Assigns a new name for the output log file (default is spaghetti.csv)
-		void setLogFilename( std::string fn ) const
+		void setLogFileName( std::string fn ) const
 		{
 			assert( !fn.empty() );
 			_rtdata._logfileName = fn;
 		}
-/// Print dynamic data to \c str
-		void printCounters( std::ostream& str, PrintFlags pf=PrintFlags::all, char sep = ';' ) const
-		{
-			_rtdata.printData( str, pf, sep );
-		}
 
-		const Counters& getCounters() const
+		Counters getCounters() const
 		{
 			return _rtdata.buildCounters();
 		}
@@ -1504,10 +1539,10 @@ This function will be called by the signal handler of the event handler class ON
 			_rtdata.clear();
 		}
 #else
-		void printCounters( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
+//		void printCounters( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 		void setLogFilename( std::string fn ) const {}
-//		const priv::RunTimeData& getCounters() const {}
-		void clearCounters() {}
+//		Counters getCounters() const {}
+//		void clearCounters() {}
 #endif // SPAG_ENABLE_LOGGING
 
 /// Sets the timer default value. See assignTimeOut()

@@ -86,7 +86,8 @@ int main( int, char* argv[] )
 		server.fsm.start();  // blocking !
 		thread_ui.join();
 
-		server.fsm.printCounters( std::cout );
+
+		server.fsm.getCounters().print();
 	}
 	catch( std::exception& e )
 	{

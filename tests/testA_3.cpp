@@ -54,5 +54,6 @@ int main( int argc, char* argv[] )
 	{
 		std::cout << "Error: " << e.what() << '\n';
 	}
-	fsm.printCounters( std::cout );
+
+	fsm.getCounters().print();
 }

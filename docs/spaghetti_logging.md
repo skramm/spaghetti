@@ -14,9 +14,9 @@ Both of these are enabled only if the build symbol `SPAG_ENABLE LOGGING` has bee
 
 If your FSM is able to stop (after a call to `stop()`), you can printout the runtime data with
 ```C++
-fsm.printCounters( std::cout );
+fsm.getCounters().print( std::cout );
 ```
-This will print out, in a CSV style and in three different sections:
+This will print with CSV style and in three different sections:
  - the state counters (how many times the states have been activated).
  - the event counters. This also include the number of timeouts, and the number of "Always Active" transitions that were encountered.
  - the ignored events counters: how many times each event occurred and was ignored (because current state did not take them into account).
@@ -31,7 +31,7 @@ These flags can be "OR-ed" to have several ones active.
 For example:
 
 ```C++
-fsm.printCounters( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
+fsm.getCounters().print( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
 ```
 Please note that if the symbol `SPAG_ENUM_STRINGS` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
 
@@ -46,10 +46,21 @@ This will return an object of type `Counters`, which hold a copy of the internal
 ### 2 - History of events and state changes
 
 At runtime, if `SPAG_ENABLE LOGGING` is defined, a file is automatically created and logs all events and states, along with a time stamp.
-The default name is `spaghetti.csv`.
+The default name is `spaghetti.csv`, but you can change it with `setLogFileName()`.
+This is even mandatory in some situations, such as in `src/sample2.cpp`, where two FSM are running concurentely.
 
-(TO BE CONTINUED)
+This will produce a file holding something like this:
 
+```
+# FSM runtime history
+#index;time;event-Id;state-Id
+000000;0.800368;0;1;
+000001;1.30055;0;0;
+000002;2.10067;0;1;
+000003;2.60078;0;0;
+000004;3.4009;0;1;
+000005;3.90097;0;0;
+```
 
 
 --- Copyright S. Kramm - 2018-2019 ---

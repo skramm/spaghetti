@@ -14,5 +14,5 @@
 2019-07-04:
 	- clarified manual on logging capabilities
 	- fixed build failure
-	- API change: `printLoggedData()` renamed as `printCounters()`
+	- API change: `printLoggedData()`: now use `getCounters()` to get the values and `getCounters().print()`
 	- added `clearCounters()`

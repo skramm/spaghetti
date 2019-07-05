@@ -47,7 +47,8 @@ int main( int, char* argv[] )
 
 		fsm.start();  // blocking !
 		thread_ui.join();
-		fsm.printCounters( std::cout );
+
+		fsm.getCounters().print();
 	}
 	catch( std::exception& e )
 	{

@@ -76,5 +76,6 @@ int main( int, char* argv[] )
 		}
 	}
 	while( !quit );
-	fsm.printCounters( std::cout );
+//	fsm.printCounters( std::cout );
+	fsm.getCounters().print();
 }

@@ -36,7 +36,7 @@ void cb_func( int v )
 		fsm.writeDotFile( "sample_3b_" + std::to_string(c), options );
 	c++;
 	if( !(c%100) )
-		std::cout << "c=" << c << '\n';
+		std::cout << "counter=" << c << '\n';
 	if( c>1000 )
 		fsm.activateInnerEvent( ev_1000 );
 }
