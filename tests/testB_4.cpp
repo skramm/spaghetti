@@ -112,5 +112,5 @@ int main( int argc, char* argv[] )
 	{
 		std::cout << "Error: " << e.what() << '\n';
 	}
-	fsm.printLoggedData( std::cout );
+	fsm.printCounters( std::cout );
 }

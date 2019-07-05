@@ -83,7 +83,7 @@ Theses options/symbols will not impact correct build of your program:
 This can be automatically enabled when building the samples by passing the option ```DEBUG=Y```:<br>
 ```make demo -j4 DEBUG=Y```
 
-* ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printLoggedData() )
+* ```SPAG_ENABLE_LOGGING``` : will enable logging of dynamic data (see spag::SpagFSM::printCounters() )
 
 * ```SPAG_FRIENDLY_CHECKING```: A lot of checking is done to ensure no nasty bug will crash your program.
 However, in case of incorrect usage of the library by your client code (say, invalid index value),

@@ -78,7 +78,7 @@ int main( int, char* argv[] )
 	{
 		std::cerr << "catch: error: " << e.what() << std::endl;
 	}
-	fsm.printLoggedData( std::cout, spag::PrintFlags::stateCount );
+	fsm.printCounters( std::cout, spag::PrintFlags::stateCount );
 }
 //-----------------------------------------------------------------------------------
 

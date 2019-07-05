@@ -174,7 +174,7 @@ typedef size_t Duration;
 namespace spag {
 
 //------------------------------------------------------------------------------------
-/// Used in \ref SpagFSM<>::printLoggedData() as second argument
+/// Used in \ref SpagFSM<>::printCounters() as second argument
 enum PrintFlags
 {
 	stateCount  = 0x01
@@ -1484,12 +1484,12 @@ This function will be called by the signal handler of the event handler class ON
 			_rtdata._logfileName = fn;
 		}
 /// Print dynamic data to \c str
-		void printLoggedData( std::ostream& str, PrintFlags pf=PrintFlags::all, char sep = ';' ) const
+		void printCounters( std::ostream& str, PrintFlags pf=PrintFlags::all, char sep = ';' ) const
 		{
 			_rtdata.printData( str, pf, sep );
 		}
 #else
-		void printLoggedData( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
+		void printCounters( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 		void setLogFilename( std::string fn ) const {}
 #endif // SPAG_ENABLE_LOGGING
 

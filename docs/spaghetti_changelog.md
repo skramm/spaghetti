@@ -7,10 +7,11 @@
  - fixed bug in transmission of transition and authorization matrices
  - renamed `assignEventMatrix()` to `assignEventMat()`
 
- 2019-07-02:
+2019-07-02:
   - fixed bug: when assigning a global timeout, states having already an AAT will not be assigned the timeout.
   - moved dev info into markdown page
 
-  2019-07-04:
-   - clarified manual on logging capabilities
-   - fixed build failure
+2019-07-04:
+	- clarified manual on logging capabilities
+	- fixed build failure
+	- API change: `printLoggedData()` renamed as `printCounters()`

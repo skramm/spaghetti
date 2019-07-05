@@ -115,7 +115,7 @@ Post an issue if you feel that can be useful, it wouldn't be too hard to add tha
 This is demonstrated in ```src/sample_3.cpp```.
 
 - **Q**: *I need to track ignored events. How can I do that?*<br>
-**A**: First, these are logged (if logging is enable, of course, see [`SPAG_ENABLE_LOGGING`](spaghetti_options.md) ), and you can print them once your FSM is stopped with ```printLoggedData()```.
+**A**: First, these are logged (if logging is enable, of course, see [`SPAG_ENABLE_LOGGING`](spaghetti_options.md) ), and you can print them once your FSM is stopped with ```printCounters()```.
 Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs.
 See member function ```assignIgnoredEventsCallback()```.<br>
 This is demonstrated in ```src/traffic_lights_common.hpp```:

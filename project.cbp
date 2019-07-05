@@ -30,6 +30,7 @@
 		<Unit filename="docs/spaghetti_changelog.md" />
 		<Unit filename="docs/spaghetti_devinfo.md" />
 		<Unit filename="docs/spaghetti_faq.md" />
+		<Unit filename="docs/spaghetti_logging.md" />
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="docs/spaghetti_options.md" />
 		<Unit filename="docs/spaghetti_rendering.md" />

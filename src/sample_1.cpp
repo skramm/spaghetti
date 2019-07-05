@@ -66,5 +66,5 @@ int main( int, char* argv[] )
 		}
 	}
 	while( !quit );
-	fsm.printLoggedData( std::cout );
+	fsm.printCounters( std::cout );
 }
