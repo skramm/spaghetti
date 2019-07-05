@@ -22,6 +22,16 @@ void cb_func( std::string s )
 	std::cout << "callback: " << s << '\n';
 }
 
+void cb_ign( States st, Events ev )
+{
+	std::cout << "- detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
+}
+
+
+void pr( std::string e )
+{
+	std::cout << "processing event " << e << '\n';
+}
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
@@ -29,6 +39,7 @@ int main( int, char* argv[] )
 	fsm_t fsm;
 
 	fsm.assignCallback( cb_func );
+	fsm.assignIgnoredEventsCallback( cb_ign );
 
 	fsm.assignCallbackValue( st0, "Init" );
 	fsm.assignCallbackValue( st1, "st1" );
@@ -46,7 +57,6 @@ int main( int, char* argv[] )
 	fsm.assignTransition( st3, ev_2, st4 );
 
 	fsm.assignTransition( st4, ev_3, st0 );
-
 	fsm.printConfig( std::cout );
 	fsm.writeDotFile( "sample_1" );
 	fsm.start();
@@ -58,9 +68,9 @@ int main( int, char* argv[] )
 		std::cin >> key;
 		switch( key )
 		{
-			case '1': fsm.processEvent( ev_1 ); break;
-			case '2': fsm.processEvent( ev_2 ); break;
-			case '3': fsm.processEvent( ev_3 ); break;
+			case '1': pr("1"); fsm.processEvent( ev_1 ); break;
+			case '2': pr("2"); fsm.processEvent( ev_2 ); break;
+			case '3': pr("3"); fsm.processEvent( ev_3 ); break;
 			case 'q': quit = true; break;
 			default: std::cout << "invalid key\n";
 		}

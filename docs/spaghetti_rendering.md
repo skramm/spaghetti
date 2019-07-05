@@ -13,7 +13,7 @@ To use it with default options:
 	...
 	fsm.writeDotFile( "myDotFile" );
 ```
-This will produce in the current folder the file ```myDotFile.dot```.
+This will produce in the current folder the file `myDotFile.dot`.
 You can render into an svg image with:
 ```
 $ dot -Tsvg myDotFile.dot > myGraph.svg
@@ -24,7 +24,7 @@ $ dot -Tpng myDotFile.dot > myGraph.png
 ```
 for a png image.
 
-Several options can be used, they are embedded in the ```spag::DotFileOptions``` data type.
+Several options can be used, they are embedded in the `spag::DotFileOptions` data type.
 
 The available options and default values are:
 

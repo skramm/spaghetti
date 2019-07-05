@@ -32,6 +32,7 @@ void cb_func( int )
 		std::cout << "c=" << c << '\n';
 	if( c>1000 )
 		fsm.stop();
+
 }
 
 int main( int, char* argv[] )

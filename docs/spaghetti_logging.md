@@ -34,7 +34,10 @@ For example:
 fsm.printCounters( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
 ```
 Please note that if the symbol `SPAG_ENUM_STRINGS` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
-Also see how this function is used in the provided sample programs.
+
+Assuming you ave access to the FSM object (say, you have a separate thread to access it and it is global), you can reset the counter anytime with a call to member function
+`fsm.clearCounters()`.
+This does not reset the timestamp, only the counters.
 
 
 ### 2 - History of events and state changes
@@ -46,3 +49,4 @@ The default name is `spaghetti.csv`.
 
 
 
+--- Copyright S. Kramm - 2018-2019 ---

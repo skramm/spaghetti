@@ -421,23 +421,27 @@ struct RunTimeData
 #endif
 	{
 		_startTime = std::chrono::high_resolution_clock::now();
-		_ignoredEvents.fill( 0 );
+		clear();
+		_stateCounter[0] = 1; // because we start on state 0, so it starts at 1
 	}
 
 	void alloc( size_t nbStates, size_t nbEvents )
 	{
-		_stateCounter.resize( nbStates,   0 );
-		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass-states")
+//		_stateCounter.resize( nbStates,   0 );
+//		_eventCounter.resize( nbEvents+2, 0 );   // two last elements are used for timeout events and for "no event" transitions ("pass-states")
 	}
-	void incrementInitState()
+
+/*	void incrementInitState()
 	{
-		assert( _stateCounter.size() );
+//		assert( _stateCounter.size() );
 		_stateCounter[0] = 1;
-	}
+	}*/
+
 	void clear()
 	{
-		_stateCounter.clear();
-		_eventCounter.clear();
+		_stateCounter.fill( 0 );
+		_eventCounter.fill( 0 );
+		_ignoredEvents.fill( 0 );
 	}
 	/// Print event/states counters to \c out
 	void printData( std::ostream& out, PrintFlags pflags, char sep ) const
@@ -535,14 +539,12 @@ Events are passed as \c size_t because we may pass values other than the ones in
 		static size_t c;
 		f << std::setw(6) << std::setfill('0') << ++c
 			<< _sepChar << sce._elapsed.count() << _sepChar << sce._event << _sepChar;
-//		std::cout << "c=" << c << '\n';
+		std::cout << "c=" << c << '\n';
 	#ifdef SPAG_ENUM_STRINGS
-//		priv::PrintEnumString( f, _strEvents[sce._event], _maxlength_e );
 		f << _strEvents[sce._event] << _sepChar;
 	#endif
 		f << sce._state << _sepChar;
 	#ifdef SPAG_ENUM_STRINGS
-//		priv::PrintEnumString( f, _strStates[sce._state], _maxlength_s );
 		f << _strStates[sce._state];
 	#endif
 		f << '\n';
@@ -553,11 +555,14 @@ Events are passed as \c size_t because we may pass values other than the ones in
 //////////////////////////////////
 
 	private:
-		std::vector<size_t>  _stateCounter;    ///< per state counter
-		std::vector<size_t>  _eventCounter;    ///< per event counter
+//		std::vector<size_t>  _stateCounter;    ///< per state counter
+//		std::vector<size_t>  _eventCounter;
+		std::array<size_t,static_cast<size_t>(ST::NB_STATES)>   _stateCounter;   ///< per state counter
+		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)+2> _eventCounter;   ///< per event counter
+		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)>   _ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
+
 		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
 		std::ofstream _logfile;
-		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)> _ignoredEvents;
 
 	#ifdef SPAG_ENUM_STRINGS
 		const std::vector<std::string>& _strEvents; ///< reference on vector of strings of events
@@ -1262,9 +1267,9 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 #endif
 			_isRunning = true;
 
-#ifdef SPAG_ENABLE_LOGGING
-			_rtdata.incrementInitState();
-#endif
+//#ifdef SPAG_ENABLE_LOGGING
+//			_rtdata.incrementInitState();
+//#endif
 			runAction();
 
 #ifndef SPAG_EXTERNAL_EVENT_LOOP
@@ -1487,6 +1492,10 @@ This function will be called by the signal handler of the event handler class ON
 		void printCounters( std::ostream& str, PrintFlags pf=PrintFlags::all, char sep = ';' ) const
 		{
 			_rtdata.printData( str, pf, sep );
+		}
+		void clearCounters()
+		{
+			_rtdata.clear();
 		}
 #else
 		void printCounters( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}

@@ -15,3 +15,4 @@
 	- clarified manual on logging capabilities
 	- fixed build failure
 	- API change: `printLoggedData()` renamed as `printCounters()`
+	- added `clearCounters()`

@@ -10,7 +10,7 @@ The types used here are:
 - ST : the enumerator used for states
 - Duration : unsigned integer value
 - DurUnit : an enum holding three values:
-```DurUnit::ms```, ```DurUnit::sec```, ```DurUnit::min```
+`DurUnit::ms`, `DurUnit::sec`, `DurUnit::min`
 
 The duration unit can also be expressed as a string, the allowed values are "ms", "sec" and "min".
 
@@ -59,22 +59,22 @@ The following member functions will assign a timeout to all the states except on
 ```C++
 void assignGlobalTimeOut( ST st_final );
 ```
-Assigns a timeout event leading to state ```st_final``` on all states except ```st_final```, using default timer unit and default timer duration value.
+Assigns a timeout event leading to state `st_final` on all states except `st_final`, using default timer unit and default timer duration value.
 
 ```C++
 void assignGlobalTimeOut( Duration dur, ST st_final );
 ```
-Assigns a timeout event on all states except ```st_final```, using duration ```dur``` and default timer unit.
+Assigns a timeout event on all states except `st_final`, using duration `dur` and default timer unit.
 
 ```C++
 void assignGlobalTimeOut( Duration dur, std::string durUnit, ST st_final );
 ```
-Assigns a timeout event on all states except ```st_final```, using duration ```dur``` and unit ```durUnit``` (expressed as a string value).
+Assigns a timeout event on all states except `st_final`, using duration `dur` and unit `durUnit` (expressed as a string value).
 
 
 ```C++
 void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final );
 ```
-Assigns a timeout event on all states except ```st_final```, using duration ```dur``` and unit ```durUnit```.
+Assigns a timeout event on all states except `st_final`, using duration `dur` and unit `durUnit`.
 
 --- Copyright S. Kramm - 2018-2019 ---

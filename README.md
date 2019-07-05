@@ -35,7 +35,7 @@ Feedback welcome, please post issue on Github in case of any problems.
 
 ### Main features
 
-- single-file header-only library, just fetch the file ```spaghetti.hpp``` and store it on your machine somewhere where your compiler can find it
+- single-file header-only library, just fetch the file `spaghetti.hpp` and store it on your machine somewhere where your compiler can find it
 - C++11, no dependencies other than standard library (please [read this](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md#1---fundamental-concepts) carefully)
 - ease of use and performance
 - [full manual included](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md)
@@ -47,7 +47,7 @@ and
 
 ### What's in this repo ?
 
-Besides the main file ```spaghetti.hpp```, the repo also holds documentation, [FAQ](docs/spaghetti_faq.md), and several samples in ```src``` folder.
+Besides the main file `spaghetti.hpp`, the repo also holds documentation, [FAQ](docs/spaghetti_faq.md), and several samples in `src` folder.
 All of this comes with all that is needed to build these on a standard Linux machine (makefile, build folders, ...).
-If you clone the repo, just run  ```make demo``` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
-You'll find the corresponding binaries in  the ```bin``` folder.
+If you clone the repo, just run  `make demo` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
+You'll find the corresponding binaries in  the `bin` folder.
