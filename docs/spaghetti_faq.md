@@ -93,8 +93,8 @@ Fortunately, you can use two helper macros to avoid that uglyness:
 If you do, then this has been tested as successful against Boost 1.54.
 But it *should* be okay with todays current release (1.66 at the time of writing), please post issue in case of trouble so it can be fixed.
 
-- **Q**: How does this library relate to the UML state machine definition
-[WP](https://en.wikipedia.org/wiki/UML_state_machine) ?
+- **Q**: *How does this library relate to the UML state machine definition
+[WP](https://en.wikipedia.org/wiki/UML_state_machine) ?*<br>
 **A**: This implements only a subset of the UML standard.
 For example, the concepts of "extended state" and "Guard conditions" are not available.
 Nor are hierarchically states implemented (see below).
@@ -122,17 +122,17 @@ This is demonstrated in `src/sample_3.cpp`.
 **A**: First, these are logged (if logging is enable, of course, see [`SPAG_ENABLE_LOGGING`](spaghetti_options.md) ),
 and you can print them once your FSM is stopped with `getCounters().print()`.
 Second, to see them during runtime, you can assign to the a generic callback function that will be called every time an ignored event occurs,
-with `assignIgnoredEventsCallback()`.
-This callback needs to have this signature:
+with `assignIgnoredEventsCallback()`.<br>
+This callback needs to have this signature:<br>
 `void cb_ign( States st, Events ev )`.<br>
 This will bring information on when and why this happened, for instance you can do something like this:
 ```C++
-void cb_ign( States st, Events ev )
-{
-	std::cout << "Detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
-}
+    void cb_ign( States st, Events ev )
+    {
+        std::cout << "Detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
+    }
 ```
-This is demonstrated in `src/traffic_lights_common.hpp`:
+This is demonstrated in [`src/traffic_lights_common.hpp`][src/traffic_lights_common.hpp]:
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state,
 the callback function is triggered.
 
