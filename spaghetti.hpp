@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION "0.9.2"
+#define SPAG_VERSION "0.9.3"
 
 #include <vector>
 #include <map>
@@ -2254,8 +2254,8 @@ SpagFSM<ST,EV,T,CBA>::writeDotFile( std::string fname, DotFileOptions opt ) cons
 							f << ':';
 						f << _strEvents.at(itr._innerEvent);
 					}
-					f << '"';
 #endif // SPAG_ENUM_STRINGS
+					f << '"';
 					if( opt.useColorsEventType )
 						f << ",color=red";
 					f << "];\n";

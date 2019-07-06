@@ -5,7 +5,6 @@
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## Key points
-- Status: beta, all the provided sample programs run as expected.
 - Licence: GPL v3
 - Audience: C++ developper having to implement a FSM
 - Webpage: https://github.com/skramm/spaghetti
@@ -22,7 +21,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 This library provides a container and API functions to easily implement an event-driven Finite State Machine
 (see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine)).
 It can be used for FSM requiring the handling of hardware events, or time out situations.
-It has been designed with good "Modern C++" practices, but provides an API as simple as possible to the developper.
+It has been designed with good "Modern C++" practices, but provides an API as simple as possible to the developer.
 
 This library provides an easy way to specify states and events, and how and when it will switch from one state to another.
 It also has some additional features, such as logging the execution history.
@@ -42,8 +41,6 @@ Feedback welcome, please post issue on Github in case of any problems.
 - runtime logging capability
 - provided with some sample programs, see folder
 [src](https://github.com/skramm/spaghetti/tree/master/src)
-and
-<a href="../src/html/index.html">Doxygen-build reference</a> (once ref manual is build)
 
 ### What's in this repo ?
 
@@ -51,3 +48,64 @@ Besides the main file `spaghetti.hpp`, the repo also holds documentation, [FAQ](
 All of this comes with all that is needed to build these on a standard Linux machine (makefile, build folders, ...).
 If you clone the repo, just run  `make demo` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
 You'll find the corresponding binaries in  the `bin` folder.
+
+### Short preview
+
+#### 1 - state callback function
+```C++
+void cb_func( bool b )
+{
+	if( b )
+		std::cout << "State: Locked\n";
+	else
+		std::cout << "State: Unlocked\n";
+}
+```
+
+#### 2 - Declaring states, events, and FSM object
+```C++
+enum class States { st_Locked, st_Unlocked, NB_STATES };
+enum class Events { ev_Push, ev_Coin, NB_EVENTS };
+
+SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
+
+fsm_t fsm;
+```
+
+#### 3 - Configuring FSM
+```C++
+	fsm.assignTransition( States::st_Locked,   Events::ev_Coin, States::st_Unlocked );
+	fsm.assignTransition( States::st_Unlocked, Events::ev_Push, States::st_Locked );
+
+	fsm.assignCallback( States::st_Locked,   cb_func, true );
+	fsm.assignCallback( States::st_Unlocked, cb_func, false );
+```
+
+#### 4 - Running and event dispatch
+```C++
+	fsm.start();
+	bool quit(false);
+	do
+	{
+		char key;
+		std::cout << "Enter command: ";
+		std::cin >> key;
+		switch( key )
+		{
+			case 'p':
+				std::cout << "Event: push\n";
+				fsm.processEvent( Events::ev_Push );
+			break;
+
+			case 'c':
+				std::cout << "Event: coin\n";
+				fsm.processEvent( Events::ev_Coin );
+			break;
+
+			case 'q': quit = true; break;
+		}
+	}
+	while( !quit );
+}
+```
+
