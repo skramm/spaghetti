@@ -80,12 +80,8 @@ But don't worry, if you don't, you will get a compiler error, this is checked at
 **A**: Sure! This is of course useful so that the callback can handle some data.
 The only technical issue is that you cannot store a non-static function into a `std::function` object.
 So the workaround is that you will need to use a *binding* trick. This is demonstrated in
-[`src/traffic_lights_1c.cpp`](../../../tree/master/src/traffic_lights_1c.cpp):
-
-```C++
-   fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )
-```
-
+[`src/traffic_lights_1c.cpp`](../../../tree/master/src/traffic_lights_1c.cpp):<br>
+`   fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )`<br>
 Fortunately, you can use two helper macros to avoid that uglyness:
 - to assign the function `CallbackFunc` belonging to class `Class` to the fsm state `State`:<br>
 `SPAG_ASSIGN_MEMBER_CALLBACK( fsm, State, Class, CallbackFunc )`
