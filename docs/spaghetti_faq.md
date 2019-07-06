@@ -35,7 +35,7 @@ Internally, the timing is handled through the C++11 `chrono` library
 
 - **Q**: *How does this library differ from the other ones?*<br/>
 **A**: Most of the other libraries define the states as C++ classes.
-While this can have some advantages, it requires you to create a class for each state.
+While this can have some advantages, it requires you to create a struct/class for each state.
 With Spaghetti, you just add an enumerator value.
 
 - **Q**: *How are runtime errors handled?*<br/>
@@ -96,6 +96,14 @@ Fortunately, you can use two helper macros to avoid that uglyness:
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
 If you do, then this has been tested as successful against Boost 1.54.
 But it *should* be okay with todays current release (1.66 at the time of writing), please post issue in case of trouble so it can be fixed.
+
+- **Q**: How does this library relate to the UML state machine definition
+[WP](https://en.wikipedia.org/wiki/UML_state_machine) ?
+**A**: This implements only a subset of the UML standard.
+For example, the concepts of "extended state" and "Guard conditions" are not available.
+Nor are hierarchically states implemented (see below).
+However, all the basics of FSM are available, most notably it respects the "run to completion" (RTC) execution model.
+It also offers the concept of "[Internal events](spaghetti_manual.md#inner_events)".
 
 - **Q**: *Can I use this for a hierarchical FSM?*<br/>
 **A**: at present, no, but this is considered for future releases
