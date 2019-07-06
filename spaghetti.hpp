@@ -316,7 +316,7 @@ struct InnerTransition
 	{
 		s << "InnerTransition:"
 			<< " destState=" << (int)it._destState
-			<< " innerEvent=" << (int)it._innerEvent;// << '\n';
+			<< " innerEvent=" << (int)it._innerEvent;
 		return s;
 	}
 };

@@ -556,6 +556,7 @@ For example and with the above code, if we want to disable transitioning from st
 As you expect, '1' (or any other non-null value) means transition is allowed, '0' means it is disabled.
 
 This will produce this state machine:
+
 ![sample_FSM](doc_fig1.svg)
 
 However, in such a situation, it would be simpler to use the following two member functions:
@@ -653,9 +654,10 @@ Some self-explaining member function that can be useful in user code:
 
  - `size_t nbStates()`: returns nb of states
  - `size_t nbEvents()`: returns nb of events (only "hardware" and "inner" ones, not timeouts)
- - `ST currentState()`: returns current state (`ST` being the enum you have used to declare the FSM type)
- - `ST previousState()`: returns previous state
- - `timeOutDuration( EN_States st )`: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
+ - `States currentState()`: returns current state (`States` being the enum you have used to declare the FSM type)
+ - `States previousState()`: returns previous state
+ - `timeOutDuration( States st )`: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
+ (first element will be 0 if not timeout assigned)
 
 Other stuff:
 - The version of the library is in the symbol `SPAG_VERSION`, can be printed with:
