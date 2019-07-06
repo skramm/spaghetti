@@ -132,7 +132,7 @@ This will bring information on when and why this happened, for instance you can 
         std::cout << "Detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
     }
 ```
-This is demonstrated in [`src/traffic_lights_common.hpp`][src/traffic_lights_common.hpp]:
+This is demonstrated in [`src/traffic_lights_common.hpp`](src/traffic_lights_common.hpp):
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state,
 the callback function is triggered.
 
