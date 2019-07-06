@@ -83,9 +83,9 @@ So the workaround is that you will need to use a *binding* trick. This is demons
 [`src/traffic_lights_1c.cpp`](../../../tree/master/src/traffic_lights_1c.cpp):<br>
 `   fsm.assignCallback( std::bind( &MyClass::callback, this, std::placeholders::_1 )`<br>
 Fortunately, you can use two helper macros to avoid that uglyness:
-- to assign the function `CallbackFunc` belonging to class `Class` to the fsm state `State`:<br>
+  * to assign the function `CallbackFunc` belonging to class `Class` to the fsm state `State`:<br>
 `SPAG_ASSIGN_MEMBER_CALLBACK( fsm, State, Class, CallbackFunc )`
-- to assign that function to all the states of the fsm:<br>
+  * to assign that function to all the states of the fsm:<br>
 `SPAG_ASSIGN_MEMBER_CALLBACK_ALL( fsm, ClassName, CallbackFunc )`
 
 - **Q**: *What version of Boost libraries does this require?*<br>
