@@ -76,6 +76,7 @@ int main( int, char* argv[] )
 		}
 	}
 	while( !quit );
-//	fsm.printCounters( std::cout );
 	fsm.getCounters().print();
+	auto cnt = fsm.getCounters();
+	std::cout << " counter of state 0=" << cnt.getValue( spag::ItemStates, fsm.getStateIndex( "St-0" ) ) << '\n';
 }

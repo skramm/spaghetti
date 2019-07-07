@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION "0.9.3"
+#define SPAG_VERSION "0.9.4"
 
 #include <vector>
 #include <map>
@@ -174,26 +174,34 @@ typedef size_t Duration;
 namespace spag {
 
 //------------------------------------------------------------------------------------
-/// Used in \ref SpagFSM<>::Counters::print() as second argument
-enum PrintFlags
+/// Used in \ref SpagFSM<>::Counters::print() as second argument and in Counters::getValue()
+enum Item : uint8_t
 {
-	stateCount  = 0x01
-	,eventCount = 0x02
-	,ignoredEvents = 0x04
-	,all        = 0xff
+	ItemStates  = 0x01
+	,ItemEvents = 0x02
+	,ItemIgnoredEvents = 0x04
 };
 
 /// Timer units
 enum class DurUnit : char { ms, sec, min };
 
+namespace priv {
+// forward declaration
+template<typename T, typename U>
+struct RunTimeData;
+};
+
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_ENABLE_LOGGING
-/// states and events counters
+/// States and events counters, independent struct.
 /**
 If strings enabled, then we pass these to the constructor, else we only pass the number of states and events
 */
 struct Counters
 {
+	template<typename T1,typename T2>
+	friend struct priv::RunTimeData;
+
 #ifdef SPAG_ENUM_STRINGS
 	Counters( const std::vector<std::string>& strStates, const std::vector<std::string>& strEvents )
 		: _strStates( strStates )
@@ -207,19 +215,41 @@ struct Counters
 #endif
 		assert( nb_states ); /// \todo remove this once tested
 		assert( nb_events );
-		stateCounter.resize(  nb_states );
-		eventCounter.resize(  nb_events );
-		ignoredEvents.resize( nb_events-2 );  // because we don't need the last two elements
+
+		_stateCounter.resize( nb_states );
+		_eventCounter.resize( nb_events );
+		_ignoredEventCounter.resize( nb_events-2 );  // because we don't need the last two elements
 	}
 
-	void print( std::ostream& out=std::cout, PrintFlags pf=PrintFlags::all, char sep = ';' ) const;
+	void print(
+		std::ostream& out=std::cout,
+		uint8_t flags = ItemStates + ItemEvents + ItemIgnoredEvents,
+		char sep = ';'
+	) const;
 
-	std::vector<size_t> stateCounter;   ///< per state counter
-	std::vector<size_t> eventCounter;   ///< per event counter
-	std::vector<size_t> ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
+	size_t getValue( Item what, size_t index )
+	{
+		switch( what )
+		{
+			case ItemStates:
+				return _stateCounter.at(index);
+			break;
+			case ItemEvents:
+				return _eventCounter.at(index);
+			break;
+			case ItemIgnoredEvents:
+				return _ignoredEventCounter.at(index);
+			break;
+			default: assert(0);
+		}
+	}
+
+	private:
+		std::vector<size_t> _stateCounter;   ///< per state counter
+		std::vector<size_t> _eventCounter;   ///< per event counter
+		std::vector<size_t> _ignoredEventCounter;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
 
 #ifdef SPAG_ENUM_STRINGS
-	private:
 		const std::vector<std::string> _strStates;
 		const std::vector<std::string> _strEvents;
 #endif
@@ -269,7 +299,7 @@ stringFromTimeUnit( DurUnit du )
 static std::string&
 getSpagName()
 {
-	static std::string str{"Spaghetti: "};
+	static std::string str("Spaghetti " + std::string(SPAG_VERSION) + ": ");
 	return str;
 }
 //-----------------------------------------------------------------------------------
@@ -331,7 +361,7 @@ struct StateInfo
 	CBA                      _callbackArg;  ///< value of argument of callback function
 
 #ifdef SPAG_USE_SIGNALS
-	bool                     _isPassState = false;
+	bool                     _isPassState = false; ///<if true, the next state is stored in transition table, at line nbEvents()+1
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
 
 	friend std::ostream& operator << ( std::ostream& s, const StateInfo& si )
@@ -441,16 +471,16 @@ getMaxLength( const T& v_str )
 Also holds the string (if option enabled), for nice printing
 */
 void
-Counters::print( std::ostream& out, PrintFlags pf, char sep ) const
+Counters::print( std::ostream& out, uint8_t flags, char sep ) const
 {
 #ifdef SPAG_ENUM_STRINGS
 	auto maxlength_e = priv::getMaxLength( _strEvents );
 	auto maxlength_s = priv::getMaxLength( _strStates );
 #endif
-	if( pf & PrintFlags::stateCount )
+	if( flags & ItemStates )
 	{
 		out << "# State counters:\n";
-		for( size_t i=0; i<stateCounter.size(); i++ )
+		for( size_t i=0; i<_stateCounter.size(); i++ )
 		{
 			out << i << sep,
 
@@ -458,35 +488,35 @@ Counters::print( std::ostream& out, PrintFlags pf, char sep ) const
 			priv::PrintEnumString( out, _strStates[i], maxlength_s );
 			out << sep;
 #endif
-			out << stateCounter[i] << '\n';
+			out << _stateCounter[i] << '\n';
 		}
 	}
 
-	if( pf & PrintFlags::eventCount )
+	if( flags & ItemEvents )
 	{
 		out << "\n# Event counters:\n";
-		for( size_t i=0; i<eventCounter.size(); i++ )
+		for( size_t i=0; i<_eventCounter.size(); i++ )
 		{
 			out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
 			priv::PrintEnumString( out, _strEvents[i], maxlength_e );
 			out << sep;
 #endif
-			out << eventCounter[i] << '\n';
+			out << _eventCounter[i] << '\n';
 		}
 	}
 
-	if( pf & PrintFlags::ignoredEvents && ignoredEvents.size()>0 )
+	if( ( flags & ItemIgnoredEvents ) && _ignoredEventCounter.size()>0 )
 	{
 		out << "\n# Ignored Events counters:\n";
-		for( size_t i=0; i<ignoredEvents.size(); i++ )
+		for( size_t i=0; i<_ignoredEventCounter.size(); i++ )
 		{
 			out << i << sep;
 #ifdef SPAG_ENUM_STRINGS
 			priv::PrintEnumString( out, _strEvents[i], maxlength_e );
 			out << sep;
 #endif
-			out << ignoredEvents[i] << '\n';
+			out << _ignoredEventCounter[i] << '\n';
 		}
 	}
 }
@@ -526,7 +556,7 @@ struct RunTimeData
 	{
 		_stateCounter.fill( 0 );
 		_eventCounter.fill( 0 );
-		_ignoredEvents.fill( 0 );
+		_ignoredEventCounter.fill( 0 );
 	}
 /// Returns a copy of all the counters.
 	Counters buildCounters() const
@@ -537,9 +567,9 @@ struct RunTimeData
 		Counters cnt( _stateCounter.size(), _eventCounter.size() );
 #endif
 
-		std::copy( std::begin(_stateCounter),  std::end(_stateCounter),  std::begin(cnt.stateCounter) );
-		std::copy( std::begin(_eventCounter),  std::end(_eventCounter),  std::begin(cnt.eventCounter) );
-		std::copy( std::begin(_ignoredEvents), std::end(_ignoredEvents), std::begin(cnt.ignoredEvents) );
+		std::copy( std::begin(_stateCounter),  std::end(_stateCounter),  std::begin(cnt._stateCounter) );
+		std::copy( std::begin(_eventCounter),  std::end(_eventCounter),  std::begin(cnt._eventCounter) );
+		std::copy( std::begin(_ignoredEventCounter), std::end(_ignoredEventCounter), std::begin(cnt._ignoredEventCounter) );
 
 		return cnt;
 	}
@@ -581,7 +611,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 	void logIgnoredEvent( size_t ev_idx )
 	{
 		SPAG_CHECK_LESS( ev_idx, SPAG_P_CAST2IDX(EV::NB_EVENTS) );
-		_ignoredEvents[ ev_idx ]++;
+		_ignoredEventCounter[ ev_idx ]++;
 	}
 
 //////////////////////////////////
@@ -612,7 +642,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 		mutable size_t _logIndex = 0;
 		std::array<size_t,static_cast<size_t>(ST::NB_STATES)>   _stateCounter;   ///< per state counter
 		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)+2> _eventCounter;   ///< per event counter
-		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)>   _ignoredEvents;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
+		std::array<size_t,static_cast<size_t>(EV::NB_EVENTS)>   _ignoredEventCounter;  ///< ignored events counter. No need to do "+2" as here, time outs and AAT will never be counted as ignored
 
 		std::chrono::time_point<std::chrono::high_resolution_clock> _startTime;
 		std::ofstream _logfile;
@@ -1505,11 +1535,37 @@ This function will be called by the signal handler of the event handler class ON
 			return _previous;
 		}
 
+#ifdef SPAG_ENUM_STRINGS
+		size_t getStateIndex( std::string str ) const
+		{
+			auto it = std::find(
+				std::begin(_strStates),
+				std::end(_strStates),
+				str
+			);
+			if( it == std::end(_strStates) )
+				SPAG_P_THROW_ERROR_RT( "invalid state string" );
+			return it - std::begin(_strStates);
+		}
+
+		size_t getEventIndex( std::string str ) const
+		{
+			auto it = std::find(
+				std::begin(_strEvents),
+				std::end(_strEvents),
+				str
+			);
+			if( it == std::end(_strEvents) )
+				SPAG_P_THROW_ERROR_RT("invalid event string" );
+			return it - std::begin(_strEvents);
+		}
+#endif
 		priv::StateInfo<ST,EV,CBA>& getStateInfo( size_t idx )
 		{
 			assert( idx < nbStates() );
 			return _stateInfo[idx];
 		}
+
 /// Return duration of time out for state \c st, or 0 if none
 		std::pair<Duration,DurUnit> timeOutDuration( ST st ) const
 		{
@@ -1539,7 +1595,6 @@ This function will be called by the signal handler of the event handler class ON
 			_rtdata.clear();
 		}
 #else
-//		void printCounters( std::ostream&, PrintFlags pf=PrintFlags::all ) const {}
 		void setLogFilename( std::string fn ) const {}
 //		Counters getCounters() const {}
 //		void clearCounters() {}
@@ -1727,8 +1782,6 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		mutable DurUnit   _defaultTimerUnit  = DurUnit::sec;         ///< default timer units
 		mutable Duration  _defaultTimerValue = 1;                    ///< default timer value
 		mutable TIM*      _eventHandler      = nullptr;              ///< pointer on timer/ event-loop handling type
-
-//		mutable RunTimeParams _runTimeParams;
 
 #ifdef SPAG_USE_ARRAY
 	#ifdef SPAG_USE_SIGNALS

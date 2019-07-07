@@ -142,5 +142,5 @@ int main()
 
 #### 4 - Running and event dispatch
 ```C++
-	fsm.start();
+	fsm.start(); // now blocking function
 ```

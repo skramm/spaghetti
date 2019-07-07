@@ -78,8 +78,8 @@ int main( int, char* argv[] )
 	{
 		std::cerr << "catch: error: " << e.what() << std::endl;
 	}
-//	fsm.printCounters( std::cout, spag::PrintFlags::stateCount );
-	fsm.getCounters().print( std::cout, spag::PrintFlags::stateCount );
+	fsm.getCounters().print( std::cout, spag::ItemStates );
+	fsm.getCounters().print( std::cout, spag::ItemStates | spag::ItemEvents );
 }
 //-----------------------------------------------------------------------------------
 

@@ -136,6 +136,9 @@ This is demonstrated in [`src/traffic_lights_common.hpp`](../../../tree/master/s
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state,
 the callback function is triggered.
 
+- **Q**: *GPL licence is an issue for me. Would it possible to release this under a different licence?*<br/>
+**A**: I like the ideas supported by the GPL licence, but I understand the potential issues, so I'm open to any suggestions.
+
 - **Q**: *Why that name? Where does that come from?*<br/>
 **A**: *Naming is hard*. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).

@@ -21,17 +21,16 @@ This will print with CSV style and in three different sections:
  - the event counters. This also include the number of timeouts, and the number of "Always Active" transitions that were encountered.
  - the ignored events counters: how many times each event occurred and was ignored (because current state did not take them into account).
 
- You can pass to this function an optional second parameter, to specify **what** data you want:
- - `PrintFlags::stateCount` : print state counters
- - `PrintFlags::eventCount` : print event counters
- - `PrintFlags::ignoredEvents` : print ignored events counters
- - `PrintFlags::all`: all of the above (default value)
-<br>
+ You can pass to this function an optional second parameter of type `Item`, to specify **what** data you want:
+ - `ItemStates`        : print state counters
+ - `ItemEvents`        : print event counters
+ - `ItemIgnoredEvents` : print ignored events counters
+ <br>
 These flags can be "OR-ed" to have several ones active.
 For example:
 
 ```C++
-fsm.getCounters().print( std::cout, PrintFlags::stateCount | PrintFlags::eventCount );
+fsm.getCounters().print( std::cout, ItemStates | ItemEvents );
 ```
 Please note that if the symbol `SPAG_ENUM_STRINGS` (see [Build options](spaghetti_options.md)) is defined, the strings will appear in this data.
 
@@ -42,6 +41,19 @@ This does not reset the timestamp, only the counters.
 You can also fetch at runtime the counter values with a call to `fsm.getCounters()`.
 This will return an object of type `Counters`, which hold a copy of the internal values.
 
+Once you have the `Counters` object, its values can be printed using the above `Item` enum.
+For example, this:
+```C++
+std::cout << counters.getValue( ItemStates, 1 )
+```
+will return the number of times the states having index 1 has been activated.
+
+**Warning** : as this is a independent datatype, no checking is done on index validity.
+
+*Note*: to get the index of a state/event from their name (assuming you enabled the SPAG_ENUM_STRINGS option), you can get these with<br>
+ - `getStateIndex( std::string )`
+ - `getEventIndex( std::string )`
+
 
 ### 2 - History of events and state changes
 
@@ -49,7 +61,7 @@ At runtime, if `SPAG_ENABLE LOGGING` is defined, a file is automatically created
 The default name is `spaghetti.csv`, but you can change it with `setLogFileName()`.
 This is even mandatory in some situations, such as in `src/sample2.cpp`, where two FSM are running concurentely.
 
-This will produce a file holding something like this:
+This will produce a file holding something like this (if you did not enable the states/events names):
 
 ```
 # FSM runtime history

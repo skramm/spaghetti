@@ -656,6 +656,8 @@ Some self-explaining member function that can be useful in user code:
  - `size_t nbEvents()`: returns nb of events (only "hardware" and "inner" ones, not timeouts)
  - `States currentState()`: returns current state (`States` being the enum you have used to declare the FSM type)
  - `States previousState()`: returns previous state
+ - `size_t getStateIndex( std::string s )` : return internal index of state with assigned string `s` (throws if not found)
+ - `size_t getEventIndex( std::string s )` : return internal index of event with assigned string `s` (throws if not found)
  - `timeOutDuration( States st )`: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
  (first element will be 0 if not timeout assigned)
 
