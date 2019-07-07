@@ -109,7 +109,7 @@ You can provide a string either individually with
 	fsm.assignString2Event( ev_MyEvent, "something happened" );
 	fsm.assignString2State( st_Arizona, "Arizona state" );
 ```
-or globally, by providing a vector of pairs (enum values, string).
+or globally, by providing a vector (or `std::array`) of pairs (enum values, string).
 For example:
 ```C++
 	std::vector<std::pair<EVENT,std::string>> v_str = {
@@ -132,9 +132,9 @@ This works similarly for states.
 <br>
 These strings will then be printed out when calling the `printConfig()` and `printData()` member function.
 <br>
-Default values are generated when this option is enabled, in the form "St-x" and "Ev-x".
+Default values are generated when this option is enabled, in the form "St-x" and "Ev-x", and unicity is checked.
 <br>
-You can also access these strings at runtime with `fsm.getString( some_event_enum_value )`.
+You can also access these strings at runtime with `fsm.getString( some_state/event_enum_value )`.
 
 
 --- Copyright S. Kramm - 2018-2019 ---

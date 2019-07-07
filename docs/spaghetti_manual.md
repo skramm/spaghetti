@@ -510,10 +510,7 @@ It is also handled using signals, so the symbol `SPAG_USE_SIGNALS` must also be 
 
 They appear in the config function output and on the graph with the string "AAT", meaning "Always Active Transition".
 
-They are defined using the member function
-```
-assignAAT( st1, st2 );
-```
+They are defined using the member function `assignAAT( st1, st2 );`.<br>
 This will disable all other transitions that *may* have been assigned previously between these two states.
 
 See for example [src/sample_1b.cpp]( ../../../tree/master/src/sample_1b.cpp)
@@ -656,10 +653,14 @@ Some self-explaining member function that can be useful in user code:
  - `size_t nbEvents()`: returns nb of events (only "hardware" and "inner" ones, not timeouts)
  - `States currentState()`: returns current state (`States` being the enum you have used to declare the FSM type)
  - `States previousState()`: returns previous state
- - `size_t getStateIndex( std::string s )` : return internal index of state with assigned string `s` (throws if not found)
- - `size_t getEventIndex( std::string s )` : return internal index of event with assigned string `s` (throws if not found)
+ - `size_t getStateIndex( std::string s )` : return internal index of state with assigned string `s`
+ - `size_t getEventIndex( std::string s )` : return internal index of event with assigned string `s`
  - `timeOutDuration( States st )`: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
  (first element will be 0 if not timeout assigned)
+
+ *Note:* `getStateIndex()` and `getEventIndex()`:
+ - are only available if build option `SPAG_ENUM_STRINGS` build option is activated, see [build options](spaghetti_options.md)
+ - will throw if string not found
 
 Other stuff:
 - The version of the library is in the symbol `SPAG_VERSION`, can be printed with:

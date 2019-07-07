@@ -49,7 +49,7 @@ All of this comes with all that is needed to build these on a standard Linux mac
 If you clone the repo, just run  `make demo` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
 You'll find the corresponding binaries in  the `bin` folder.
 
-### Short preview - 1 (no signal/timeout handling)
+### Short preview 1 (no signal/timeout handling)
 
 #### 1 - State callback function
 ```C++
@@ -108,7 +108,7 @@ SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 }
 ```
 
-### Short preview 2, with timeout
+### Short preview 2, with timeout (needs Boost asio)
 
 #### 1 - State callback function
 ```C++
