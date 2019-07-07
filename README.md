@@ -49,9 +49,9 @@ All of this comes with all that is needed to build these on a standard Linux mac
 If you clone the repo, just run  `make demo` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
 You'll find the corresponding binaries in  the `bin` folder.
 
-### Short preview
+### Short preview - 1 (no signal/timeout handling)
 
-#### 1 - state callback function
+#### 1 - State callback function
 ```C++
 void cb_func( bool b )
 {
@@ -62,18 +62,17 @@ void cb_func( bool b )
 }
 ```
 
-#### 2 - Declaring states, events, and FSM object
+#### 2 - Declaring states, events and FSM type
 ```C++
 enum class States { st_Locked, st_Unlocked, NB_STATES };
 enum class Events { ev_Push, ev_Coin, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
-
-fsm_t fsm;
 ```
 
 #### 3 - Configuring FSM
 ```C++
+	fsm_t fsm;
 	fsm.assignTransition( States::st_Locked,   Events::ev_Coin, States::st_Unlocked );
 	fsm.assignTransition( States::st_Unlocked, Events::ev_Push, States::st_Locked );
 
@@ -109,3 +108,39 @@ fsm_t fsm;
 }
 ```
 
+### Short preview 2, with timeout
+
+#### 1 - State callback function
+```C++
+void callback( std::string v )
+{
+	std::cout << "cb, value=" << v << '\n';
+}
+```
+
+#### 2 - Declaring states, events and FSM type
+```C++
+enum States { st_Red, st_Orange, st_Green, NB_STATES };
+enum Events { NB_EVENTS };
+
+SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
+```
+
+#### 3 - Configuring FSM
+```C++
+int main()
+{
+	fsm_t fsm;
+	fsm.assignTimeOut( st_Red,    5, st_Green  );
+	fsm.assignTimeOut( st_Green,  5, st_Orange );
+	fsm.assignTimeOut( st_Orange, 1, st_Red   );
+
+	fsm.assignCallback( st_Red,    callback, std::string("RED") );
+	fsm.assignCallback( st_Orange, callback, std::string("ORANGE") );
+	fsm.assignCallback( st_Green,  callback, std::string("GREEN") );
+```
+
+#### 4 - Running and event dispatch
+```C++
+	fsm.start();
+```
