@@ -299,7 +299,8 @@ stringFromTimeUnit( DurUnit du )
 static std::string&
 getSpagName()
 {
-	static std::string str("Spaghetti " + std::string(SPAG_VERSION) + ": ");
+//	static std::string str("Spaghetti " + std::string(SPAG_VERSION) + ": "); // REMOVED ON 2019-07-10: will cause a break in tests at each new version !
+	static std::string str("Spaghetti: ");
 	return str;
 }
 //-----------------------------------------------------------------------------------
@@ -470,6 +471,7 @@ getMaxLength( const T& v_str )
 /**
 Also holds the string (if option enabled), for nice printing
 */
+inline
 void
 Counters::print( std::ostream& out, uint8_t flags, char sep ) const
 {
