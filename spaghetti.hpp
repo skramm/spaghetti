@@ -327,11 +327,14 @@ struct TimerEvent
 //-----------------------------------------------------------------------------------
 #ifdef SPAG_USE_SIGNALS
 /// Holds information on inner events
+/**
+The type StateInfo (one for every state) hold a vector of these: each state can handle several InnerTransition
+*/
 template<typename ST,typename EV>
 struct InnerTransition
 {
-	ST      _destState;
-	EV      _innerEvent;
+	ST _destState;
+	EV _innerEvent;
 
 	InnerTransition( EV ev, ST st ) : _destState(st), _innerEvent(ev)
 	{}
@@ -353,11 +356,11 @@ struct InnerTransition
 };
 #endif // SPAG_USE_SIGNALS
 //-----------------------------------------------------------------------------------
-/// Private class, holds information about a state
+/// Private class, holds informations about a state. The FSM holds one of these for every state.
 template<typename ST,typename EV,typename CBA>
 struct StateInfo
 {
-	TimerEvent<ST>           _timerEvent;   ///< Holds for each state the information on timeout
+	TimerEvent<ST>           _timerEvent;   ///< Holds the information on timeout
 	std::function<void(CBA)> _callback;     ///< callback function
 	CBA                      _callbackArg;  ///< value of argument of callback function
 
@@ -1478,7 +1481,7 @@ This function will be called by the signal handler of the event handler class ON
 			if( stinf._isPassState )
 			{
 				auto next = _transitionMat[ nbEvents()+1 ][_current];
-				SPAG_LOG << "is pass state, switch to state " << (int)next << '\n';
+				SPAG_LOG << "is pass state, switch from state " << (int)currentState() << " to state " << (int)next << '\n';
 				_previous = _current;
 				_current  = next;
 			}
@@ -1798,7 +1801,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 	#endif
 
-/// Matrix holding for each event a boolean telling is the event is ignored or not, for a given state (0:ignore event, 1:handle external event, -1: internal event)
+/// Matrix holding for each event a byte telling is the event is ignored or not, for a given state (0:ignore event, 1:handle external event, -1: internal event)
 		std::array<
 			std::array<char, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)
@@ -1814,10 +1817,6 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		std::vector<priv::StateInfo<ST,EV,CBA>> _stateInfo;         ///< Holds for each state the details
 #endif
 		mutable std::map<EV,bool> _innerEventFlag; ///< holds the activation flag for each inner event
-
-#ifdef SPAG_USE_SIGNALS
-//		std::map<EV,ST> _eventInfo; ///< holds for inner event the state it is assigned to
-#endif
 
 #ifdef SPAG_ENUM_STRINGS
 		std::vector<std::string> _strEvents;      ///< holds events strings
@@ -2530,7 +2529,7 @@ struct AsioWrapper
 	{
 		SPAG_P_START;
 
-		SPAG_LOG << "handling signal " << signal_number << " errorcode=" << err_code.message() << " current=" << fsm->currentState() << std::endl;
+		SPAG_LOG << "handling signal " << signal_number << " errorcode=" << err_code.message() << ", current state=" << fsm->currentState() << std::endl;
 		auto st_idx = SPAG_P_CAST2IDX( fsm->currentState() );
 		auto& stateInfo = fsm->getStateInfo( st_idx );
 //		std::cout << "signal handler, processing " << stateInfo._innerTrans;

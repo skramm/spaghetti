@@ -7,7 +7,7 @@
 
  Q&A:
 
-- **Q**: *What is the timing unit?*<br/>
+- **Q**: *What is the timing unit?*<br>
 **A**: The values are stored as integer values with an associated `DurUnit` enumeration value, so you can select between seconds, milliseconds, and minutes, and this for each timeout value.<br>
 It is up to the Timer class to handle these
 (the provided optional timer class `AsioWrapper` does).
@@ -33,12 +33,12 @@ Oh, and if for some reason (templated function in a header, as in `src/traffic_l
 Internally, the timing is handled through the C++11 `chrono` library
 [duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
-- **Q**: *How does this library differ from the other ones?*<br/>
+- **Q**: *How does this library differ from the other ones?*<br>
 **A**: Most of the other libraries define the states as C++ classes.
 While this can have some advantages, it requires you to create a struct/class for each state.
 With Spaghetti, you just add an enumerator value.
 
-- **Q**: *How are runtime errors handled?*<br/>
+- **Q**: *How are runtime errors handled?*<br>
 **A**: A lot of stuff is checked at build time but some errors in user code can only be detected at runtime.
 Configuration basic errors are handled using exceptions and will throw a
 [`std::logic_error`](http://en.cppreference.com/w/cpp/error/logic_error).<br>
@@ -50,16 +50,16 @@ Thus it is clearer to trigger an assert that will cleanly exit the program with 
 Other non critical errors will throw a
 [`std::runtime_error`](http://en.cppreference.com/w/cpp/error/runtime_error).
 
-- **Q**: *What if I have more that a single argument to pass to my callback function?*<br/>
+- **Q**: *What if I have more that a single argument to pass to my callback function?*<br>
 **A**: You'll need to "pack it" in some class, or use a
 [`std::pair`](http://en.cppreference.com/w/cpp/utility/pair),
 or a [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple).
 
-- **Q**: *Can I use a callback function with a void parameter ( `void my_callback()`)*<br/>
+- **Q**: *Can I use a callback function with a void parameter ( `void my_callback()`)*<br>
 **A**: No, unfortunately. This is because void is not a type, you can't pass it as template argument.
 But you can always use anything, say an integer, and ignore its value.
 
-- **Q**: *Can I pass the FSM object itself as callback argument?*<br/>
+- **Q**: *Can I pass the FSM object itself as callback argument?*<br>
 **A**: No, as the callback argument is a template parameter of the FSM. You would get into some infinite recursion...
 But you can then make the FSM object global, so the callback functions can access it.
 This is demonstrated in sample program
@@ -68,7 +68,7 @@ But **be careful**, because in that case, no checking will be done on what you w
 You could make the FSM run into some invalid configuration, leading to undefined behavior.<br>
 
 - **Q**: *How can I assign callback argument values in a more convenient way?
-I have a lot of states, and assigning these one by one (with `assignCallbackValue()`) is tedious*<br/>
+I have a lot of states, and assigning these one by one (with `assignCallbackValue()`) is tedious*<br>
 **A**: If you have no special needs on the value of the callback arguments (i.e. you only need them to be different values),
 then you can use `assignCallbackAutoval( cb )`.
 This will assign to all the states the callback function `cb(int)`
@@ -101,14 +101,14 @@ Nor are hierarchically states implemented (see below).
 However, all the basics of FSM are available, most notably it respects the "run to completion" (RTC) execution model.
 It also offers the concept of "[Internal events](spaghetti_manual.md#inner_events)".
 
-- **Q**: *Can I use this for a hierarchical FSM?*<br/>
+- **Q**: *Can I use this for a hierarchical FSM?*<br>
 **A**: at present, no, but this is considered for future releases
 
-- **Q**: *Can I have two concurrent FSM working at the same time?*<br/>
+- **Q**: *Can I have two concurrent FSM working at the same time?*<br>
 **A**: Yes! See sample program [`src/sample_2.cpp`](../../../tree/master/src/sample_2.cpp) that demonstrates this.
 This requires defining the symbol `SPAG_EXTERNAL_EVENT_LOOP`, see [build options](spaghetti_options.md).
 
-- **Q**: *Does this library provide serialization of the configuration of the FSM, so I can easily save it to a file?*<br/>
+- **Q**: *Does this library provide serialization of the configuration of the FSM, so I can easily save it to a file?*<br>
 **A**: No, because it holds objects of type `std::function` to store the callback functions.
 And this object **can not** be serialized.<br>
 All the rest of the configuration could be serialized, but I felt that saving configuration without the callbacks would be useless.
@@ -136,10 +136,15 @@ This is demonstrated in [`src/traffic_lights_common.hpp`](../../../tree/master/s
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state,
 the callback function is triggered.
 
-- **Q**: *GPL licence is an issue for me. Would it possible to release this under a different licence?*<br/>
+- **Q**: *What signal does the included event-loop class `AsioWrapper` use ? Can I change it ?*<br>
+**A**: This is at present hardcoded, it uses the signal SIGUSR1,
+see [WP Posix signals page](https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals).
+Please post issue if this a problem, of if you encounter a OS-related strange behavior.
+
+- **Q**: *GPL licence is an issue for me. Would it be possible to release this under a different licence?*<br>
 **A**: I like the ideas supported by the GPL licence, but I understand the potential issues, so I'm open to any suggestions.
 
-- **Q**: *Why that name? Where does that come from?*<br/>
+- **Q**: *Why that name? Where does that come from?*<br>
 **A**: *Naming is hard*. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).
 So you got it.

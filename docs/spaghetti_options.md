@@ -100,7 +100,7 @@ Spaghetti: runtime error in func: assignTransitionMat(), values are not equal:
  - EVENT::NB_EVENTS value=8
 Exiting...
 ```
-If this symbol is \b not defined, regular checking is still done with the classical `assert()`.
+If this symbol is not defined, regular checking is still done with the classical `assert()`.
 As usual, this checking can be removed by defining the symbol `NDEBUG`.
 
 * `SPAG_ENUM_STRINGS` : this enables the usage of enum-string mapping, for states and events.

@@ -4,7 +4,7 @@ Homepage: https://github.com/skramm/spaghetti
 
 
 This page demonstrates usage of the library through several showcases, and gives additional details.
-All the example are included and runnable in the src folder, just `make demo` (or `make demo -j4` to make things quicker), then run `bin/program_name`.
+All the examples are included and runnable in the src folder, just `make demo` (or `make demo -j4` to make things quicker), then run `bin/program_name`.
 
 For a reference manual, run `make doc`, then open `html/index.html` (needs doxygen).
 
@@ -461,6 +461,8 @@ This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/s
 
 ### 7.1 Inner events
 
+#### Introduction
+
 In some situations, a FSM has to change its behavior depending on some of its internal characteristics.
 For example
 - "If state X has been activated 5 times, then switch to state Y instead of state Z"
@@ -468,8 +470,8 @@ For example
 
 This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "external events".
 These latter ones are triggered by the user code:
-when they occur, the user code must call the member function `processEvent()` and thats it.
-The state switches to the next one and all the actions associated with that state are done:
+when they occur, the user code must call the member function `processEvent()` and that's it.
+The FSM switches to the next state and all the actions associated with that state are processed:
 callback is executed, timeout (if any) is launched, ...
 
 But we cannot rely on this for "inner" event types.
@@ -484,7 +486,7 @@ This structure gets assigned during configuration step by member function `assig
 At runtime, it is still the user-code responsability to call some member function, but this time it will/may be considered later.<br>
 Recall, with the other triggering member function `processEvent()`, the processing takes place immediately:
 the FSM will check if that event is allowed on the current state, and will switch to the next state according to the transition matrix.<br>
-Here, we just notify the FSM that some inner event happened, and that it "might" be useful later, when on some other state.
+With Inner Events, we just notify the FSM that some inner event happened, and that it "might" be useful later, when on some other state.
 This is done by a call to `activateInnerEvent()`.
 
 The function will actually only set the flag associated to that inner event to "true", so that it will be indeed processed when we arrive on the state.
@@ -498,17 +500,26 @@ Now, it will also check if there is an inner event associated to that state, and
 
 The signal handler will then itself call the `processInnerEvent()` member function,
 
-As this require the use of
-[signals](https://en.wikipedia.org%2Fwiki%2FSignal_%28IPC%29),
-thus this is available only if symbol `SPAG_USE_SIGNALS` is defined (see [build options](spaghetti_options.md).)
+As this feature require the use of
+[signals](https://en.wikipedia.org/wiki/Signal_(IPC)),
+thus it is available only if symbol `SPAG_USE_SIGNALS` is defined (see [build options](spaghetti_options.md).)
+
+#### Usage
+
+To **configure** inner events, you may use one of these two fsm member functions:
+
+- `void assignInnerTransition( ST st1, EV iev, ST st2 )`: this means:  *when we are on state `st1` and if event `iev` has occurred, then switch to state `st2`*.
+
+- `void assignInnerTransition( EV iev, ST st )`: this means:  *whatever state is active, if event `iev` has occurred, then switch to state `st`*.
+
 
 <a name="pass_states"></a>
 ### 7.2 - Pass states
 
-Pass states are states having a single transition to the next state, that is always active.
+Pass states are states having a single transition to the next state, with that transition being always active.
 It is also handled using signals, so the symbol `SPAG_USE_SIGNALS` must also be defined.
 
-They appear in the config function output and on the graph with the string "AAT", meaning "Always Active Transition".
+These transitions appear in the config function output and on the graph with the string "AAT", meaning "Always Active Transition".
 
 They are defined using the member function `assignAAT( st1, st2 );`.<br>
 This will disable all other transitions that *may* have been assigned previously between these two states.
