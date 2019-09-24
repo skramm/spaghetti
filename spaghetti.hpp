@@ -1480,7 +1480,12 @@ then we need to raise the signal right away! (instead of waiting)
 				);
 
 			if( _innerEventFlag[ ev ] == false )
-				;
+				SPAG_P_LOG_ERROR << "warning, request to clear inner event idx=" << SPAG_P_CAST2IDX(ev)
+#ifdef SPAG_ENUM_STRINGS
+					<< " (" + _strEvents[ SPAG_P_CAST2IDX(ev) ] + ")"
+#endif
+					<< ", but event was not active\n";
+
 			_innerEventFlag[ ev ] = false;
 			SPAG_LOG << "deactivating event " << SPAG_P_CAST2IDX(ev)
 #ifdef SPAG_ENUM_STRINGS
