@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION "0.9.4"
+#define SPAG_VERSION "0.9.5"
 
 #include <vector>
 #include <map>
@@ -894,7 +894,7 @@ Allowed types for \c T:
 					<< st1_idx << " to state " << st2_idx
 #endif
 					<< " removes the "
-					<< stinf._innerTransList.size() << " inner transition(s) previously assigned to this state\n";
+					<< stinf._innerTransList.size() << " inner transition(s) previously assigned to this state.\n";
 			stinf._innerTransList.clear();
 
 			auto& tev = stinf._timerEvent;
@@ -906,7 +906,7 @@ Allowed types for \c T:
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" << _strStates[st1_idx] << ')'
 #endif
-					<< '\n';
+					<< ".\n";
 				tev._enabled = false;
 			}
 		}
@@ -1008,7 +1008,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 	#ifdef SPAG_ENUM_STRINGS
 							<< " (" << _strStates[i] << ')'
 	#endif
-							<< " is a pass state (holds an AAT), time out not assigned\n";
+							<< " is a pass state (holds an AAT), time out not assigned.\n";
 					}
 					else
 #endif
@@ -1023,7 +1023,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 	#ifdef SPAG_ENUM_STRINGS
 								<< " (" << _strStates.at( SPAG_P_CAST2IDX(tev._nextState)) << ')'
 	#endif
-								<< " after " << tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit ) << '\n';
+								<< " after " << tev._duration << ' ' << priv::stringFromTimeUnit( tev._durUnit ) << ".\n";
 						}
 						assignTimeOut( static_cast<ST>(i), dur, durUnit, st_final );
 					}
@@ -1091,7 +1091,7 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" << _strStates[st_idx]  << ')'
 #endif
-					<< " but state has no timeout assigned...\n";
+					<< " but state has no timeout assigned.\n";
 			}
 			_stateInfo[ st_idx ]._timerEvent._enabled = false;
 		}
@@ -1484,7 +1484,7 @@ then we need to raise the signal right away! (instead of waiting)
 #ifdef SPAG_ENUM_STRINGS
 					<< " (" + _strEvents[ SPAG_P_CAST2IDX(ev) ] + ")"
 #endif
-					<< ", but event was not active\n";
+					<< ", but event was not active.\n";
 
 			_innerEventFlag[ ev ] = false;
 			SPAG_LOG << "deactivating event " << SPAG_P_CAST2IDX(ev)
@@ -1495,7 +1495,7 @@ then we need to raise the signal right away! (instead of waiting)
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[ currentState() ] << ')'
 #endif
-				<< '\n';
+				<< ".\n";
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
@@ -1774,7 +1774,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				bool do_raise_sig = false;
 				if( stateInfo._isPassState )
 				{
-					SPAG_LOG << "Is pass-state, raise signal\n";
+					SPAG_LOG << "Is pass-state, raise signal.\n";
 					do_raise_sig = true;
 				}
 				else
@@ -1783,7 +1783,11 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 						if( _innerEventFlag.count( itr._innerEvent ) ) // if event is registered
 							if( _innerEventFlag.at( itr._innerEvent ) ) // and active
 							{
-								SPAG_LOG << "IE is Active, raise signal\n";
+								SPAG_LOG << "Inner Event idx=" << SPAG_P_CAST2IDX(itr._innerEvent)
+								#ifdef SPAG_ENUM_STRINGS
+									<< " (" << _strEvents[ SPAG_P_CAST2IDX(itr._innerEvent) ] << ")"
+								#endif
+									<< " is active, raise signal.\n";
 								do_raise_sig = true;
 								break;                    // no need to check the others
 							}
