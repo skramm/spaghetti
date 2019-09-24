@@ -10,8 +10,6 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_EMBED_ASIO_WRAPPER
 #include "spaghetti.hpp"
 
-#include <functional>
-
 //-----------------------------------------------------------------------------------
 enum States { st_Init, st_Red, st_Orange, st_Green, NB_STATES };
 enum Events { NB_EVENTS };

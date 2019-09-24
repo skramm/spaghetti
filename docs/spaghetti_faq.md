@@ -121,16 +121,16 @@ This is demonstrated in `src/sample_3.cpp`.
 - **Q**: *I need to track ignored events. How can I do that?*<br>
 **A**: First, these are logged (if logging is enable, of course, see [`SPAG_ENABLE_LOGGING`](spaghetti_options.md) ),
 and you can print them once your FSM is stopped with `getCounters().print()`.
-Second, to see them during runtime, you can assign to the a generic callback function that will be called every time an ignored event occurs,
+Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs,
 with `assignIgnoredEventsCallback()`.<br>
 This callback needs to have this signature:<br>
 `void cb_ign( States st, Events ev )`.<br>
 This will bring information on when and why this happened, for instance you can do something like this:
 ```C++
-    void cb_ign( States st, Events ev )
-    {
-        std::cout << "Detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
-    }
+void cb_ign( States st, Events ev )
+{
+   std::cout << "Detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
+}
 ```
 This is demonstrated in [`src/traffic_lights_common.hpp`](../../../tree/master/src/traffic_lights_common.hpp):
 switching to "warning" mode is only allowed while on regular modes, and if that event occurs while on any other state,

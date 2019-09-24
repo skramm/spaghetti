@@ -1417,7 +1417,7 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			}
 			else
 			{
-				SPAG_LOG << "event is ignored\n";
+				SPAG_LOG << "event is ignored on current state\n";
 				if( _ignEventCallback )
 					_ignEventCallback( _current, ev );
 
@@ -1429,7 +1429,9 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 		}
 
 #ifdef SPAG_USE_SIGNALS
-/// activate inner event: set the inner event to true, so that a signal will be raised when we are on that state (and once callback has been completed).
+/// Activate inner event: set the inner event to true, so that a signal will be raised
+/// when we are on a state that has the event enabled as inner transition
+/// (and once callback has been completed).
 /**
 \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 \todo implement "early quit" (as soon as found)
@@ -1442,15 +1444,15 @@ then we need to raise the signal right away! (instead of waiting)
 
 			if( 0 == _innerEventFlag.count( ev ) )
 				throw std::runtime_error(
-					"request to activate event "
+					"request to activate inner event "
 					+ std::to_string( SPAG_P_CAST2IDX(ev) )
 #ifdef SPAG_ENUM_STRINGS
 					+ " (" + _strEvents[ SPAG_P_CAST2IDX(ev) ] + ")"
 #endif
-					+ ", but not found"
+					+ ", but not found in list of Internal Events"
 				);
 
-			 _innerEventFlag[ ev ] = true;
+			_innerEventFlag[ ev ] = true;
 			SPAG_LOG << "activating event " << SPAG_P_CAST2IDX(ev)
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strEvents[ SPAG_P_CAST2IDX(ev) ] << ')'
@@ -1462,6 +1464,33 @@ then we need to raise the signal right away! (instead of waiting)
 				<< '\n';
 
 			SPAG_P_END;
+		}
+
+/// Deactivate an inner event. Will issue a warning if the event is presently not active
+		void clearInternalEvent( EV ev )
+		{
+			if( 0 == _innerEventFlag.count( ev ) )
+				throw std::runtime_error(
+					"request to clear inner event "
+					+ std::to_string( SPAG_P_CAST2IDX(ev) )
+#ifdef SPAG_ENUM_STRINGS
+					+ " (" + _strEvents[ SPAG_P_CAST2IDX(ev) ] + ")"
+#endif
+					+ ", but not found in list of Internal Events"
+				);
+
+			if( _innerEventFlag[ ev ] == false )
+				;
+			_innerEventFlag[ ev ] = false;
+			SPAG_LOG << "deactivating event " << SPAG_P_CAST2IDX(ev)
+#ifdef SPAG_ENUM_STRINGS
+				<< " (" << _strEvents[ SPAG_P_CAST2IDX(ev) ] << ')'
+#endif
+				<< " current state is " << (int)currentState()
+#ifdef SPAG_ENUM_STRINGS
+				<< " (" << _strStates[ currentState() ] << ')'
+#endif
+				<< '\n';
 		}
 
 /// This is to be called by event loop wrapper, by the signal handler.
@@ -1716,7 +1745,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #ifdef SPAG_ENUM_STRINGS
 				<< " (" << _strStates[ SPAG_P_CAST2IDX(_current) ] << ")"
 #endif
-				<< ", starting action\n";
+				<< ", starting handler\n";
 			auto curr_idx = SPAG_P_CAST2IDX(_current);
 			auto& stateInfo = _stateInfo[ curr_idx ];
 
@@ -1756,6 +1785,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				}
 				if( do_raise_sig )
 				{
+					SPAG_LOG << "raising signal\n";
 					SPAG_LOG_FLUSH;
 					_eventHandler->raiseSignal();
 					_eventHandler->timerCancel();

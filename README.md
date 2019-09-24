@@ -72,6 +72,8 @@ SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 
 #### 3 - Configuring FSM
 ```C++
+int main()
+{
 	fsm_t fsm;
 	fsm.assignTransition( States::st_Locked,   Events::ev_Coin, States::st_Unlocked );
 	fsm.assignTransition( States::st_Unlocked, Events::ev_Push, States::st_Locked );

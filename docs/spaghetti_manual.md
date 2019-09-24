@@ -487,9 +487,9 @@ At runtime, it is still the user-code responsability to call some member functio
 Recall, with the other triggering member function `processEvent()`, the processing takes place immediately:
 the FSM will check if that event is allowed on the current state, and will switch to the next state according to the transition matrix.<br>
 With Inner Events, we just notify the FSM that some inner event happened, and that it "might" be useful later, when on some other state.
-This is done by a call to `activateInnerEvent()`.
+This is done by a call to `activateInnerEvent( EV )` (see below).
 
-The function will actually only set the flag associated to that inner event to "true", so that it will be indeed processed when we arrive on the state.
+This function will actually only set the flag associated to that inner event to "true", so that it will be indeed processed when we arrive on the state.
 
 So how is this event processed, in a way that will not lead to a potential stack overflow?
 The key is using signals.
@@ -508,9 +508,23 @@ thus it is available only if symbol `SPAG_USE_SIGNALS` is defined (see [build op
 
 To **configure** inner events, you may use one of these two fsm member functions:
 
-- `void assignInnerTransition( ST st1, EV iev, ST st2 )`: this means:  *when we are on state `st1` and if event `iev` has occurred, then switch to state `st2`*.
+- `void assignInnerTransition( ST st1, EV iev, ST st2 )`<br>
+This means:  *when we are on state `st1` and if event `iev` has occurred, then switch to state `st2`*.
 
-- `void assignInnerTransition( EV iev, ST st )`: this means:  *whatever state is active, if event `iev` has occurred, then switch to state `st`*.
+- `void assignInnerTransition( EV iev, ST st )`<br>
+This means:  *whatever state is active, if event `iev` has occurred, then switch to state `st`*.
+
+- `void disableInnerTransition( EV ev, ST st_from )`<br>
+This can be used to disable the inner event `ev` that may have been assigned to state `st_from`.
+
+To **trigger** an inner event `ev`:
+```
+	fsm.activateInnerEvent( ev );
+```
+In some situations, you might need to **de-activate** an inner event, this can be done with:
+```
+	fsm.clearInnerEvent( ev );
+```
 
 
 <a name="pass_states"></a>

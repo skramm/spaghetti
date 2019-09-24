@@ -5,7 +5,9 @@
 - [Manual](spaghetti_manual.md)
 
 This library does not produce graphical rendering of the state machine.
-But it provides a function to generate a [standard dot file](https://en.wikipedia.org/wiki/DOT_%28graph_description_language%29), that can be used to generate the corresponding image, using [Graphviz](https://www.graphviz.org/).
+But it provides a function to generate a
+[standard dot file](https://en.wikipedia.org/wiki/DOT_%28graph_description_language%29)
+that can be used to generate the corresponding image with [Graphviz](https://www.graphviz.org/).
 
 To use it with default options:
 ```C++
