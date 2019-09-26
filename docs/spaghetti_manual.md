@@ -499,7 +499,7 @@ In some situations, you might need to **de-activate** an inner event, this can b
 	fsm.clearInnerEvent( ev );
 ```
 
-More details [here](spaghetti_dev_info#inner_events) .
+More details [here](spaghetti_devinfo.md#inner_events) .
 
 <a name="pass_states"></a>
 ### 7.2 - Pass states

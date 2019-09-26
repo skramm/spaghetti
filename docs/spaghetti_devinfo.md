@@ -6,6 +6,12 @@
 This page gives some general details for those who want to dive into the code
 (more to come...)
 
+### 0 - Continuous Integration
+
+At present, a very light CI is running, using travis-ci.com, for details see file `.travis.yml`.
+All the samples are build and the `make test` is run (see below: Automated testing)
+
+
 ### 1 - Possibly related software
 
  - Boost MSM: http://www.boost.org/doc/libs/release/libs/msm/
@@ -17,12 +23,12 @@ This page gives some general details for those who want to dive into the code
 
 Most of it is pretty obvious by parsing the code, but here are some additional points:
 
-- TABS for indentation, SPACE for spacing
-- Identifiers
- - `camelCaseIsUsed` for functions, variables
- - class/struct member data is prepended with '_' ( `_thisIsADataMember` )
- - Types are `CamelCase` (UpperCase first letter). Example: `ThisIsAType`
- - To avoid name collisions, all the symbols defined here start with `SPAG_`
+* TABS for indentation, SPACE for spacing
+* Identifiers
+  * `camelCaseIsUsed` for functions, variables
+  * class/struct member data is prepended with '_' ( `_thisIsADataMember` )
+  * Types are `CamelCase` (UpperCase first letter). Example: `ThisIsAType`
+* Macros: to avoid name collisions, all the symbols defined here start with `SPAG_`
 
 ### 3 - Automated testing
 
@@ -34,10 +40,11 @@ This is very preliminar.
 At present, the testing consist in making sure a test program produces an output similar to a given reference
 (in the form of a file `tests/XXXX.stdout`).
 
+
 <a name="inner_events"></a>
 ### 4 - Inner events handling
 
-In this section, more details about how [Inner events](spaghetti_manual#inner_events) are handled internally.
+In this section, more details about how [Inner events](spaghetti_manual.md#inner_events) are handled internally.
 
 It is not possible to handle inner events in a similar way as regular (external) events.
 If we did so (by checking when arriving on a state if some condition is met, and if so, change again state, call associated callback function),
@@ -53,8 +60,7 @@ Recall, with the other triggering member function `processEvent()`, the processi
 the FSM will check if that event is allowed on the current state, and will switch to the next state according to the transition matrix.<br>
 
 With Inner Events, we just notify the FSM that some inner event happened.
-This is done by a call to `activateInnerEvent( EV )` (see below).
-
+This is done by a call to `activateInnerEvent( EV )`.
 This function will only activate a flag associated to that inner event, so that it will be indeed processed when we arrive on the state where it is supposed to trigger something.
 
 So how is this event processed, in a way that will not lead to a potential stack overflow?
