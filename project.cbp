@@ -37,6 +37,7 @@
 		<Unit filename="docs/spaghetti_timeout.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />
+		<Unit filename="src/common_stuff_samples.hpp" />
 		<Unit filename="src/doc_fig_1.cpp" />
 		<Unit filename="src/doxyfile" />
 		<Unit filename="src/sample1.dot" />

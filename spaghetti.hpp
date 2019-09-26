@@ -133,8 +133,7 @@ This program is free software: you can redistribute it and/or modify
 
 #define SPAG_NOT_AVAILABLE(a) \
 	{ \
-		SPAG_P_LOG_ERROR << "This function is not available when symbol " << SPAG_STRINGIZE(a) << " is not defined, see manual.\n"; \
-		assert(0); \
+		static_assert( priv::AlwaysFalse<ST>::value, "This function is not available when symbol " #a " not defined" ); \
 	}
 
 #ifdef SPAG_TRACK_RUNTIME
@@ -186,9 +185,16 @@ enum Item : uint8_t
 enum class DurUnit : char { ms, sec, min };
 
 namespace priv {
-// forward declaration
-template<typename T, typename U>
-struct RunTimeData;
+
+	// forward declaration
+	template<typename T, typename U>
+	struct RunTimeData;
+
+	/// A trick used in static_assert, so it aborts only if function is instanciated
+	template<typename T>
+	struct AlwaysFalse {
+		enum { value = false };
+	};
 };
 
 //-----------------------------------------------------------------------------------
@@ -956,13 +962,44 @@ To remove afterwards the inner events on some states, use \c disableInnerTransit
 					}
 				}
 		}
-#else
+
+/// Removes inner transition \c ev that is assigned on state \c st_from
+/**
+This is a companion function of \c assignInnerTransition( EV, ST )
+
+Hence, as this latter ones assigns an inner event to all the states, we need a function
+to remove this event on some states
+*/
+		void disableInnerTransition( EV ev, ST st_from )
+		{
+			auto st_idx = SPAG_P_CAST2IDX(st_from);
+			auto& stinf = _stateInfo[st_idx];
+
+			auto it = stinf.findInnerEvent( ev );
+			if( it == std::end( stinf._innerTransList ) )
+				SPAG_P_THROW_ERROR_CFG( "state "
+					+ std::to_string( st_idx )
+#ifdef SPAG_ENUM_STRINGS
+					+ " (" + _strStates[st_idx] + ") "
+#endif
+					+ " has no inner transition"
+				);
+
+			stinf._innerTransList.erase( it );
+			_allowedMat[ev][st_from] = 0;
+		}
+
+#else // SPAG_USE_SIGNALS not defined
+
 		void assignInnerTransition( ST st1, EV ev, ST st2 )
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 		void assignInnerTransition( EV ev, ST st )
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
+		void disableInnerTransition( EV, ST )
+			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
 		void assignAAT( ST st1, ST st2 )
 			SPAG_NOT_AVAILABLE(SPAG_USE_SIGNALS);
+
 #endif // SPAG_USE_SIGNALS
 
 /// Assigns a timeout event leading to state \c st_final, on \b all states except \c st_final,
@@ -994,7 +1031,7 @@ After this, on all the states except \c st_final, if \c duration expires, the FS
 */
 		void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final )
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
 
 			for( size_t i=0; i<nbStates(); i++ )                                 // iterate on all the states
 				if( i != SPAG_P_CAST2IDX(st_final) )                             // and for all of them, except the designated one,
@@ -1058,7 +1095,7 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 /// Assigns a timeout event on state \c st_curr, will switch to event \c st_next. With units
 		void assignTimeOut( ST st_curr, Duration dur, DurUnit unit, ST st_next )
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_curr), nbStates() );
 			SPAG_CHECK_LESS( SPAG_P_CAST2IDX(st_next), nbStates() );
 			_stateInfo[ SPAG_P_CAST2IDX( st_curr ) ]._timerEvent = priv::TimerEvent<ST>( st_next, dur, unit );
@@ -1075,14 +1112,14 @@ See setTimerDefaultValue() and setTimerDefaultUnit()
 /// Removes all the timeouts
 		void clearTimeOuts()
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
 			for( size_t i=0; i<nbStates(); i++ )
 				_stateInfo[ SPAG_P_CAST2IDX( i ) ]._timerEvent._enabled = false;
 		}
 /// Removes the timeout on state \c st
 		void clearTimeOut( ST st )
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
 			auto st_idx = SPAG_P_CAST2IDX( st );
 			SPAG_CHECK_LESS( st_idx, nbStates() );
 			if( !_stateInfo[ st_idx ]._timerEvent._enabled )
@@ -1137,34 +1174,6 @@ Thus it is also not usable for inner transitions.
 			_allowedMat[ SPAG_P_CAST2IDX(ev) ][ st_idx ] = (what?1:0);
 		}
 
-#ifdef SPAG_USE_SIGNALS
-/// Remove inner transition \c ev that is assigned on state \c st_from
-/**
-This is a companion function of \c assignInnerTransition( EV, ST )
-
-Hence, as this latter ones assigns an inner event to all the states, we need a function
-to remove this event on some states
-*/
-		void disableInnerTransition( EV ev, ST st_from )
-		{
-			auto st_idx = SPAG_P_CAST2IDX(st_from);
-			auto& stinf = _stateInfo[st_idx];
-
-			auto it = stinf.findInnerEvent( ev );
-			if( it == std::end( stinf._innerTransList ) )
-				SPAG_P_THROW_ERROR_CFG( "state "
-					+ std::to_string( st_idx )
-#ifdef SPAG_ENUM_STRINGS
-					+ " (" + _strStates[st_idx] + ") "
-#endif
-					+ " has no inner transition"
-				);
-
-			stinf._innerTransList.erase( it );
-			_allowedMat[ev][st_from] = 0;
-		}
-#endif // SPAG_USE_SIGNALS
-
 /// Assigns a callback function to a state, will be called each time we arrive on this state
 		void assignCallback( ST st, Callback_t func, CBA cb_arg=CBA() )
 		{
@@ -1215,7 +1224,7 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 #ifndef SPAG_EMBED_ASIO_WRAPPER
 		void assignEventHandler( TIM* t )
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
 			_eventHandler = t;
 		}
 #endif
@@ -1655,14 +1664,14 @@ This function will be called by the signal handler of the event handler class ON
 /// Sets the timer default value. See assignTimeOut()
 		void setTimerDefaultValue( Duration val ) const
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
             _defaultTimerValue = val;
 		}
 
 /// Sets the timer default unit. See assignTimeOut()
 		void setTimerDefaultUnit( DurUnit unit ) const
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
             _defaultTimerUnit = unit;
 		}
 
@@ -1673,7 +1682,7 @@ Provided so that we can use this in a function templated with the FSM type, with
 */
 		void setTimerDefaultUnit( std::string str ) const
 		{
-			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "ERROR, FSM build without timer" );
+			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
 			auto tu = priv::timeUnitFromString( str );
 			if( !tu.first )
 				SPAG_P_THROW_ERROR_CFG( "invalid string value: " + str );
@@ -1739,6 +1748,14 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 #else
 			out += no;
 #endif
+			out += SPAG_P_STRINGIZE2( SPAG_NO_VERBOSE );
+#ifdef SPAG_ENUM_STRINGS
+			out += yes;
+#else
+			out += no;
+#endif
+
+
 			return out;
 		}
 
@@ -2440,8 +2457,8 @@ struct NoTimer
 //-----------------------------------------------------------------------------------
 /// Wraps the boost::asio stuff to have an asynchronous timer easily available
 /**
-Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitely.
-That last point isn't that obvious, has it also must have a lifespan not limited to some callback function.
+Rationale: holds a timer, created by constructor. It can then be used without having to create one explicitly.
+That last point isn't that obvious, as it also must have a lifespan not limited to some callback function.
 
 For timer duration, see
 http://en.cppreference.com/w/cpp/chrono/duration
@@ -2478,7 +2495,6 @@ struct AsioWrapper
 
 	public:
 /// Constructor
-
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
 	AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
 #else

@@ -479,7 +479,7 @@ thus it is available only if symbol `SPAG_USE_SIGNALS` is defined (see [build op
 
 Inner event are declared as regular events, they must be part of the "events" enum.
 
-To **configure** inner events, you may use one of these two fsm member functions:
+To **configure** inner events, you may use these fsm member functions:
 
 - `void assignInnerTransition( ST st1, EV iev, ST st2 )`<br>
 This means:  *when we are on state `st1` and if event `iev` has occurred, then switch to state `st2`*.
@@ -588,7 +588,8 @@ You can printout the whole configuration of the FSM with a member function:
 ```
 The second argument is optional.
 
-This will print out both the transition table and the state information. For example, consider this, produced with
+This will print out both the transition table and the state information.
+For example, consider this, produced with
 `$ bin/testA_2`:
 
 ```
@@ -617,8 +618,9 @@ Spaghetti: Warning, state S05 (St-5) is unreachable
 Spaghetti: Warning, state S06 (St-6) is unreachable
 ```
 
-The transition table is pretty much simple to understand: for each state (columns), it shows the next state, depending on the event (lines).
-It has a line for Timeouts, where we can see that all the states have a timeout assigned, except state S01, that has an "Always Active" transition.
+The transition table is pretty much simple to understand:
+for each state (columns), it shows the next state, depending on the event (lines).
+It has a line for Timeouts, where we can see that all the states have a timeout assigned, except for state S01, that has an "Always Active" transition.
 
 The second part shows, for each state, the "special events"
 (Time-outs, Internal events, Always Active Transitions).

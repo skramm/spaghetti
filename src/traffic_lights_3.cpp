@@ -1,6 +1,6 @@
 /**
 \file traffic_lights_3.cpp
-\brief a simple traffic light example. Similar to version 2, with an added udp server part.
+\brief a simple traffic light example. Similar to version 2, with an added UDP server part.
 Besides having a separate thread handling keyboard input, it can receive data from
 traffic_lights_client.cpp
 
@@ -19,16 +19,14 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_ENUM_STRINGS
 #include "spaghetti.hpp"
 
-#include <future>
-
-// states and events are declared in file traffic_lights_common.hpp
+// States and events are declared in file traffic_lights_common.hpp
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 
 /// global pointer on mutex, will get initialized in getSingletonMutex()
 std::mutex* g_mutex;
 
 //-----------------------------------------------------------------------------------
-/// concrete class, implements UdpServer and SpagFSM, and triggers event on the FSM
+/// Concrete class, implements UdpServer and SpagFSM, and triggers event on the FSM
 struct MyServer : public UdpServer<1024>
 {
 	MyServer( boost::asio::io_service& io_service, int port_no )
@@ -65,7 +63,7 @@ int main( int, char* argv[] )
 	g_mutex = getSingletonMutex();
 	try
 	{
-		spag::AsioEL asio;  // create Timer class
+		spag::AsioEL asio;  // create Timer/event loop object
 
 		MyServer server( asio.get_io_service(), 12345 ); // create udp server with asio
 
