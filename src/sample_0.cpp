@@ -16,6 +16,8 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_ENABLE_LOGGING
 #include "spaghetti.hpp"
 
+#include "common_stuff_samples.hpp"
+
 #include <thread>
 #include <mutex>
 
@@ -53,12 +55,13 @@ void cb_func( std::string s )
 {
 	std::cout << "callback: " << s << '\n';
 }
+#define PROG_INFO "Enter 'a' for event, 'q' to quit"
+
 //-----------------------------------------------------------------------------------
 int main( int, char* argv[] )
 {
-	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
-
-	std::cout << "enter 'a' for event, 'q' to quit\n";
+	INFO;
+//	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
 	try

@@ -15,7 +15,13 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_USE_SIGNALS
 #define SPAG_ENABLE_LOGGING
 #define SPAG_ENUM_STRINGS
+
+// try running and hitting key '3' with and without defining this symbol
+//#define SPAG_NO_VERBOSE
+
 #include "spaghetti.hpp"
+
+#include "common_stuff_samples.hpp"
 
 #include <thread>
 
@@ -28,6 +34,12 @@ void cb_func( std::string s )
 {
 	std::cout << "callback: " << s << '\n';
 }
+
+#define PROG_INFO " -'1': switch through states 1,2,3\n\
+ -'2': switch to error state \n\
+ -'3': not allowed !\n\
+ -'q': quit"
+
 
 template<typename FSM>
 void UI_thread( const FSM* fsm )
@@ -44,6 +56,7 @@ void UI_thread( const FSM* fsm )
 				case '2': fsm->processEvent( ev_2 ); break;
 				case '3': fsm->processEvent( ev_inner ); break; // this is only to make sure that this will generate an error
 				case 'q': quit = true; fsm->stop();  break;
+				default: std::cout << "ignored key\n"; break;
 			}
 		}
     }
@@ -76,7 +89,8 @@ void configureFSM( fsm_t& fsm )
 
 int main( int, char* argv[] )
 {
-	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
+	INFO;
+//	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 	fsm_t fsm;
 	configureFSM( fsm );

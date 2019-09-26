@@ -77,13 +77,13 @@ This program is free software: you can redistribute it and/or modify
 
 #define SPAG_P_THROW_ERROR_RT( msg ) \
 	{ \
-		SPAG_P_LOG_ERROR << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
+		SPAG_P_LOG_ERROR << "error: " << msg << '\n'; \
 		throw std::runtime_error( spag::priv::getSpagName() + "runtime error in " + __FUNCTION__ + "(): " + msg ); \
 	}
 
 #define SPAG_P_THROW_ERROR_CFG( msg ) \
 	{ \
-		SPAG_P_LOG_ERROR << "error in " << __FUNCTION__ << "(): " << msg << '\n'; \
+		SPAG_P_LOG_ERROR << "error: " << msg << '\n'; \
 		throw std::logic_error( spag::priv::getSpagName() + "configuration error in " + __FUNCTION__ + "(): " + msg ); \
 	}
 
@@ -620,7 +620,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 	}
 
 //////////////////////////////////
-// private member function section
+// RunTimeData: private member function section
 //////////////////////////////////
 
 	private:
@@ -640,7 +640,7 @@ Events are passed as \c size_t because we may pass values other than the ones in
 	}
 
 //////////////////////////////////
-// private data section
+// RunTimeData: private data section
 //////////////////////////////////
 
 	private:
@@ -1235,16 +1235,19 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 		}
 
 #ifdef SPAG_ENUM_STRINGS
+
 	private:
 /// parses the strings and returns false if one of the strings is present more than once
+#if 1
 		bool checkUnicity( const std::vector<std::string>& v_str ) const
 		{
-#if 1
+
 			for( size_t i=0; i<v_str.size()-1; i++ )
 				for( size_t j=i+1; j<v_str.size(); j++ )
 					if( v_str[i] == v_str[j] )
 						return false;
 			return true;
+		}
 #else
 		template<typename Key>
 		bool checkUnicity( const std::map<Key,std::string>& strMap ) const
@@ -1257,8 +1260,8 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			if( v_res.size() > 1 )
 				return false;
 			return true;
-#endif
 		}
+#endif
 	public:
 /// Assign a string to an enum event value (available only if option SPAG_ENUM_STRINGS is enabled)
 /// \todo Replace the assert with something more user-friendly (same with the other functions)
@@ -1396,6 +1399,16 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 			SPAG_P_ASSERT( _isRunning, "attempting to process an event but FSM is not started" );
 
 			auto ev_idx = SPAG_P_CAST2IDX( ev );
+			if( isInnerEvent(ev) )
+				SPAG_P_THROW_ERROR_RT(
+					std::string( "request to process event idx=" )
+					+ std::to_string( ev_idx )
+				#ifdef SPAG_ENUM_STRINGS
+					+ std::string( " (" ) + _strEvents[ev_idx] + std::string( ")" )
+				#endif
+					+ std::string( " but event has been declared as inner event." )
+				);
+
 #ifdef SPAG_ENUM_STRINGS
 			SPAG_LOG << "processing event " << ev_idx << ": \"" << _strEvents[ev_idx] << "\"\n";
 #else
@@ -1442,7 +1455,7 @@ then we need to raise the signal right away! (instead of waiting)
 		{
 			SPAG_P_START;
 
-			if( 0 == _innerEventFlag.count( ev ) )
+			if( !isInnerEvent( ev ) )
 				throw std::runtime_error(
 					"request to activate inner event "
 					+ std::to_string( SPAG_P_CAST2IDX(ev) )
@@ -1469,7 +1482,7 @@ then we need to raise the signal right away! (instead of waiting)
 /// Deactivate an inner event. Will issue a warning if the event is presently not active
 		void clearInternalEvent( EV ev )
 		{
-			if( 0 == _innerEventFlag.count( ev ) )
+			if( !isInnerEvent( ev ) )
 				throw std::runtime_error(
 					"request to clear inner event "
 					+ std::to_string( SPAG_P_CAST2IDX(ev) )
@@ -1523,7 +1536,7 @@ This function will be called by the signal handler of the event handler class ON
 			{
 				for( const auto& innerTrans: stinf._innerTransList )
 				{
-					if( _innerEventFlag.count( innerTrans._innerEvent ) == 0 )       // step 1: check that the event is correctly registered in map
+					if( !isInnerEvent( innerTrans._innerEvent ) )       // step 1: check that the event is correctly registered in map
 						SPAG_P_THROW_ERROR_RT( "Unable to find inner event" );     /// \todo expand user message
 
 
@@ -1733,10 +1746,25 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 ///@}
 
 ///////////////////////////////////
-// private member function section
+// SpagFSM: private member function section
 ///////////////////////////////////
 
 	private:
+
+/// Returns true if event \c ev has been declared as inner event, with
+/**
+assignInnerTransition( ST st1, EV iev, ST st2 );
+or
+assignInnerTransition( EV, ST );
+
+\note To be replaced with https://en.cppreference.com/w/cpp/container/map/contains
+when C++20 available.
+*/
+	bool isInnerEvent( EV ev ) const
+	{
+		return static_cast<bool>(_innerEventFlag.count( ev ));
+	}
+
 /// Run associated action with a state switch (state has already switched)
 /**
 -# first, starts timer, if needed (first, because running callback can take some time).
@@ -1780,7 +1808,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 				else
 				{
 					for( auto& itr: stateInfo._innerTransList )
-						if( _innerEventFlag.count( itr._innerEvent ) ) // if event is registered
+						if( isInnerEvent( itr._innerEvent ) ) // if event is registered
 							if( _innerEventFlag.at( itr._innerEvent ) ) // and active
 							{
 								SPAG_LOG << "Inner Event idx=" << SPAG_P_CAST2IDX(itr._innerEvent)
@@ -1813,7 +1841,7 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		std::string getConfigErrorMessage( priv::EN_ConfigError ce, size_t st ) const;
 
 /////////////////////////////
-// private data section
+// SpagFSM: private data section
 /////////////////////////////
 
 	private:
@@ -1825,19 +1853,19 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 		mutable bool      _isRunning         = false;
 		mutable DurUnit   _defaultTimerUnit  = DurUnit::sec;         ///< default timer units
 		mutable Duration  _defaultTimerValue = 1;                    ///< default timer value
-		mutable TIM*      _eventHandler      = nullptr;              ///< pointer on timer/ event-loop handling type
+		mutable TIM*      _eventHandler      = nullptr;              ///< pointer on timer/ event-loop handling object
 
 #ifdef SPAG_USE_ARRAY
 	#ifdef SPAG_USE_SIGNALS
 		std::array<
 			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)+2                   // + 2 is used to hold the AAT
-		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+		> _transitionMat;  ///< describe what states the fsm switches to, when an event is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 	#else
 		std::array<
 			std::array<ST, static_cast<size_t>(ST::NB_STATES)>,
 			static_cast<size_t>(EV::NB_EVENTS)+1                  // +1 is used to hold the timeout events
-		> _transitionMat;  ///< describe what states the fsm switches to, when a message is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
+		> _transitionMat;  ///< describe what states the fsm switches to, when an event is received. lines: events, columns: states, value: states to switch to. DOES NOT hold timer events
 	#endif
 
 /// Matrix holding for each event a byte telling is the event is ignored or not, for a given state (0:ignore event, 1:handle external event, -1: internal event)

@@ -463,48 +463,21 @@ This is demonstrated in sample program [src/sample_2.cpp](../../../tree/master/s
 
 #### Introduction
 
-In some situations, a FSM has to change its behavior depending on some of its internal characteristics.
+In some situations, a FSM has to change its behavior depending on some internal event.
 For example
 - "If state X has been activated 5 times, then switch to state Y instead of state Z"
 - "if some class member variable has value 10, then, when on state X, we want to switch to state Y instead of having a timeout leading to state Z"
 
 This is implemented in Spaghetti by using so-called "inner-events", as opposed to other events, that are called "external events".
-These latter ones are triggered by the user code:
-when they occur, the user code must call the member function `processEvent()` and that's it.
-The FSM switches to the next state and all the actions associated with that state are processed:
-callback is executed, timeout (if any) is launched, ...
+These are identified as enum values, and must be part of the "Events" enum, just as the others.
 
-But we cannot rely on this for "inner" event types.
-Actually, we could, by checking when arriving on a state if some condition is met, and if so, change again state, call associated callback function, and so on.
-As you get it, there is a high risk of getting into an infinite recursion loop, that will quickly lead to a stack overflow.
-
-So those events are processed differently.
-
-Each state holds a list of `InnerTransition` struct, that holds information on what inner event must be handled, and what state it will lead to.
-This structure gets assigned during configuration step by member function `assignInnerTransition()`.
-
-At runtime, it is still the user-code responsability to call some member function, but this time it will/may be considered later.<br>
-Recall, with the other triggering member function `processEvent()`, the processing takes place immediately:
-the FSM will check if that event is allowed on the current state, and will switch to the next state according to the transition matrix.<br>
-With Inner Events, we just notify the FSM that some inner event happened, and that it "might" be useful later, when on some other state.
-This is done by a call to `activateInnerEvent( EV )` (see below).
-
-This function will actually only set the flag associated to that inner event to "true", so that it will be indeed processed when we arrive on the state.
-
-So how is this event processed, in a way that will not lead to a potential stack overflow?
-The key is using signals.
-When we arrive on a state, the function `runAction()` is always called.
-This function will, depending on the situation, start the timer, and/or run the callback.
-Now, it will also check if there is an inner event associated to that state, and if so, it will
-**raise a signal**, that will be handled **after completion** of the function, by a dedicated handler function.
-
-The signal handler will then itself call the `processInnerEvent()` member function,
-
-As this feature require the use of
+This feature requires the use of
 [signals](https://en.wikipedia.org/wiki/Signal_(IPC)),
-thus it is available only if symbol `SPAG_USE_SIGNALS` is defined (see [build options](spaghetti_options.md).)
+thus it is available only if symbol `SPAG_USE_SIGNALS` is defined (see [build options](spaghetti_options.md) ).
 
 #### Usage
+
+Inner event are declared as regular events, they must be part of the "events" enum.
 
 To **configure** inner events, you may use one of these two fsm member functions:
 
@@ -526,6 +499,7 @@ In some situations, you might need to **de-activate** an inner event, this can b
 	fsm.clearInnerEvent( ev );
 ```
 
+More details [here](spaghetti_dev_info#inner_events) .
 
 <a name="pass_states"></a>
 ### 7.2 - Pass states

@@ -32,6 +32,7 @@ void pr( std::string e )
 {
 	std::cout << "processing event " << e << '\n';
 }
+
 int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
