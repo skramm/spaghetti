@@ -34,6 +34,7 @@
 		<Unit filename="docs/spaghetti_manual.md" />
 		<Unit filename="docs/spaghetti_options.md" />
 		<Unit filename="docs/spaghetti_rendering.md" />
+		<Unit filename="docs/spaghetti_summary.md" />
 		<Unit filename="docs/spaghetti_timeout.md" />
 		<Unit filename="doxyfile" />
 		<Unit filename="spaghetti.hpp" />

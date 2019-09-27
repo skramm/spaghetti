@@ -654,10 +654,10 @@ Some self-explaining member function that can be useful in user code:
  - `size_t nbEvents()`: returns nb of events (only "hardware" and "inner" ones, not timeouts)
  - `States currentState()`: returns current state (`States` being the enum you have used to declare the FSM type)
  - `States previousState()`: returns previous state
- - `size_t getStateIndex( std::string s )` : return internal index of state with assigned string `s`
- - `size_t getEventIndex( std::string s )` : return internal index of event with assigned string `s`
- - `timeOutDuration( States st )`: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`
- (first element will be 0 if not timeout assigned)
+ - `size_t getStateIndex( std::string s )`: returns internal index of state with assigned string `s`
+ - `size_t getEventIndex( std::string s )`: returns internal index of event with assigned string `s`
+ - `timeOutDuration( States st )`: returns duration of timeout on state `st`, as a `std::pair (Duration, DurUnit)`.
+ First element will be 0 if no timeout assigned to that state.
 
  *Note:* `getStateIndex()` and `getEventIndex()`:
  - are only available if build option `SPAG_ENUM_STRINGS` build option is activated, see [build options](spaghetti_options.md)
