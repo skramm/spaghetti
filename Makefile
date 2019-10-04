@@ -52,7 +52,7 @@ SRC_DIR=src
 SRC_DIR_T=tests
 OBJ_DIR=obj
 
-
+# suffix _T is for the test files
 HEADER_FILES := $(wildcard $(SRC_DIR)/*.h*)
 SRC_FILES    := $(wildcard $(SRC_DIR)/*.cpp)
 SRC_FILES_T  := $(wildcard $(SRC_DIR_T)/testA_*.cpp)

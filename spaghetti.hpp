@@ -1662,7 +1662,8 @@ This function will be called by the signal handler of the event handler class ON
 #endif // SPAG_ENABLE_LOGGING
 
 /// Sets the timer default value. See assignTimeOut()
-		void setTimerDefaultValue( Duration val ) const
+		template<typename T>
+		void setTimerDefaultValue( T val ) const
 		{
 			static_assert( std::is_same<TIM,priv::NoTimer<ST,EV,CBA>>::value == false, "Error, FSM type has no timer" );
             _defaultTimerValue = val;

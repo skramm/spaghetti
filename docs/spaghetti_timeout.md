@@ -20,61 +20,48 @@ Please read [this for more info on how to use timeouts](spaghetti_manual.md#show
 
 ### 1 - Single Timeout on a state
 
-```C++
-void assignTimeOut( ST st_curr, ST st_next );
-```
+* `fsm.assignTimeOut( st_curr, st_next );`<br>
 Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
 Duration value will depend on the situation:
  - if a timeout has been previously assigned to `st_curr`, then its value will be retained.
  - if not, the default value and units will be used.
 
-See `setTimerDefaultValue()` and `setTimerDefaultUnit()`
-
-```C++
-void assignTimeOut( ST st_curr, Duration dur, ST st_next );
-```
+* `fsm.assignTimeOut( st_curr, dur, st_next );`<br>
 Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
 Duration will be `dur`, with the current default unit.
 
-```C++
-void assignTimeOut( ST st_curr, Duration dur, DurUnit unit, ST st_next );
-```
+* `fsm.assignTimeOut( st_curr, dur, unit, st_next );`<br>
 Assigns a timeout event of duration `dur` with unit `unit` on state `st_curr`, will switch to event `st_next`.
-
-```C++
-void assignTimeOut( ST st_curr, Duration dur, std::string unit, ST st_next );
-```
-Assigns a timeout event of duration `dur` with unit `unit` expressed as a string on state `st_curr`, will switch to event `st_next`.
 
 
 ### 2 - Global operations
 
-```C++
-void clearTimeOuts();
-```
-Removes all the timeouts
+* `fsm.clearTimeOuts();`<br>
+Removes all the timeouts that may have been assigned.
 
 The following member functions will assign a timeout to all the states except one.
 
-```C++
-void assignGlobalTimeOut( ST st_final );
-```
+* `fsm.assignGlobalTimeOut( st_final );`<br>
 Assigns a timeout event leading to state `st_final` on all states except `st_final`, using default timer unit and default timer duration value.
 
-```C++
-void assignGlobalTimeOut( Duration dur, ST st_final );
-```
+* `fsm.assignGlobalTimeOut( dur, st_final );`<br>
 Assigns a timeout event on all states except `st_final`, using duration `dur` and default timer unit.
 
-```C++
-void assignGlobalTimeOut( Duration dur, std::string durUnit, ST st_final );
-```
-Assigns a timeout event on all states except `st_final`, using duration `dur` and unit `durUnit` (expressed as a string value).
+
+* `fsm.assignGlobalTimeOut( dur, unit, st_final );`<br>
+Assigns a timeout event on all states except `st_final`, using duration `dur` and unit `unit`.
 
 
-```C++
-void assignGlobalTimeOut( Duration dur, DurUnit durUnit, ST st_final );
-```
-Assigns a timeout event on all states except `st_final`, using duration `dur` and unit `durUnit`.
+## 3 - Timer default values
+
+* `fsm.setTimerDefaultValue( val );`<br>
+Assigns the (integer) value `val` as default timer value, will be used for all further timer configuration not specifying a value.
+
+* `fsm.setTimerDefaultUnit( unit )`<br>
+Assign `unit` as default timer unit for all further timer configuration not specifying a unit.
+Value `unit` must be either
+a member of enum spag::DurUnit (see top of page),
+or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.
+
 
 --- Copyright S. Kramm - 2018-2019 ---
