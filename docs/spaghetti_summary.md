@@ -60,10 +60,13 @@ assigns an "Always Active Transition" to a "pass-state" (AAT):
 once on state `st1`, the FSM will switch right away to `st2`.
 
 * `fsm.assignInnerTransition( st1, iev, st2 );`<br>
-Assigns a inner transition between `st1` and `st2`, triggered by internal event `ev`
+Assigns a inner transition between `st1` and `st2`, triggered by internal event `iev`
 
 * `fsm.assignInnerTransition( iev, st );`<br>
 Whatever state we are on, when internal event `iev` occurs, we will switch to state `st` (except if we are already on that state)
+
+* `fsm.clearInternalEvent( iev );`<br>
+This will clear the (potentially activated) inner event `iev` (i.e. as if it didn't happen).
 
 * `fsm.disableInnerTransition( ev, st_from );`<br>
 Removes inner transition `ev` that is assigned on state `st_from`
@@ -91,7 +94,7 @@ The function MUST have the following signature:
 This will allow the function to determine wich state and event lead to its calling.
 
 * `fsm.assignCBValuesStrings();`<br>
-assigns to callback functions an argument value that is the state name (requires that callback argument is a string, [see below](#names). The callback argument ttype must be a string.
+assigns to callback functions an argument value that is the state name (requires that callback argument is a string, [see below](#names). The callback argument type must be a string.
 
 #### 2.3 - Assigning time outs
 

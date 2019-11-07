@@ -8,8 +8,9 @@ All the examples are included and runnable in the src folder, just `make demo` (
 
 For a reference manual, run `make doc`, then open `html/index.html` (needs doxygen).
 
-**Warning**: this manual is only preliminar, thus it might contain outdated-irrelevant-incorrect information at this state, please check source code also.
-**Feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback always appreciated!**
+For a shorter summary of all the API, [read this](spaghetti_summary.md).
+
+In case of any problem, feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback always appreciated!
 
 ### Summary
 1. [Fundamental concepts](#concepts)
@@ -488,7 +489,7 @@ This means:  *when we are on state `st1` and if event `iev` has occurred, then s
 This means:  *whatever state is active, if event `iev` has occurred, then switch to state `st`*.
 
 - `void disableInnerTransition( EV ev, ST st_from )`<br>
-This can be used to disable the inner event `ev` that may have been assigned to state `st_from`.
+This can be used to disable the inner event `ev` transition that may have been assigned to state `st_from`.
 
 To **trigger** an inner event `ev`:
 ```
@@ -496,7 +497,7 @@ To **trigger** an inner event `ev`:
 ```
 In some situations, you might need to **de-activate** an inner event, this can be done with:
 ```
-	fsm.clearInnerEvent( ev );
+	fsm.clearInternalEvent( ev );
 ```
 
 More details [here](spaghetti_devinfo.md#inner_events) .
