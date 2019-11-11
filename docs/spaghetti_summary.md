@@ -9,9 +9,9 @@ For more details, please check manual or off-line Doxygen-generated pages.
 
 
 Page content:
-1. [Declaring the type of the FSM](fsm_type)
-1. [Configuring the FSM](config)
-1. [Running the FSM](running)
+1. [Declaring the type of the FSM](#fsm_type)
+1. [Configuring the FSM](#config)
+1. [Running the FSM](#running)
 
 <a name="fsm_type"></a>
 ### 1 - Declaring the type of the FSM
