@@ -98,7 +98,55 @@ assigns to callback functions an argument value that is the state name (requires
 
 #### 2.3 - Assigning time outs
 
-(This is detailed on a [separate page](spaghetti_timeout.md)).
+All these function are only available if an event-handler class has been assigned.
+
+Some function use default values and units, that itself can be configured.
+Timing values are integers.
+Timing units must be either a member of enum `spag::DurUnit` (`DurUnit::ms`, `DurUnit::sec`, `DurUnit::min`),
+or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.
+
+##### Assign a Timeout on a single state
+
+* `fsm.assignTimeOut( st_curr, st_next );`<br>
+Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
+Duration value will depend on the situation:
+ - if a timeout has been previously assigned to `st_curr`, then its value will be retained.
+ - if not, the default value and units will be used.
+
+* `fsm.assignTimeOut( st_curr, dur, st_next );`<br>
+Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
+Duration will be `dur`, with the current default unit.
+
+* `fsm.assignTimeOut( st_curr, dur, unit, st_next );`<br>
+Assigns a timeout event of duration `dur` with unit `unit` on state `st_curr`, will switch to event `st_next`.
+
+
+##### Handling Timeouts on several states
+
+* `fsm.clearTimeOuts();`<br>
+Removes all the timeouts that may have been assigned.
+
+The following member functions will assign a timeout to all the states except one:
+
+* `fsm.assignGlobalTimeOut( st_final );`<br>
+Assigns a timeout event leading to state `st_final` on all states except `st_final`, using default timer unit and default timer duration value.
+
+* `fsm.assignGlobalTimeOut( dur, st_final );`<br>
+Assigns a timeout event on all states except `st_final`, using duration `dur` and default timer unit.
+
+
+* `fsm.assignGlobalTimeOut( dur, unit, st_final );`<br>
+Assigns a timeout event on all states except `st_final`, using duration `dur` and unit `unit`.
+
+
+##### Timer default values
+
+* `fsm.setTimerDefaultValue( val );`<br>
+Assigns the (integer) value `val` as default timer value, will be used for all further timer configuration not specifying a value.
+
+* `fsm.setTimerDefaultUnit( unit )`<br>
+Assign `unit` as default timer unit for all further timer configuration not specifying a unit.
+
 
 <a name="names"></a>
 #### 2.4 - Assigning names to events/states

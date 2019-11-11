@@ -39,7 +39,7 @@ Feedback welcome, please post issue on Github in case of any problems.
 - ease of use and performance
 - [full manual included](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md)
 - runtime logging capability
-- provided with some sample programs, see folder
+- provided with several sample programs, see folder
 [src](https://github.com/skramm/spaghetti/tree/master/src)
 
 ### What's in this repo ?

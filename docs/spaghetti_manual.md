@@ -30,7 +30,6 @@ In case of any problem, feel free to [post an issue on Github](https://github.co
 1. [Build options](spaghetti_options.md)
 1. [Graphical Rendering of the FSM](spaghetti_rendering.md)
 1. [Runtime logging](spaghetti_logging.md)
-1. [Summary of time-out related functions](spaghetti_timeout.md)
 1. [Developper information](spaghetti_devinfo.md)
 1. [FAQ](spaghetti_faq.md)
 
@@ -105,7 +104,7 @@ Take a look at the little sample in next section.
 ## 2 - Showcase 1: Hello World for FSM
 
 In this example, we show the "Hello World" of FSM, which is the "Turnstyle" FSM,
-see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile).
+see [WP page](https://en.wikipedia.org/wiki/Finite-state_machine#Example:_coin-operated_turnstile).
 
 First, create enums for states and events:
 
@@ -114,11 +113,11 @@ First, create enums for states and events:
 enum States { st_Locked, st_Unlocked, NB_STATES };
 enum Events { ev_Push, ev_Coin, NB_EVENTS };
 ```
-Then, create the FSM data type, using a conveniency macro:
+Then, create the FSM data type using a conveniency macro:
 ```C++
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, bool );
 ```
-This means you create the type `fsm_t` (this is actually a typedef of the templated class `SpagFSM`), using `States` and `Events`,
+This means you create the type `fsm_t` (this macro is actually a typedef of the templated class `SpagFSM`), using `States` and `Events`,
 with callback functions having a `bool` as argument.
 
 Now, you can instanciate the fsm:
@@ -222,8 +221,6 @@ The only requirement is that you must have [Boost Asio](http://www.boost.org/doc
 As this is fairly common these days, lets assume this is okay.
 If not, if you are lucky enough to have a Debian-based OS (Ubuntu and other derivatives), just enter
 `sudo apt-get install  libboost-all-dev`.
-If not,
-[check here](https://duckduckgo.com/?q=installing+boost+asio).
 
 To use the provided Timer class, you need to pass an option to Spaghetti by defining the symbol `SPAG_EMBED_ASIO_WRAPPER`
 ([see here details about the build options](spaghetti_options.md)).
