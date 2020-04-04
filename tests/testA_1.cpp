@@ -33,7 +33,7 @@ void configureFSM( fsm_t& fsm )
 
 int main( int, char* argv[] )
 {
-	std::cout << "Boost version: " << GetBoostVersion() << "\n";
+	std::cout << "Boost version: " << BOOST_VERSION << "\n";
 
 //	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
