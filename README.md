@@ -4,6 +4,9 @@
 
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
+## RECENT NEWS
+ - 2020-04-05 : updated to build with Boost 1.70
+
 ## Key points
 - Licence: GPL v3
 - Audience: C++ developper having to implement a FSM

@@ -2481,9 +2481,21 @@ struct AsioWrapper
 #endif
 
 #if BOOST_VERSION < 106600
-/// see http://www.boost.org/doc/libs/1_54_0/doc/html/boost_asio/reference/io_service.html
-/// "Stopping the io_service from running out of work" at bottom of page
+/// see http://www.boost.org/doc/libs/1_54_0/doc/html/boost_asio/reference/io_service.html :
+/** "Stopping the io_service from running out of work" at bottom of page
+Some applications may need to prevent an io_service object's run() call from returning when there
+is no more work to do. For example, the io_service may be being run in a background thread that is
+launched prior to the application's asynchronous operations. The run() call may be kept running by
+creating an object of type io_service::work
+
+This was changed from 1.66: see
+https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
+
+"Stopping the io_context from running out of work"
+*/
 	boost::asio::io_service::work _work;
+#else
+	int _work; // dummy
 #endif
 
 	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> SteadyClock;
@@ -2496,10 +2508,18 @@ struct AsioWrapper
 
 	public:
 /// Constructor
-#ifdef SPAG_EXTERNAL_EVENT_LOOP
-	AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
-#else
-	AsioWrapper() : _work( _io_service )
+#if BOOST_VERSION < 106600
+	#ifdef SPAG_EXTERNAL_EVENT_LOOP
+		AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
+	#else
+		AsioWrapper() : _work( _io_service )
+	#endif
+#else                                    // boost from 1.66: no more: boost::asio::io_service::work
+	#ifdef SPAG_EXTERNAL_EVENT_LOOP
+		AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work(0)
+	#else
+		AsioWrapper() : _work(0)
+	#endif
 #endif
 
 #ifdef SPAG_USE_SIGNALS
@@ -2509,7 +2529,7 @@ struct AsioWrapper
 // see http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
 #if BOOST_VERSION >= 106600
 //		std::cout << "Boost >= 1.66, started executor_work_guard\n";
-		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> = boost::asio::make_work_guard( _io_service );
+		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> x = boost::asio::make_work_guard( _io_service );
 #endif
 		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_io_service) );
 
@@ -2622,7 +2642,10 @@ struct AsioWrapper
 		fsm->processInnerEvent( stateInfo );
 		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
 
-		if( err_code == 0 )
+// update on 2020-04-05: new boost releases (from ???)
+// now don't have the == operator
+		if( !err_code )
+//		if( err_code == 0 )
 			_signals.async_wait(                                   // re-initialize signal handler, only if the handler is not called whith a "cancel" message
 				boost::bind(
 					&AsioWrapper<ST,EV,CBA>::signalHandler,
