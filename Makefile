@@ -47,10 +47,10 @@ LDFLAGS += -lboost_system -lboost_thread -pthread
 
 SHELL=/bin/bash
 
-BIN_DIR=bin
+BIN_DIR=build/bin
 SRC_DIR=src
 SRC_DIR_T=tests
-OBJ_DIR=obj
+OBJ_DIR=build/obj
 
 # suffix _T is for the test files
 HEADER_FILES := $(wildcard $(SRC_DIR)/*.h*)
@@ -90,17 +90,17 @@ test: $(EXEC_FILES_T)
 			cmp tests/$$(basename $$f).stdout $$(basename $$f).stdout; \
 		done;
 
-doc: html/index.html src/html/index.html
-	-xdg-open html/index.html
+doc: build/doc_html/index.html build/doc_samples_html/index.html
+	-xdg-open build/doc_html/index.html
 	@echo "- Done target $@"
 
-html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css docs/*
+build/doc_html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css docs/*
 	@echo "* Processing Doxygen on main file"
 	doxygen doxyfile
 
-src/html/index.html: $(SRC_FILES) $(HEADER_FILES) src/doxyfile
+build/doc_samples_html/index.html: $(SRC_FILES) $(HEADER_FILES) src/doxyfile
 	@echo "* Processing Doxygen on sample programs"
-	cd src; doxygen doxyfile
+	doxygen src/doxyfile
 
 install:
 	cp spaghetti.hpp $(DEST_PATH)

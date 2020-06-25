@@ -153,5 +153,5 @@ This is the reference pages related to the samples provided with the
 Spaghetti library, see "files" just above.
 
 To get back to the reference manual of the library,
-<a href="../../html/index.html">click here</a>.
+<a href="../doc_html/index.html">click here</a>.
 */
