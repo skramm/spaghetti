@@ -26,7 +26,7 @@ Alternatively, you can also give the units when defining Timeouts. This will for
 ```C++
 	fsm.assignTimeOut( st_Red, 5, spag::DurUnit::min, st_Green );
 ```
-Oh, and if for some reason (templated function in a header, as in `src/traffic_lights_common.hpp`) you don't have access to the `DurUnit` type, you can also use string values:
+If for some reason (templated function in a header, as in `src/traffic_lights_common.hpp`) you don't have access to the `DurUnit` type, you can also use string values:
 ```C++
 	fsm.assignTimeOut( st_Red, 5, "min", st_Green );
 ```
@@ -37,6 +37,9 @@ Internally, the timing is handled through the C++11 `chrono` library
 **A**: Most of the other libraries define the states as C++ classes.
 While this can have some advantages, it requires you to create a struct/class for each state.
 With Spaghetti, you just add an enumerator value.
+
+- **Q**: What are the requirements on the event loop/timer class template, if I want to use a different then the one that is provided?<br>
+**A**: TODO
 
 - **Q**: *How are runtime errors handled?*<br>
 **A**: A lot of stuff is checked at build time but some errors in user code can only be detected at runtime.
@@ -99,7 +102,7 @@ But it *should* be okay with todays current release (1.66 at the time of writing
 For example, the concepts of "extended state" and "Guard conditions" are not available.
 Nor are hierarchically states implemented (see below).
 However, all the basics of FSM are available, most notably it respects the "run to completion" (RTC) execution model.
-It also offers the concept of "[Internal events](spaghetti_manual.md#inner_events)".
+It also provides the concept of "[Internal events](spaghetti_manual.md#inner_events)".
 
 - **Q**: *Can I use this for a hierarchical FSM?*<br>
 **A**: at present, no, but this is considered for future releases

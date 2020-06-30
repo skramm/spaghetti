@@ -100,7 +100,7 @@ assigns to callback functions an argument value that is the state name (requires
 
 All these function are only available if an event-handler class has been assigned.
 
-Some function use default values and units, that itself can be configured.
+They all have default values and units, that themselves can be configured.
 Timing values are integers.
 Timing units must be either a member of enum `spag::DurUnit` (`DurUnit::ms`, `DurUnit::sec`, `DurUnit::min`),
 or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.

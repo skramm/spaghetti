@@ -47,7 +47,7 @@ At present, the testing consist in making sure a test program produces an output
 In this section, more details about how [Inner events](spaghetti_manual.md#inner_events) are handled internally.
 
 It is not possible to handle inner events in a similar way as regular (external) events.
-If we did so (by checking when arriving on a state if some condition is met, and if so, change again state, call associated callback function),
+If we did so (by checking when arriving on a state if some condition is met, and if so, change again state and call associated callback function),
 we would quickly enter an infinite recursion loop, that will immediately lead to a stack overflow.
 
 So those events are processed differently.

@@ -7,6 +7,7 @@ This file is part of Spaghetti, a C++ library for implementing Finite State Mach
 Homepage: https://github.com/skramm/spaghetti
 */
 
+//#define SPAG_PRINT_STATES
 #define SPAG_EMBED_ASIO_WRAPPER
 #include "spaghetti.hpp"
 

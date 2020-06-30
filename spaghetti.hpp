@@ -267,7 +267,7 @@ struct Counters
 namespace priv {
 
 //-----------------------------------------------------------------------------------
-/// helper function
+/// Helper function, name says it all. The returned argument first value will be false if unrecognized string.
 inline
 std::pair<bool,DurUnit>
 timeUnitFromString( std::string str ) noexcept
@@ -286,7 +286,7 @@ timeUnitFromString( std::string str ) noexcept
 }
 
 //-----------------------------------------------------------------------------------
-/// helper function
+/// Helper function, name says it all.
 inline
 std::string
 stringFromTimeUnit( DurUnit du )
@@ -371,7 +371,7 @@ struct StateInfo
 	CBA                      _callbackArg;  ///< value of argument of callback function
 
 #ifdef SPAG_USE_SIGNALS
-	bool                     _isPassState = false; ///<if true, the next state is stored in transition table, at line nbEvents()+1
+	bool                     _isPassState = false; ///< if true, the next state is stored in transition table, at line nbEvents()+1
 	std::vector<InnerTransition<ST,EV>> _innerTransList;
 
 	friend std::ostream& operator << ( std::ostream& s, const StateInfo& si )
@@ -379,7 +379,6 @@ struct StateInfo
 		s << "StateInfo:"
 			<< "\n -has callback=" << (si._callback==0?"NO":"YES")
 			<< "\n -callbackArg=" << si._callbackArg
-
 			<< "\n -isPassState=" << si._isPassState
 			<< "\n -NbInnerTransition=" << si._innerTransList.size()
 			<< '\n';
@@ -746,7 +745,7 @@ Requirements: the two enums \b MUST have the following requirements:
 template<typename ST, typename EV,typename TIM,typename CBA=int>
 class SpagFSM
 {
-	typedef std::function<void(CBA)> Callback_t;
+	using Callback_t = std::function<void(CBA)>;
 
 	public:
 /// Constructor
@@ -1354,7 +1353,7 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 		void start()
 		{
 			SPAG_P_ASSERT( !_isRunning, "attempt to start an already running FSM" );
-
+			SPAG_LOG << "start FSM\n";
 			doChecking();
 
 			_isRunning = true;
@@ -1367,6 +1366,8 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 				_eventHandler->init( this );   // blocking function !
 			}
 #endif
+
+			SPAG_LOG << "NO BLOCKING!\n";
 		}
 
 /// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer
@@ -1756,6 +1757,12 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 			out += no;
 #endif
 
+#ifdef SPAG_USE_ASIO_WRAPPER
+		out += "Boost asio used, Boost version=";
+		out += std::to_string(BOOST_VERSION);
+#endif
+
+
 
 			return out;
 		}
@@ -1771,9 +1778,9 @@ Usage (example): <code>std::cout << fsm_t::buildOptions();</code>
 
 /// Returns true if event \c ev has been declared as inner event, with
 /**
-assignInnerTransition( ST st1, EV iev, ST st2 );
+<code>assignInnerTransition( ST st1, EV iev, ST st2 );</code>
 or
-assignInnerTransition( EV, ST );
+<code>assignInnerTransition( EV, ST );</code>
 
 \note To be replaced with https://en.cppreference.com/w/cpp/container/map/contains
 when C++20 available.
@@ -1803,7 +1810,7 @@ when C++20 available.
 			if( stateInfo._timerEvent._enabled )
 			{
 				SPAG_P_ASSERT( _eventHandler, "Event handler has not been allocated" );
-				SPAG_LOG << "timeout enabled, duration=" <<  stateInfo._timerEvent._duration << "\n";
+				SPAG_LOG << "timeout start, duration=" <<  stateInfo._timerEvent._duration << "\n";
 				_eventHandler->timerStart( this );
 			}
 			if( stateInfo._callback ) // if there is a callback stored, then call it
@@ -1812,7 +1819,7 @@ when C++20 available.
 				stateInfo._callback( _stateInfo[ SPAG_P_CAST2IDX(_current) ]._callbackArg );
 			}
 			else
-				SPAG_LOG << "no callback provided\n";
+				SPAG_LOG << "state has no callback provided\n";
 
 #ifdef SPAG_USE_SIGNALS
 			if( _isRunning )  // we need this, because the callback could have stopped the FSM, thus we must not generate a signal !
@@ -1975,7 +1982,7 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	out << std::setfill('0');
 
 	priv::printChars( out, maxlength, spc_char );
-	out << "        STATES:\nEVENTS ";
+	out << "        STATES:\nEVENTS|";
 	priv::printChars( out, maxlength, spc_char );
 	for( size_t i=0; i<nbStates(); i++ )
 		out << spc_char<< 'S' << std::setw(2) << i;
@@ -2475,32 +2482,15 @@ struct AsioWrapper
 
 // if external io_service, then we only hold a reference on it
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
-	boost::asio::io_service& _io_service;
+	boost::asio::io_context& _io_service;
 #else
-	boost::asio::io_service _io_service;
+	boost::asio::io_context _io_service;
 #endif
 
-#if BOOST_VERSION < 106600
-/// see http://www.boost.org/doc/libs/1_54_0/doc/html/boost_asio/reference/io_service.html :
-/** "Stopping the io_service from running out of work" at bottom of page
-Some applications may need to prevent an io_service object's run() call from returning when there
-is no more work to do. For example, the io_service may be being run in a background thread that is
-launched prior to the application's asynchronous operations. The run() call may be kept running by
-creating an object of type io_service::work
-
-This was changed from 1.66: see
-https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
-
-"Stopping the io_context from running out of work"
-*/
-	boost::asio::io_service::work _work;
-#else
-	int _work; // dummy
-#endif
-
-	typedef boost::asio::basic_waitable_timer<std::chrono::steady_clock> SteadyClock;
+	using SteadyClock = boost::asio::basic_waitable_timer<std::chrono::steady_clock>;
 
 	std::unique_ptr<SteadyClock> _asioTimer; ///< pointer on timer, will be allocated in constructor
+	boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _ewg;
 
 #ifdef SPAG_USE_SIGNALS
 	boost::asio::signal_set      _signals;
@@ -2508,31 +2498,18 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 
 	public:
 /// Constructor
-#if BOOST_VERSION < 106600
 	#ifdef SPAG_EXTERNAL_EVENT_LOOP
-		AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
+		AsioWrapper( boost::asio::io_service& io ) : _io_service(io)
 	#else
-		AsioWrapper() : _work( _io_service )
+		AsioWrapper() : _ewg( boost::asio::make_work_guard( _io_service ) )
 	#endif
-#else                                    // boost from 1.66: no more: boost::asio::io_service::work
-	#ifdef SPAG_EXTERNAL_EVENT_LOOP
-		AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work(0)
-	#else
-		AsioWrapper() : _work(0)
-	#endif
-#endif
+
 
 #ifdef SPAG_USE_SIGNALS
 	, _signals( _io_service, SIGUSR1 )
 #endif
 	{
-// see http://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.html
-#if BOOST_VERSION >= 106600
-//		std::cout << "Boost >= 1.66, started executor_work_guard\n";
-		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> x = boost::asio::make_work_guard( _io_service );
-#endif
 		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_io_service) );
-
 //		_signals.add( SIGUSR1 );                               // assign signal handler for SIGUSR1
 	}
 
@@ -2543,7 +2520,7 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 		return _io_service;
 	}
 
-/// Mandatory function for SpagFSM. Called only once, when FSM is started
+/// Mandatory function for SpagFSM. Called only once, when FSM is started. Blocking
 	void init( spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{
 		SPAG_LOG << '\n';
@@ -2559,6 +2536,7 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 		);
 #endif
 		_io_service.run();          // blocking call !!!
+		SPAG_LOG << "_io_service.run():ERROR NON BLOCKING\n";
 	}
 
 /// terminates all pending events, timers events or signals
@@ -2593,7 +2571,7 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 /// Mandatory function for SpagFSM. Cancel the pending async timer
 	void timerCancel()
 	{
-//		SPAG_LOG << '\n';
+		SPAG_LOG << '\n';
 		_asioTimer->cancel_one();
 	}
 
@@ -2615,7 +2593,7 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 			break;
 			default: assert(0); // this should not happen...
 		}
-
+		SPAG_LOG << "call of async_wait()\n";
 		_asioTimer->async_wait(
 			boost::bind(
 				&AsioWrapper<ST,EV,CBA>::timerCallback,
@@ -2643,7 +2621,7 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 		SPAG_LOG << "AFTER processInnerEvent(): " << stateInfo << '\n';
 
 // update on 2020-04-05: new boost releases (from ???)
-// now don't have the == operator
+// now doesn't have the == operator
 		if( !err_code )
 //		if( err_code == 0 )
 			_signals.async_wait(                                   // re-initialize signal handler, only if the handler is not called whith a "cancel" message
@@ -2655,6 +2633,10 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 					fsm
 				)
 			);
+		else
+		{
+			SPAG_P_THROW_ERROR_RT( "Unexpected error boost::system::error_code: " + err_code.message() );
+		}
 		SPAG_P_END;
 	}
 	void raiseSignal()
@@ -2728,7 +2710,7 @@ https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio/reference/io_service.h
 \subsection ssec_samples Sample programs
 
 Check list here:
-<a href="../src/html/files.html" target="_blank">sample programs</a>.
+<a href="../doc_samples_html/files.html" target="_blank">sample programs</a>.
 
 
 */

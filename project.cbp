@@ -37,6 +37,13 @@
 		<Unit filename="docs/spaghetti_summary.md" />
 		<Unit filename="docs/spaghetti_timeout.md" />
 		<Unit filename="doxyfile" />
+		<Unit filename="other/Makefile" />
+		<Unit filename="other/basic_asio_test_1.cpp" />
+		<Unit filename="other/basic_asio_test_2.cpp" />
+		<Unit filename="other/basic_asio_test_3.cpp" />
+		<Unit filename="other/basic_asio_test_4.cpp" />
+		<Unit filename="other/boost_statechart_1.cpp" />
+		<Unit filename="other/readme.md" />
 		<Unit filename="spaghetti.hpp" />
 		<Unit filename="src/common_stuff_samples.hpp" />
 		<Unit filename="src/doc_fig_1.cpp" />
@@ -70,10 +77,7 @@
 		<Unit filename="tests/testB_4.cpp" />
 		<Unit filename="tests/testB_5.cpp" />
 		<Extensions>
-			<envvars />
-			<code_completion />
 			<lib_finder disable_auto="1" />
-			<debugger />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>
