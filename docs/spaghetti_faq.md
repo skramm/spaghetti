@@ -93,8 +93,8 @@ Fortunately, you can use two helper macros to avoid that uglyness:
 
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
-If you do, then this has been tested as successful against Boost 1.54.
-But it *should* be okay with todays current release (1.66 at the time of writing), please post issue in case of trouble so it can be fixed.
+If you do, then this has been tested as successful against Boost 1.54 to 1.70.
+Please post issue in case of trouble with a later Boost release, so it can be fixed.
 
 - **Q**: *How does this library relate to the UML state machine definition
 [WP](https://en.wikipedia.org/wiki/UML_state_machine) ?*<br>

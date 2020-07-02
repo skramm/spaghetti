@@ -1366,8 +1366,6 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 				_eventHandler->init( this );   // blocking function !
 			}
 #endif
-
-			SPAG_LOG << "NO BLOCKING!\n";
 		}
 
 /// stop FSM : needed only if timer is used, this will cancel (and kill) the pending timer
@@ -2481,29 +2479,48 @@ struct AsioWrapper
 	private:
 
 // if external io_service, then we only hold a reference on it
+
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
-	boost::asio::io_context& _io_service;
+	#if BOOST_VERSION < 106600
+		boost::asio::io_service& _io_service;
+		boost::asio::io_service::work _work;
+	#else
+		boost::asio::io_context& _io_service;
+	#endif
 #else
-	boost::asio::io_context _io_service;
+	#if BOOST_VERSION < 106600
+		boost::asio::io_service _io_service;
+		boost::asio::io_service::work _work;
+	#else
+		boost::asio::io_context _io_service;
+		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _ewg;
+	#endif
 #endif
 
 	using SteadyClock = boost::asio::basic_waitable_timer<std::chrono::steady_clock>;
 
 	std::unique_ptr<SteadyClock> _asioTimer; ///< pointer on timer, will be allocated in constructor
-	boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _ewg;
 
 #ifdef SPAG_USE_SIGNALS
-	boost::asio::signal_set      _signals;
+	boost::asio::signal_set _signals;
 #endif
 
 	public:
 /// Constructor
-	#ifdef SPAG_EXTERNAL_EVENT_LOOP
+#ifdef SPAG_EXTERNAL_EVENT_LOOP
+	#if BOOST_VERSION < 106600
+		AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
+	#else
 		AsioWrapper( boost::asio::io_service& io ) : _io_service(io)
+
+	#endif
+#else
+	#if BOOST_VERSION < 106600
+		AsioWrapper() :  _work( _io_service )
 	#else
 		AsioWrapper() : _ewg( boost::asio::make_work_guard( _io_service ) )
 	#endif
-
+#endif
 
 #ifdef SPAG_USE_SIGNALS
 	, _signals( _io_service, SIGUSR1 )
@@ -2536,7 +2553,6 @@ struct AsioWrapper
 		);
 #endif
 		_io_service.run();          // blocking call !!!
-		SPAG_LOG << "_io_service.run():ERROR NON BLOCKING\n";
 	}
 
 /// terminates all pending events, timers events or signals
@@ -2593,7 +2609,6 @@ struct AsioWrapper
 			break;
 			default: assert(0); // this should not happen...
 		}
-		SPAG_LOG << "call of async_wait()\n";
 		_asioTimer->async_wait(
 			boost::bind(
 				&AsioWrapper<ST,EV,CBA>::timerCallback,
@@ -2605,7 +2620,7 @@ struct AsioWrapper
 	}
 
 #ifdef SPAG_USE_SIGNALS
-/// This is a handler, automatically called by boost::io_service when an OS signal USR1 is detected.
+/// This is a handler, automatically called by boost::io_service when an OS signal USR1 is detected (see init() ).
 /// \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 	void signalHandler( const boost::system::error_code& err_code, int signal_number, spag::SpagFSM<ST,EV,AsioWrapper,CBA>* fsm )
 	{

@@ -38,7 +38,8 @@ Feedback welcome, please post issue on Github in case of any problems.
 ### Main features
 
 - single-file header-only library, just fetch the file `spaghetti.hpp` and store it on your machine somewhere where your compiler can find it
-- C++11, no dependencies other than standard library (please [read this](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md#1---fundamental-concepts) carefully)
+- C++11, no dependencies if no event loop required.
+To get full features, you will need Boost::asio.
 - ease of use and performance
 - [full manual included](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md)
 - runtime logging capability
@@ -51,6 +52,14 @@ Besides the main file `spaghetti.hpp`, the repo also holds documentation, [FAQ](
 All of this comes with all that is needed to build these on a standard Linux machine (makefile, build folders, ...).
 If you clone the repo, just run  `make demo` to build the demo programs (assuming you have Boost installed, as some samples rely on it).
 You'll find the corresponding binaries in  the `bin` folder.
+
+If you want a quick demo (assuming you have Boost locally available), once you have downloaded the [latest release](https://github.com/skramm/spaghetti/releases) you can try:
+```
+$ cd spaghetti
+$ make demo -j4
+$ build/bin/traffic_lights_1
+```
+
 
 ### Short preview 1 (no signal/timeout handling)
 
