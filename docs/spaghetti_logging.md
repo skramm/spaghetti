@@ -75,4 +75,4 @@ This will produce a file holding something like this (if you did not enable the 
 ```
 
 
---- Copyright S. Kramm - 2018-2019 ---
+--- Copyright S. Kramm - 2018-2020 ---

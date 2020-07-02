@@ -64,4 +64,4 @@ a member of enum spag::DurUnit (see top of page),
 or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.
 
 
---- Copyright S. Kramm - 2018-2019 ---
+--- Copyright S. Kramm - 2018-2020 ---

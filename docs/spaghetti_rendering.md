@@ -93,4 +93,4 @@ The edges are colored depending on their type
 This can be disabled by setting `useColorsEventType` to `false`.
 
 
---- Copyright S. Kramm - 2018-2019 ---
+--- Copyright S. Kramm - 2018-2020 ---

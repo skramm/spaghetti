@@ -4,7 +4,7 @@ Homepage: https://github.com/skramm/spaghetti
 
 
 This page demonstrates usage of the library through several showcases, and gives additional details.
-All the examples are included and runnable in the src folder, just `make demo` (or `make demo -j4` to make things quicker), then run `bin/program_name`.
+All the examples are included and runnable in the src folder, just `make demo` (or `make demo -j4` to make things quicker), then run `build/bin/program_name`.
 
 For a reference manual, run `make doc`, then open `html/index.html` (needs doxygen).
 
@@ -82,7 +82,7 @@ Events can be of **three** types:
 
 1. *hardware events* (basically, it can be just a keyboard press).
 You need to define them in the enum above.
-But you can have none !
+But you can have none.
 In that case, just define the events enum as:
 ```C++
 	enum Events { NB_EVENTS };
@@ -138,7 +138,7 @@ This means:
 - if a coin is inserted while in "locked" state, then switch to state "unlocked".
 - if somebody pushes the gate while in "unlocked" state, then switch to state "locked".
 
-Ok, and also tell the FSM what is to be done when a state gets triggered.
+You need to tell the FSM what is to be done when a state gets triggered.
 This is done by providing a callback function.
 In this case it is the same for all, but you can have a different function for every state.
 You don't even need to provide a callback function, it is always optional:
@@ -202,7 +202,7 @@ All of this is given as a sample program,
 see file
 [src/turnstyle_1.cpp](../../../tree/master/src/turnstyle_1.cpp)
 and/or just clone repo and enter
-`make demo -j4` followed by `bin/turnstyle_1`.
+`make demo -j4` followed by `build/bin/turnstyle_1`.
 
 <a name="showcase2"></a>
 ## 3 - Showcase 2: let's use a timer
@@ -280,7 +280,7 @@ We add a "Warning" button to make the system enter a "orange blinking state".
 Actually, that won't be a unique state, but two different states,
 "Blink On" and "Blink Off".
 
-Oh, and also a "Warning off" button (to return to regular cycle), and a "Reset" button (can be useful).
+We also add a "Warning off" button (to return to regular cycle), and a "Reset" button (always useful!)
 
 So we have the following states and events:
 ```C++
@@ -375,7 +375,7 @@ This will just loop over and over and send the string to the server, using a UDP
 Now the server. The potential problem we need to deal with is that:
 - the server needs to hold the FSM, so that network-received commands can take action on it,
 - the server also needs to hold the socket,
-- with Boost::asio, to create a socket, we need to provide an "io_service" object,
+- with Boost::asio, to create a socket, we need to provide an "io_service"/"io_context" object,
 - if we embed that object inside the FSM (as it is done in the previous example), we won't be able to create the socket...
 
 So here, we demonstrate another use case: we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
@@ -387,7 +387,7 @@ SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 ```
 This macro also defines the class `AsioEL` ("boost::Asio Event Loop") that you will need to instanciate (see below).
 
-The server will inherit from some generic UDP server (also included):
+The server will inherit from some generic UDP server (also included in demo program):
 ```C++
 struct MyServer : public UdpServer<1024>
 {
@@ -418,7 +418,7 @@ struct MyServer : public UdpServer<1024>
 };
 ```
 
-And the `main()` function will instanciate the timer class and **assign it** to the fsm
+The `main()` function will instanciate the timer class and **assign it** to the fsm
 (skipped the parts about the keyboard UI thread):
 ```C++
 int main()
