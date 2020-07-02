@@ -2,7 +2,7 @@
 * FSM Configuration: 
  - Transition table:
                  STATES:
-EVENTS           S00 S01 S02 S03
+EVENTS         | S00 S01 S02 S03
 ---------------|----------------
 event      E00 | S01  .   .   .  
 *Timeout*   TO |  .  S02  .   .  

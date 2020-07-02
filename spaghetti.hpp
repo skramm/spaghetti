@@ -1980,8 +1980,9 @@ SpagFSM<ST,EV,T,CBA>::printMatrix( std::ostream& out ) const
 	out << std::setfill('0');
 
 	priv::printChars( out, maxlength, spc_char );
-	out << "        STATES:\nEVENTS|";
+	out << "        STATES:\nEVENTS";
 	priv::printChars( out, maxlength, spc_char );
+	out << '|';
 	for( size_t i=0; i<nbStates(); i++ )
 		out << spc_char<< 'S' << std::setw(2) << i;
 	out << '\n';
