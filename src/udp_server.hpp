@@ -22,7 +22,7 @@ typedef unsigned char BYTE;
 Callback: upon each reception of data, a callback function is called
 
 The user of this class needs to provide a function getResponse()
-that will return the data thats needs to be send back.
+that will return the data that needs to be send back.
 
 The boost::io_service is assumed to be started externally
 */
@@ -30,7 +30,7 @@ template<size_t BUF_SIZE>
 class UdpServer
 {
 	public:
-		typedef std::array<BYTE, BUF_SIZE> Buffer_t;
+		using Buffer_t = std::array<BYTE, BUF_SIZE>;
 
 		UdpServer( boost::asio::io_service& io_service, int port_no ) //, bool sendack=false )
 			: _socket( io_service, boost::asio::ip::udp::endpoint( boost::asio::ip::udp::v4(), port_no ) ) //, _sendack(sendack)

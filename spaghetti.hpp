@@ -166,11 +166,11 @@ int g_indent;
 #define SPAG_P_CAST2IDX( a ) static_cast<size_t>(a)
 
 
-// TEMP
-typedef size_t Duration;
 
 /// Main library namespace
 namespace spag {
+
+using Duration=size_t;
 
 //------------------------------------------------------------------------------------
 /// Used in \ref SpagFSM<>::Counters::print() as second argument and in Counters::getValue()
@@ -2686,24 +2686,24 @@ struct AsioWrapper
 		static_assert( 0, "Error, can't use this macro with symbol SPAG_USE_ASIO_WRAPPER defined" )
 #else
 	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
-		typedef spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg> type
+		using type = spag::SpagFSM<st,ev,spag::priv::NoTimer<st,ev,cbarg>,cbarg>
 #endif
 
 /// Shorthand for declaring the type of FSM with an arbitrary timer class
 #define SPAG_DECLARE_FSM_TYPE( type, st, ev, timer, cbarg ) \
-	typedef spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg> type
+	using type = spag::SpagFSM<st,ev,timer<st,ev,cbarg>,cbarg>
 
 #ifdef SPAG_USE_ASIO_WRAPPER
 	#ifdef SPAG_EMBED_ASIO_WRAPPER
 /// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Does not create the \c AsioEL type (user code doesn't need it)
 		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
-			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type
+			using type = spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg>
 	#else
 /// Shorthand for declaring the type of FSM with the provided Boost::asio timer class. Also creates the \c AsioEL type
 		#define SPAG_DECLARE_FSM_TYPE_ASIO( type, st, ev, cbarg ) \
-			typedef spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg> type; \
+			using type = spag::SpagFSM<st,ev,spag::AsioWrapper<st,ev,cbarg>,cbarg>; \
 			namespace spag { \
-				typedef spag::AsioWrapper<st,ev,cbarg> AsioEL; \
+				using AsioEL = spag::AsioWrapper<st,ev,cbarg>; \
 			}
 	#endif
 #else

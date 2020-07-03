@@ -2,7 +2,8 @@
 
 2020-07-01:
 	- fixed bug with Boost 1.70: executor_work_guard needs to be a class member if we want the event loop to stay alive
-	- removed support for pre 1.66 Boost
+	- minor fixes (doc)
+
 
 2019-07-07: v0.9.4
 	- API change: renamed `PrintFlags` to `Item`, and cleanout counter access (`getValue()`)
