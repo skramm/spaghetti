@@ -14,7 +14,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 - Manual : [online here](docs/spaghetti_manual.md)
 - Language: C++11
 - OS: any one, as long as you have a C++11 compiler
-- Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018.
+- Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018-2020.
 
 ![FSM gif](https://github.com/skramm/spaghetti/blob/master/docs/out.gif)
 
@@ -59,7 +59,7 @@ $ cd spaghetti
 $ make demo -j4
 $ build/bin/traffic_lights_1
 ```
-
+(Note: Requires `boost_system` and `boost_thread` libs at link time)
 
 ### Short preview 1 (no signal/timeout handling)
 
