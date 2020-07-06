@@ -77,6 +77,7 @@ help:
 	@echo " - cleanall: the two above, and also erases the build demo programs"
 	@echo " - doc: build ref. manual, using Doxygen (needs to be installed)"
 	@echo " - install: copies single file header to $(DEST_PATH)"
+	@echo " - test: builds and run the test code"
 
 demo: $(EXEC_FILES)
 	@echo "- Done target $@"

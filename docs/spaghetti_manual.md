@@ -378,14 +378,15 @@ Now the server. The potential problem we need to deal with is that:
 - with Boost::asio, to create a socket, we need to provide an "io_service"/"io_context" object,
 - if we embed that object inside the FSM (as it is done in the previous example), we won't be able to create the socket...
 
-So here, we demonstrate another use case: we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
+So here, we demonstrate another use case:
+we will use the provided asio-based timer class, but we will instanciate it separately, it will **not** be embedded inside the FSM:
 ```C++
 #define SPAG_USE_ASIO_WRAPPER
 #include "spaghetti.hpp"
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 ```
-This macro also defines the class `AsioEL` ("boost::Asio Event Loop") that you will need to instanciate (see below).
+This macro also defines (typedef) the class `AsioEL` ("boost::Asio Event Loop") that you will need to instanciate (see below).
 
 The server will inherit from some generic UDP server (also included in demo program):
 ```C++

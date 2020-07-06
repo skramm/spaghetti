@@ -8,7 +8,7 @@ This library can log different things at runtime, in two main ways:
 - It can produce a csv-style of when a switch to a state occurred, and on what event.
 
 While the first one can be (at present) accessed only once the FSM is stopped, the other one is a file that is continuously updated.
-Both of these are enabled only if the build symbol `SPAG_ENABLE LOGGING` has been defined.
+Both of these are enabled only if the build symbol `SPAG_ENABLE_LOGGING` has been defined.
 
 ### 1 - Counters
 
@@ -59,7 +59,7 @@ will return the number of times the states having index 1 has been activated.
 
 At runtime, if `SPAG_ENABLE LOGGING` is defined, a file is automatically created and logs all events and states, along with a time stamp.
 The default name is `spaghetti.csv`, but you can change it with `setLogFileName()`.
-This is even mandatory in some situations, such as in `src/sample2.cpp`, where two FSM are running concurentely.
+This is even mandatory in some situations, such as in `src/sample2.cpp`, where two FSM are running concurrentely.
 
 This will produce a file holding something like this (if you did not enable the states/events names):
 

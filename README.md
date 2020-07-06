@@ -158,3 +158,12 @@ int main()
 ```C++
 	fsm.start(); // now blocking function
 ```
+
+
+### Future development (?)
+
+What is planned:
+
+- experiment and benchmark with the two provided containers (vectors and arrays)
+- with vector as containers, expand API to be able to create states at runtime
+

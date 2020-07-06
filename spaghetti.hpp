@@ -3,7 +3,7 @@
 \brief single header file of Spaghetti FSM C++ library, see home page for full details:
 https://github.com/skramm/spaghetti
 
-Copyright 2018 Sebastien Kramm
+Copyright 2018-2020 Sebastien Kramm
 
 Licence: GPLv3
 
@@ -173,7 +173,8 @@ namespace spag {
 using Duration=size_t;
 
 //------------------------------------------------------------------------------------
-/// Used in \ref SpagFSM<>::Counters::print() as second argument and in Counters::getValue()
+/// Used in \ref SpagFSM<>::Counters::print() as second argument and in Counters::getValue().
+/// See https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_logging.md
 enum Item : uint8_t
 {
 	ItemStates  = 0x01
@@ -182,7 +183,7 @@ enum Item : uint8_t
 };
 
 /// Timer units
-enum class DurUnit : char { ms, sec, min };
+enum class DurUnit : uint8_t { ms, sec, min };
 
 namespace priv {
 
@@ -218,7 +219,7 @@ struct Counters
 #else
 	Counters( size_t nb_states, size_t nb_events )
 	{
-#endif
+#endif // SPAG_ENUM_STRINGS
 		assert( nb_states ); /// \todo remove this once tested
 		assert( nb_events );
 
@@ -606,7 +607,9 @@ Events are passed as \c size_t because we may pass values other than the ones in
 			if( !_logfile.is_open() )
 				SPAG_P_THROW_ERROR_RT( "unable to open file " + _logfileName );
 
-			_logfile << "# FSM runtime history\n#index" << _sepChar << "time" << _sepChar << "event-Id" << _sepChar
+			_logfile << "# FSM runtime history\n# "
+				<< getSpagName() << SPAG_VERSION
+				<< "\n# index" << _sepChar << "time" << _sepChar << "event-Id" << _sepChar
 	#ifdef SPAG_ENUM_STRINGS
 				<< "event_string" << _sepChar << "state-Id" << _sepChar << "state_string\n";
 	#else
