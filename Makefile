@@ -83,13 +83,26 @@ demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
 # build and run the tests apps
-test: $(EXEC_FILES_T)
+test: $(EXEC_FILES_T) nobuild
 	for f in $(EXEC_FILES_T); \
 		do \
 			echo -e "\n***********************************\nRunning test program $$f:"; \
 			./$$f >$$(basename $$f).stdout; \
 			cmp tests/$$(basename $$f).stdout $$(basename $$f).stdout; \
 		done;
+
+
+NOBUILD_SRC_FILES := $(wildcard tests/nobuild_*.cpp)
+NOBUILD_OBJ_FILES := $(patsubst %.cpp, %.o, $(NOBUILD_SRC_FILES))
+
+nobuild: $(NOBUILD_OBJ_FILES)
+	@echo "done target $@"
+
+tests/nobuild_%.o: tests/nobuild_%.cpp
+	@echo "Checking build failure of $<" >>build/no_build.stdout
+	@echo -e "-----------------------------\nChecking build failure of $<\n" >>build/no_build.stderr
+	! $(CXX) -o $@ -c $< 1>>build/no_build.stdout 2>>build/no_build.stderr
+
 
 doc: build/doc_html/index.html build/doc_samples_html/index.html
 	-xdg-open build/doc_html/index.html
@@ -152,11 +165,12 @@ cleanall: clean cleandoc cleanbin
 # generic compile rule
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE)
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
-	$(CXX) -o $@ -c $< $(CFLAGS)
+	@$(CXX) -o $@ -c $< $(CFLAGS)
 
+# for test files
 $(OBJ_DIR)/%.o: $(SRC_DIR_T)/%.cpp $(HEADER_FILES) $(THE_FILE)
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
-	$(CXX) -o $@ -c $< $(CFLAGS)
+	@$(CXX) -o $@ -c $< $(CFLAGS)
 
 # linking
 $(BIN_DIR)/%: $(OBJ_DIR)/%.o $(THE_FILE)

@@ -1,6 +1,9 @@
 ## Changelog
 
-2020-07-01:
+2020-XXX:
+	- addded macro to change the default signal: `SPAG_SIGNAL`
+
+2020-07-01: v0.9.5
 	- fixed bug with Boost 1.70: executor_work_guard needs to be a class member if we want the event loop to stay alive
 	- minor fixes (doc)
 

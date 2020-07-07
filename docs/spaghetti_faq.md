@@ -16,8 +16,9 @@ When you add the following configuration line, it will be considered as 5 second
 ```C++
 	fsm.assignTimeOut( st_Red, 5, st_Green );
 ```
-Actually, it uses the current default timer unit.
-This one can be changed any time, for example to milliseconds, with the following command (which will **not** change the settings of already assigned timeouts):
+Actually, it uses the current default timer unit, so this is true only if you haven't changed it'.
+This one can be changed any time, for example to milliseconds, with the following command
+(which will **not** change the settings of already assigned timeouts):
 ```C++
 	fsm.setTimerDefaultUnit( spag::DurUnit::ms );
 ```
@@ -36,7 +37,7 @@ Internally, the timing is handled through the C++11 `chrono` library
 - **Q**: *How does this library differ from the other ones?*<br>
 **A**: Most of the other libraries define the states as C++ classes.
 While this can have some advantages, it requires you to create a struct/class for each state.
-With Spaghetti, you just add an enumerator value.
+With Spaghetti, you just add an enumerator value and define callback functions and transitions with member function calls.
 
 - **Q**: What are the requirements on the event loop/timer class template, if I want to use a different then the one that is provided?<br>
 **A**: TODO
@@ -45,10 +46,11 @@ With Spaghetti, you just add an enumerator value.
 **A**: A lot of stuff is checked at build time but some errors in user code can only be detected at runtime.
 Configuration basic errors are handled using exceptions and will throw a
 [`std::logic_error`](http://en.cppreference.com/w/cpp/error/logic_error).<br>
+<br>
 For runtime errors (in the sense: "FSM runtime"), due to the inherent nature of the threading mechanism, critical errors are handled through custom assertions.
-This is because throwing an exception from a thread will have other threads call std::terminate, thus breaking the exception handling procedure:
+This is because throwing an exception from a thread will have other threads call `std::terminate()`, thus breaking the exception handling procedure:
 exception cannot be catched and the user only gets some obscure message
-( usually "*terminate called without an active exception*" ).
+(usually "*terminate called without an active exception*" ).
 Thus it is clearer to trigger an assert that will cleanly exit the program with an appropriate error message written to `std::cerr`.<br>
 Other non critical errors will throw a
 [`std::runtime_error`](http://en.cppreference.com/w/cpp/error/runtime_error).
@@ -59,11 +61,11 @@ Other non critical errors will throw a
 or a [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple).
 
 - **Q**: *Can I use a callback function with a void parameter ( `void my_callback()`)*<br>
-**A**: No, unfortunately. This is because void is not a type, you can't pass it as template argument.
+**A**: No, unfortunately. This is because `void` is not a type, you can't pass it as template argument.
 But you can always use anything, say an integer, and ignore its value.
 
 - **Q**: *Can I pass the FSM object itself as callback argument?*<br>
-**A**: No, as the callback argument is a template parameter of the FSM. You would get into some infinite recursion...
+**A**: No, as the callback argument type is a template parameter of the FSM. You would get into some infinite recursion...
 But you can then make the FSM object global, so the callback functions can access it.
 This is demonstrated in sample program
 [`src/sample_3.cpp`](../../../tree/master/src/sample_3.cpp).<br>
@@ -105,7 +107,11 @@ However, all the basics of FSM are available, most notably it respects the "run 
 It also provides the concept of "[Internal events](spaghetti_manual.md#inner_events)".
 
 - **Q**: *Can I use this for a hierarchical FSM?*<br>
-**A**: at present, no, but this is considered for future releases
+**A**: Although it was considered at some point, I think this would completely change the architecture of the library, and change its nature.
+Thus if hierarchical features are needed, I would recommend switching to
+[boost::msm](https://www.boost.org/doc/libs/release/libs/msm/)
+or
+[boost::statechart](https://www.boost.org/doc/libs/release/libs/statechart/).
 
 - **Q**: *Can I have two concurrent FSM working at the same time?*<br>
 **A**: Yes! See sample program [`src/sample_2.cpp`](../../../tree/master/src/sample_2.cpp) that demonstrates this.
@@ -124,10 +130,10 @@ This is demonstrated in `src/sample_3.cpp`.
 - **Q**: *I need to track ignored events. How can I do that?*<br>
 **A**: First, these are logged (if logging is enable, of course, see [`SPAG_ENABLE_LOGGING`](spaghetti_options.md) ),
 and you can print them once your FSM is stopped with `getCounters().print()`.
-Second, to see them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs,
-with `assignIgnoredEventsCallback()`.<br>
-This callback needs to have this signature:<br>
-`void cb_ign( States st, Events ev )`.<br>
+Second, to handle them during runtime, you can assign a generic callback function that will be called every time an ignored event occurs,
+with `assignIgnoredEventsCallback( cbfunc )`.<br>
+This callback function needs to have this signature:<br>
+`void cb_ign( States, Events )`, with `States` and `Events` the types using to define the FSM.<br>
 This will bring information on when and why this happened, for instance you can do something like this:
 ```C++
 void cb_ign( States st, Events ev )
@@ -140,9 +146,19 @@ switching to "warning" mode is only allowed while on regular modes, and if that 
 the callback function is triggered.
 
 - **Q**: *What signal does the included event-loop class `AsioWrapper` use ? Can I change it ?*<br>
-**A**: This is at present hardcoded, it uses the signal SIGUSR1,
+**A**: The default signal is SIGUSR1,
 see [WP Posix signals page](https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals).
-Please post issue if this a problem, of if you encounter a OS-related strange behavior.
+If you need another one, just define the symbol SPAG_SIGNAL with the one you need:
+```C++
+#define SPAG_SIGNAL SIG_XXXX
+#include "spaghetti.hpp"
+```
+
+- **Q**: *Is it possible to instantiate both a FSm with the embedded asio-timer class and another FSM with another timer-class
+(or no timer at all)*<br>
+**A**: No, because the build "behavorial" symbols (see [build options](spaghetti_options.md)
+will deeply change the nature of the FSM class. So, as these are common, you cannot have in the same program
+(actually, in the same compilation unit) two FSM instances of two different types.
 
 - **Q**: *GPL licence is an issue for me. Would it be possible to release this under a different licence?*<br>
 **A**: I like the ideas supported by the GPL licence, but I understand the potential issues, so I'm open to any suggestions.

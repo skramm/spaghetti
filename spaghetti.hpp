@@ -28,7 +28,7 @@ This program is free software: you can redistribute it and/or modify
 /// If not defined, it defaults to std::vector
 #define SPAG_USE_ARRAY
 
-#define SPAG_VERSION "0.9.5"
+#define SPAG_VERSION "0.9.6"
 
 #include <vector>
 #include <map>
@@ -39,6 +39,12 @@ This program is free software: you can redistribute it and/or modify
 #include <fstream>
 #include <iostream> // needed for expansion of SPAG_LOG
 
+
+#if defined (SPAG_USE_SIGNALS)
+	#ifndef SPAG_SIGNAL
+		#define SPAG_SIGNAL SIGUSR1
+	#endif
+#endif
 
 #if defined (SPAG_EMBED_ASIO_WRAPPER)
 	#define SPAG_USE_ASIO_WRAPPER
@@ -2527,11 +2533,10 @@ struct AsioWrapper
 #endif
 
 #ifdef SPAG_USE_SIGNALS
-	, _signals( _io_service, SIGUSR1 )
+	, _signals( _io_service, SPAG_SIGNAL )
 #endif
 	{
 		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_io_service) );
-//		_signals.add( SIGUSR1 );                               // assign signal handler for SIGUSR1
 	}
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
@@ -2661,7 +2666,7 @@ struct AsioWrapper
 	void raiseSignal()
 	{
 		SPAG_P_START;
-		std::raise( SIGUSR1 );
+		std::raise( SPAG_SIGNAL );
 		SPAG_P_END;
 	}
 #endif
@@ -2683,7 +2688,7 @@ struct AsioWrapper
 #define SPAG_ASSIGN_MEMBER_CALLBACK_ALL( fsm, ClassName, CallbackFunc ) \
 	fsm.assignCallback( std::bind( &ClassName::CallbackFunc, this, std::placeholders::_1 ) )
 
-/// Shorthand for declaring the type of FSM, without a timer
+/// Shorthand for declaring a type of FSM without a timer
 #ifdef SPAG_USE_ASIO_WRAPPER
 	#define SPAG_DECLARE_FSM_TYPE_NOTIMER( type, st, ev, cbarg ) \
 		static_assert( 0, "Error, can't use this macro with symbol SPAG_USE_ASIO_WRAPPER defined" )
