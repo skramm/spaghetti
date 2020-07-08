@@ -160,9 +160,6 @@ If you need another one, just define the symbol SPAG_SIGNAL with the one you nee
 will deeply change the nature of the FSM class. So, as these are common, you cannot have in the same program
 (actually, in the same compilation unit) two FSM instances of two different types.
 
-- **Q**: *GPL licence is an issue for me. Would it be possible to release this under a different licence?*<br>
-**A**: I like the ideas supported by the GPL licence, but I understand the potential issues, so I'm open to any suggestions.
-
 - **Q**: *Why that name? Where does that come from?*<br>
 **A**: *Naming is hard*. But, lets see: Finite State Machine = FSM = Flying Spaghetti Monster
 (see [WP](https://en.wikipedia.org/wiki/Flying_Spaghetti_Monster)).

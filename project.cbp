@@ -6,19 +6,6 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Release">
-				<Option output="bin/Release/spaghetti" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Release/" />
-				<Option type="1" />
-				<Option compiler="gcc" />
-				<Compiler>
-					<Add option="-O2" />
-					<Add option="-DSPAG_USE_SIGNALS" />
-				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
-			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
@@ -67,6 +54,12 @@
 		<Unit filename="src/turnstyle_1.cpp" />
 		<Unit filename="src/turnstyle_2.cpp" />
 		<Unit filename="src/udp_server.hpp" />
+		<Unit filename="tests/nobuild_1.cpp" />
+		<Unit filename="tests/nobuild_2.cpp" />
+		<Unit filename="tests/nobuild_3.cpp" />
+		<Unit filename="tests/nobuild_4.cpp" />
+		<Unit filename="tests/nobuild_5.cpp" />
+		<Unit filename="tests/nobuild_6.cpp" />
 		<Unit filename="tests/readme.txt" />
 		<Unit filename="tests/testA_1.cpp" />
 		<Unit filename="tests/testA_1.stdout" />

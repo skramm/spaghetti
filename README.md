@@ -1,14 +1,17 @@
 # Spaghetti
 
 [![Build Status](https://travis-ci.org/skramm/spaghetti.svg?branch=master)](https://travis-ci.org/skramm/spaghetti)
+[![Latest release](https://img.shields.io/github/v/release/skramm/spaghetti)](https://github.com/skramm/spaghetti/releases)
+
 
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## RECENT NEWS
- - 2020-04-05 : updated to build with Boost 1.70
+ - 2020-07-08: changed licence to BSL1.0<br>
+ ([changelog](docs/spaghetti_changelog.md))
 
 ## Key points
-- Licence: GPL v3
+- Licence: [BSL1.0](https://www.boost.org/LICENSE_1_0.txt)
 - Audience: C++ developper having to implement a FSM
 - Webpage: https://github.com/skramm/spaghetti
 - Manual : [online here](docs/spaghetti_manual.md)
