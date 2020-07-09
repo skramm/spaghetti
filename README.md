@@ -1,5 +1,7 @@
 # Spaghetti
 
+[![logo](https://raw.githubusercontent.com/skramm/spaghetti/master/docs/SpagFSM_logo_300.png)
+
 [![Build Status](https://travis-ci.org/skramm/spaghetti.svg?branch=master)](https://travis-ci.org/skramm/spaghetti)
 [![Latest release](https://img.shields.io/github/v/release/skramm/spaghetti)](https://github.com/skramm/spaghetti/releases)
 

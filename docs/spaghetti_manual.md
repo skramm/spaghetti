@@ -6,11 +6,11 @@ Homepage: https://github.com/skramm/spaghetti
 This page demonstrates usage of the library through several showcases, and gives additional details.
 All the examples are included and runnable in the src folder, just `make demo` (or `make demo -j4` to make things quicker), then run `build/bin/program_name`.
 
-For a reference manual, run `make doc`, then open `html/index.html` (needs doxygen).
+For a reference manual, run `make doc`, then open `build/doc_html/index.html` (needs doxygen).
 
 For a shorter summary of all the API, [read this](spaghetti_summary.md).
 
-In case of any problem, feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback always appreciated!
+In case of any problem, feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback is appreciated.
 
 ### Summary
 1. [Fundamental concepts](#concepts)

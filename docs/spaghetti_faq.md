@@ -35,9 +35,10 @@ Internally, the timing is handled through the C++11 `chrono` library
 [duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
 - **Q**: *How does this library differ from the other ones?*<br>
-**A**: Most of the other libraries define the states as C++ classes.
+**A**: Most of the other libraries define the states as C++ classes (see below other entry on hierarchical FSM).
 While this can have some advantages, it requires you to create a struct/class for each state.
 With Spaghetti, you just add an enumerator value and define callback functions and transitions with member function calls.
+If you need advanced features of the UML state machine, then this is not for you.
 
 - **Q**: What are the requirements on the event loop/timer class template, if I want to use a different then the one that is provided?<br>
 **A**: TODO
@@ -61,11 +62,13 @@ Other non critical errors will throw a
 or a [`std::tuple`](http://en.cppreference.com/w/cpp/utility/tuple).
 
 - **Q**: *Can I use a callback function with a void parameter ( `void my_callback()`)*<br>
-**A**: No, unfortunately. This is because `void` is not a type, you can't pass it as template argument.
+**A**: No, unfortunately.
+This is because `void` is not a type, you can't pass it as template argument.
 But you can always use anything, say an integer, and ignore its value.
 
 - **Q**: *Can I pass the FSM object itself as callback argument?*<br>
-**A**: No, as the callback argument type is a template parameter of the FSM. You would get into some infinite recursion...
+**A**: No, as the callback argument type is a template parameter of the FSM.
+You would get into some infinite recursion...
 But you can then make the FSM object global, so the callback functions can access it.
 This is demonstrated in sample program
 [`src/sample_3.cpp`](../../../tree/master/src/sample_3.cpp).<br>
@@ -100,7 +103,7 @@ Please post issue in case of trouble with a later Boost release, so it can be fi
 
 - **Q**: *How does this library relate to the UML state machine definition
 [WP](https://en.wikipedia.org/wiki/UML_state_machine) ?*<br>
-**A**: This implements only a subset of the UML standard.
+**A**: This implements only a small subset of the UML standard.
 For example, the concepts of "extended state" and "Guard conditions" are not available.
 Nor are hierarchically states implemented (see below).
 However, all the basics of FSM are available, most notably it respects the "run to completion" (RTC) execution model.
