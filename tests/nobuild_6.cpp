@@ -2,7 +2,7 @@
 This cannot build as we cannot have a "no-timer" fsm type if we have the
 build option SPAG_EMBED_ASIO_WRAPPER active
 
-This is because the SPAG_EMBED_ASIO_WRAPPER symbol enable some stuff in the class declaration, so it
+This is because the SPAG_EMBED_ASIO_WRAPPER symbol enables some stuff in the class declaration, so it
 becomes impossible to define a FSM of another type.
 */
 

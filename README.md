@@ -1,6 +1,6 @@
 # Spaghetti
 
-[![logo](https://raw.githubusercontent.com/skramm/spaghetti/master/docs/SpagFSM_logo_200.png)
+![logo](https://raw.githubusercontent.com/skramm/spaghetti/master/docs/SpagFSM_logo_200.png)
 
 [![Build Status](https://travis-ci.org/skramm/spaghetti.svg?branch=master)](https://travis-ci.org/skramm/spaghetti)
 [![Latest release](https://img.shields.io/github/v/release/skramm/spaghetti)](https://github.com/skramm/spaghetti/releases)
@@ -150,9 +150,9 @@ SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
 int main()
 {
 	fsm_t fsm;
-	fsm.assignTimeOut( st_Red,    5, st_Green  );
-	fsm.assignTimeOut( st_Green,  5, st_Orange );
-	fsm.assignTimeOut( st_Orange, 1, st_Red   );
+	fsm.assignTimeOut( st_Red,    5, st_Green  ); // 5 s. from red to green
+	fsm.assignTimeOut( st_Green,  5, st_Orange ); // 5 s. from green to orange
+	fsm.assignTimeOut( st_Orange, 1, st_Red   );  // 1 s. from orange to red
 
 	fsm.assignCallback( st_Red,    callback, std::string("RED") );
 	fsm.assignCallback( st_Orange, callback, std::string("ORANGE") );

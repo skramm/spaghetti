@@ -12,7 +12,7 @@ For a shorter summary of all the API, [read this](spaghetti_summary.md).
 
 In case of any problem, feel free to [post an issue on Github](https://github.com/skramm/spaghetti/issues), feedback is appreciated.
 
-### Summary
+### Content
 1. [Fundamental concepts](#concepts)
 1. [Showcase 1: Hello World for FSM](#showcase1)
 1. [Showcase 2: let's use a timer](#showcase2)
