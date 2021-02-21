@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.org/skramm/spaghetti.svg?branch=master)](https://travis-ci.org/skramm/spaghetti)
 [![Latest release](https://img.shields.io/github/v/release/skramm/spaghetti)](https://github.com/skramm/spaghetti/releases)
-[![License: BSL](https://img.shields.io/badge/licence-BSL1.0-yellowgreen)(https://opensource.org/licenses/bsl1.0.html)
+[![License: BSL](https://img.shields.io/badge/licence-BSL1.0-yellowgreen)](https://opensource.org/licenses/bsl1.0.html)
 
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
