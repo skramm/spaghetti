@@ -163,7 +163,7 @@ cleanall: clean cleandoc cleanbin
 
 
 # generic compile rule
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE) Makefile
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
 	@$(CXX) -o $@ -c $< $(CFLAGS)
 
@@ -175,7 +175,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR_T)/%.cpp $(HEADER_FILES) $(THE_FILE)
 # linking
 $(BIN_DIR)/%: $(OBJ_DIR)/%.o $(THE_FILE)
 	@echo $(COLOR_3) " - Link demo $@." $(COLOR_OFF)
-	$(CXX) -o $@ -s $(subst $(BIN_DIR)/,$(OBJ_DIR)/,$@).o  $(LDFLAGS)
+	@$(CXX) -o $@ -s $(subst $(BIN_DIR)/,$(OBJ_DIR)/,$@).o  $(LDFLAGS)
 
 #$(BIN_DIR)/%: $(OBJ_DIR)/%.o $(THE_FILE)
 #	@echo $(COLOR_3) " - Link demo $@." $(COLOR_OFF)
