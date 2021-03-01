@@ -155,7 +155,7 @@ Calls the 2 above functions.
 #### 2.4 - Assigning names to events/states
 
 This is possible only if you have activated
-[build option](spaghetti_options.md#spag_enum_strings))
+[build option](spaghetti_options.md#spag_enum_strings)
 `SPAG_ENUM_STRINGS`.
 However, if not, then these functions will just do nothing (no build error).
 
