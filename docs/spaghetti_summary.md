@@ -84,7 +84,7 @@ assigns callback function `cb_func` to the state `st1`, will be passed value `so
 assigns value `some_value` to the callback function assigned to state `st1`
 
 * `fsm.assignCallbackAutoval( cb_func );`<br>
-assigns the function `cb_func` as callback to all the states, with argument value being the state value/index, converted to an `int`.
+assigns the function `cb_func` as callback to all the states, with passed argument value being the state value/index, converted to an `int`.
 Requires that argument type is an "integer" type, see https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 
 * `fsm.assignIgnoredEventsCallback( func );`<br>
@@ -98,20 +98,21 @@ assigns to callback functions an argument value that is the state name (requires
 
 #### 2.3 - Assigning time outs
 
-All these function are only available if an event-handler class has been assigned.
+All these functions are only available if an event-handler class has been assigned.
 
 They all have default values and units, that themselves can be configured.
 Timing values are integers.
-Timing units must be either a member of enum `spag::DurUnit` (`DurUnit::ms`, `DurUnit::sec`, `DurUnit::min`),
-or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.
+Timing units (the `unit` type below) must be either a member of enum `spag::DurUnit` (`DurUnit::ms`, `DurUnit::sec`, `DurUnit::min`),
+or a string among these values:
+`"ms"` or `"msec"` for milliseconds, `"s"` or `"sec"` for seconds, or `"mn"` or `"min"` for minutes.
 
 ##### Assign a Timeout on a single state
 
 * `fsm.assignTimeOut( st_curr, st_next );`<br>
 Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
 Duration value will depend on the situation:
- - if a timeout has been previously assigned to `st_curr`, then its value will be retained.
- - if not, the default value and units will be used.
+  * if a timeout has been previously assigned to `st_curr`, then its value will be retained.
+  * if not, the default value and units will be used.
 
 * `fsm.assignTimeOut( st_curr, dur, st_next );`<br>
 Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
@@ -147,15 +148,19 @@ Assigns the (integer) value `val` as default timer value, will be used for all f
 * `fsm.setTimerDefaultUnit( unit )`<br>
 Assign `unit` as default timer unit for all further timer configuration not specifying a unit.
 
+* `fsm.setTimerDefault( val, unit );`<br>
+Calls the 2 above functions.
 
 <a name="names"></a>
 #### 2.4 - Assigning names to events/states
 
-This is possible only if you have activated build option `SPAG_ENUM_STRINGS`.
+This is possible only if you have activated
+[build option](spaghetti_options.md#spag_enum_strings))
+`SPAG_ENUM_STRINGS`.
 However, if not, then these functions will just do nothing (no build error).
 
 * `fsm.assignString2State( st, some_name );`<br>
-assigns string `some_name` to state `st`.
+assigns string `some_name` to state `st`.<br>
 
 * `fsm.assignString2Event( ev, some_name );`<br>
 assigns string `some_name` to event `ev`.
@@ -184,7 +189,7 @@ The configuration of the FSM can be copied to another variable, assuming they ar
 ```
 fsm_t fsm1, fsm2;
 // .. do some config on fsm1
-fsm1. assignConfig( fsm2 );
+fsm1.assignConfig( fsm2 );
 ```
 
 <a name="running"></a>
@@ -193,10 +198,11 @@ fsm1. assignConfig( fsm2 );
 #### 3.1 - Starting/stopping the FSM
 
 * `fsm.start();`<br>
-Starts the FSM. This function can be blocking or not, depending on how the FSM type has been created (see above).
+Starts the FSM. This function can be blocking or not, depending on how the FSM type has been created (see above, [FSM type](#fsm_type)).
 
 * `fsm.stop();`<br>
 Stops the FSM.
+Can occur in a callback function, assuming `fsm` is global.
 
 ####  3.2 - Triggering events
 

@@ -63,5 +63,8 @@ Value `unit` must be either
 a member of enum spag::DurUnit (see top of page),
 or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.
 
+* `fsm.setTimerDefault( val, unit );`<br>
+Calls the 2 above functions.
+
 
 --- Copyright S. Kramm - 2018-2020 ---

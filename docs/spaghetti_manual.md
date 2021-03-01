@@ -524,7 +524,7 @@ to switch to.
 This is done with the member function `assignTransitionMat()`.
 
 For example, say you have a 3 states (`st0,st1,st2`) and 2 events (`ev1,ev2`)
-and you want to switch from each of the states to the next one if the "event 1" occurs, and switch back to initial state if "event 2" occurs.
+and you want to switch from each of the states to the next one if the event `ev1` occurs, and switch back to initial state `st0` if event `ev2` occurs.
 You can build a "matrix" (vector of vector) holding that information and assign it to the FSM.
 
 ```C++
@@ -617,14 +617,17 @@ Spaghetti: Warning, state S05 (St-5) is unreachable
 Spaghetti: Warning, state S06 (St-6) is unreachable
 ```
 
-The transition table is pretty much simple to understand:
+The first table ("transition table") is pretty much simple to understand:
 for each state (columns), it shows the next state, depending on the event (lines).
-It has a line for Timeouts, where we can see that all the states have a timeout assigned, except for state S01, that has an "Always Active" transition.
+The line header will printout both the assigned names of events ([if any](spaghetti_summary.md#names)), and the internal id
+(E00, E01, ...).
+For the columns, only the internal state Id is printed (S00, S01, ...).
+This table has a line for Timeouts, where we can see that all the states have a timeout assigned, except for state S01, that has an "Always Active" transition (last line).
 
-The second part shows, for each state, the "special events"
+The second table shows, for each state, the "special events"
 (Time-outs, Internal events, Always Active Transitions).
 We can see that on state S00 (named here "init state"), a timeout will occur after 1.5 s. and switch to state S02.
-But this state also has an Internal Transition (IT), currently Inactive (thus the (I)).
+But this state also has an Internal Transition (IT), currently Inactive (thus the `I`).
 It will be triggered by the internal event E00 (named "my_event"), and switching to state S01 will occur.
 
 State S01 is a "Pass State": it has a "Always Active Transition" (AAT), so when activated, it will switch immediately to state S02.

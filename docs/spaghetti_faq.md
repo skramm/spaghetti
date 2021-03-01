@@ -16,7 +16,7 @@ When you add the following configuration line, it will be considered as 5 second
 ```C++
 	fsm.assignTimeOut( st_Red, 5, st_Green );
 ```
-Actually, it uses the current default timer unit, so this is true only if you haven't changed it'.
+Actually, it uses the current default timer unit, so this is true only if you haven't changed it.
 This one can be changed any time, for example to milliseconds, with the following command
 (which will **not** change the settings of already assigned timeouts):
 ```C++
@@ -47,11 +47,12 @@ If you need advanced features of the UML state machine, then this is not for you
 **A**: A lot of stuff is checked at build time but some errors in user code can only be detected at runtime.
 Configuration basic errors are handled using exceptions and will throw a
 [`std::logic_error`](http://en.cppreference.com/w/cpp/error/logic_error).<br>
-<br>
-For runtime errors (in the sense: "FSM runtime"), due to the inherent nature of the threading mechanism, critical errors are handled through custom assertions.
-This is because throwing an exception from a thread will have other threads call `std::terminate()`, thus breaking the exception handling procedure:
+For runtime errors (in the sense: "FSM runtime"), due to the inherent nature of the threading mechanism,
+critical errors are handled through custom assertions.
+This is because throwing an exception from a thread will have other threads call `std::terminate()`, thus
+breaking the exception handling procedure:
 exception cannot be catched and the user only gets some obscure message
-(usually "*terminate called without an active exception*" ).
+(usually "`terminate called without an active exception`").<br>
 Thus it is clearer to trigger an assert that will cleanly exit the program with an appropriate error message written to `std::cerr`.<br>
 Other non critical errors will throw a
 [`std::runtime_error`](http://en.cppreference.com/w/cpp/error/runtime_error).
@@ -68,7 +69,7 @@ But you can always use anything, say an integer, and ignore its value.
 
 - **Q**: *Can I pass the FSM object itself as callback argument?*<br>
 **A**: No, as the callback argument type is a template parameter of the FSM.
-You would get into some infinite recursion...
+You would get into some infinite template recursion issue...
 But you can then make the FSM object global, so the callback functions can access it.
 This is demonstrated in sample program
 [`src/sample_3.cpp`](../../../tree/master/src/sample_3.cpp).<br>

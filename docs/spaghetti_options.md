@@ -103,6 +103,7 @@ Exiting...
 If this symbol is not defined, regular checking is still done with the classical `assert()`.
 As usual, this checking can be removed by defining the symbol `NDEBUG`.
 
+<a name="spag_enum_strings"></a<
 * `SPAG_ENUM_STRINGS` : this enables the usage of enum-string mapping, for states and events.
 You can provide a string either individually with
 ```C++

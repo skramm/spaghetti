@@ -1678,6 +1678,14 @@ This function will be called by the signal handler of the event handler class ON
 //		void clearCounters() {}
 #endif // SPAG_ENABLE_LOGGING
 
+/// Sets the timer defaults.
+		template<typename T,typename U>
+		void setTimerDefault( T val, U unit ) const
+		{
+			setTimerDefaultValue( val );
+			setTimerDefaultUnit( unit );
+		}
+
 /// Sets the timer default value. See assignTimeOut()
 		template<typename T>
 		void setTimerDefaultValue( T val ) const
