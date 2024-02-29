@@ -1,0 +1,27 @@
+name: CI-testing
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  job2:
+    name: CI-testing
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+        compiler: [g++, clang++]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: -- boost install -- 
+      run: sudo apt-get install -y libboost-all-dev
+    - name: check version
+      run: gcc --version; clang --version
+    - name:  --- make demo  ---
+      run: make demo
+    - name:  --- make test  ---
+      run: make test      
