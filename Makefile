@@ -87,9 +87,10 @@ test: $(EXEC_FILES_T) nobuild
 	for f in $(EXEC_FILES_T); \
 		do \
 			echo -e "\n***********************************\nRunning test program $$f:"; \
-			./$$f >$$(basename $$f).stdout; \
-			cmp tests/$$(basename $$f).stdout $$(basename $$f).stdout; \
+			./$$f >BUILD/$$(basename $$f).stdout; \
+			cmp tests/$$(basename $$f).stdout BUILD/$$(basename $$f).stdout; \
 		done;
+	mv *.dot BUILD/
 
 
 NOBUILD_SRC_FILES := $(wildcard tests/nobuild_*.cpp)
@@ -154,8 +155,8 @@ clean:
 	-rm diff.html
 
 cleandoc:
-	-rm -r html/*
-	-rm -r src/html/*
+	@-rm -r BUILD/doc_html/*
+	@-rm -r BUILD/doc_samples_html/*
 
 cleanbin:
 	-rm $(BIN_DIR)/*

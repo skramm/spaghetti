@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="spaghetti" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="CHANGELOG" />
+		<Unit filename="Makefile" />
+		<Unit filename="README.md" />
+		<Unit filename="../docs/spaghetti_changelog.md" />
+		<Unit filename="../docs/spaghetti_devinfo.md" />
+		<Unit filename="../docs/spaghetti_faq.md" />
+		<Unit filename="../docs/spaghetti_logging.md" />
+		<Unit filename="../docs/spaghetti_manual.md" />
+		<Unit filename="../docs/spaghetti_options.md" />
+		<Unit filename="../docs/spaghetti_rendering.md" />
+		<Unit filename="../docs/spaghetti_summary.md" />
+		<Unit filename="../docs/spaghetti_timeout.md" />
+		<Unit filename="../doxyfile" />
+		<Unit filename="../spaghetti.hpp" />
+		<Unit filename="../src/common_stuff_samples.hpp" />
+		<Unit filename="../src/doc_fig_1.cpp" />
+		<Unit filename="../src/doxyfile" />
+		<Unit filename="../src/sample1.dot" />
+		<Unit filename="../src/sample_0.cpp" />
+		<Unit filename="../src/sample_1.cpp" />
+		<Unit filename="../src/sample_1b.cpp" />
+		<Unit filename="../src/sample_2.cpp" />
+		<Unit filename="../src/sample_3.cpp" />
+		<Unit filename="../src/sample_3b.cpp" />
+		<Unit filename="../src/sample_3c.cpp" />
+		<Unit filename="../src/spaghetti.css" />
+		<Unit filename="../src/traffic_lights_1.cpp" />
+		<Unit filename="../src/traffic_lights_1b.cpp" />
+		<Unit filename="../src/traffic_lights_1c.cpp" />
+		<Unit filename="../src/traffic_lights_2.cpp" />
+		<Unit filename="../src/traffic_lights_3.cpp" />
+		<Unit filename="../src/traffic_lights_client.cpp" />
+		<Unit filename="../src/traffic_lights_common.hpp" />
+		<Unit filename="../src/turnstyle_1.cpp" />
+		<Unit filename="../src/turnstyle_2.cpp" />
+		<Unit filename="../src/udp_server.hpp" />
+		<Unit filename="../test/nobuild_1.cpp" />
+		<Unit filename="../test/nobuild_2.cpp" />
+		<Unit filename="../test/nobuild_3.cpp" />
+		<Unit filename="../test/nobuild_4.cpp" />
+		<Unit filename="../test/nobuild_5.cpp" />
+		<Unit filename="../test/nobuild_6.cpp" />
+		<Unit filename="../test/readme.txt" />
+		<Unit filename="../test/testA_1.cpp" />
+		<Unit filename="../test/testA_1.stdout" />
+		<Unit filename="../test/testA_2.cpp" />
+		<Unit filename="../test/testA_2.stdout" />
+		<Unit filename="../test/testA_3.cpp" />
+		<Unit filename="../test/testA_3.stdout" />
+		<Unit filename="../test/testB_4.cpp" />
+		<Unit filename="../test/testB_5.cpp" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
