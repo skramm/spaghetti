@@ -1,5 +1,7 @@
 ## Changelog
 
+2024/03: clarified/cleaned demo build process
+
 2020-XXX:
  - addded macro to change the default signal: `SPAG_SIGNAL`
  - changed licence to Boost 1.0

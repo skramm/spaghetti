@@ -47,10 +47,10 @@ LDFLAGS += -lboost_system -lboost_thread -pthread
 
 SHELL=/bin/bash
 
-BIN_DIR=build/bin
+BIN_DIR=BUILD/bin
 SRC_DIR=src
 SRC_DIR_T=tests
-OBJ_DIR=build/obj
+OBJ_DIR=BUILD/obj
 
 # suffix _T is for the test files
 HEADER_FILES := $(wildcard $(SRC_DIR)/*.h*)
@@ -82,7 +82,7 @@ help:
 demo: $(EXEC_FILES)
 	@echo "- Done target $@"
 
-# build and run the tests apps
+# build and run the tests apps, and compare to the expected output
 test: $(EXEC_FILES_T) nobuild
 	for f in $(EXEC_FILES_T); \
 		do \
@@ -99,21 +99,23 @@ nobuild: $(NOBUILD_OBJ_FILES)
 	@echo "done target $@"
 
 tests/nobuild_%.o: tests/nobuild_%.cpp
-	@echo "Checking build failure of $<" >>build/no_build.stdout
-	@echo -e "-----------------------------\nChecking build failure of $<\n" >>build/no_build.stderr
-	! $(CXX) -o $@ -c $< 1>>build/no_build.stdout 2>>build/no_build.stderr
+	@echo "Checking build failure of $<" >>BUILD/no_build.stdout
+	@echo -e "-----------------------------\nChecking build failure of $<\n" >>BUILD/no_build.stderr
+	@! $(CXX) -o $@ -c $< 1>>BUILD/no_build.stdout 2>>BUILD/no_build.stderr
 
 
-doc: build/doc_html/index.html build/doc_samples_html/index.html
-	-xdg-open build/doc_html/index.html
+doc: BUILD/doc_html/index.html BUILD/doc_samples_html/index.html
+	-xdg-open $<
 	@echo "- Done target $@"
 
-build/doc_html/index.html: $(THE_FILE) doxyfile README.md src/spaghetti.css docs/*
+BUILD/doc_html/index.html: $(THE_FILE) misc/doxyfile README.md misc/spaghetti.css docs/*
 	@echo "* Processing Doxygen on main file"
-	doxygen doxyfile
+	mkdir -p BUILD/doc_html
+	doxygen misc/doxyfile
 
-build/doc_samples_html/index.html: $(SRC_FILES) $(HEADER_FILES) src/doxyfile
+BUILD/doc_samples_html/index.html: $(SRC_FILES) $(HEADER_FILES) src/doxyfile
 	@echo "* Processing Doxygen on sample programs"
+	mkdir -p BUILD/doc_samples_html
 	doxygen src/doxyfile
 
 install:
@@ -161,14 +163,17 @@ cleanbin:
 cleanall: clean cleandoc cleanbin
 	@echo "done"
 
+mkfolders:
+	mkdir -p $(OBJ_DIR)
+	mkdir -p $(BIN_DIR)
 
 # generic compile rule
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE) Makefile
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE) Makefile mkfolders
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
 	@$(CXX) -o $@ -c $< $(CFLAGS)
 
 # for test files
-$(OBJ_DIR)/%.o: $(SRC_DIR_T)/%.cpp $(HEADER_FILES) $(THE_FILE)
+$(OBJ_DIR)/%.o: $(SRC_DIR_T)/%.cpp $(HEADER_FILES) $(THE_FILE) mkfolders
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
 	@$(CXX) -o $@ -c $< $(CFLAGS)
 
