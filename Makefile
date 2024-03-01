@@ -84,13 +84,14 @@ demo: $(EXEC_FILES)
 
 # build and run the tests apps, and compare to the expected output
 test: $(EXEC_FILES_T) nobuild
-	for f in $(EXEC_FILES_T); \
+	cd $(BIN_DIR); for f in $(EXEC_FILES_T); \
 		do \
 			echo -e "\n***********************************\nRunning test program $$f:"; \
-			./$$f >BUILD/$$(basename $$f).stdout; \
-			cmp tests/$$(basename $$f).stdout BUILD/$$(basename $$f).stdout; \
+			./$$(basename $$f) >$$(basename $$f).stdout; \
+			cmp ../../tests/$$(basename $$f).stdout $$(basename $$f).stdout; \
 		done;
-	mv *.dot BUILD/
+
+#	mv *.dot BUILD/
 
 
 NOBUILD_SRC_FILES := $(wildcard tests/nobuild_*.cpp)

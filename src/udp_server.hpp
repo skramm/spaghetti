@@ -21,7 +21,7 @@ typedef unsigned char BYTE;
 /**
 Callback: upon each reception of data, a callback function is called
 
-The user of this class needs to provide a function getResponse()
+The user of this class needs to provide a member function \c getResponse()
 that will return the data that needs to be send back.
 
 The boost::io_service is assumed to be started externally
