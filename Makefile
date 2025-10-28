@@ -1,5 +1,5 @@
 # makefile for Spaghetti
-# author: S. Kramm, 2018
+# author: S. Kramm, 2018 - 2025
 # hosted on  https://github.com/skramm/spaghetti
 
 COLOR_1=-e "\e[1;33m"
