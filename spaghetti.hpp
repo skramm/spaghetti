@@ -40,6 +40,7 @@ DEALINGS IN THE SOFTWARE.
 #define SPAG_VERSION "0.9.6"
 
 #include <vector>
+#include <array>
 #include <map>
 #include <algorithm>
 #include <functional>

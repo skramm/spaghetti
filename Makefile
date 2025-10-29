@@ -172,7 +172,7 @@ mkfolders:
 # generic compile rule
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADER_FILES) $(THE_FILE) Makefile mkfolders
 	@echo $(COLOR_2) " - Compiling app file $<." $(COLOR_OFF)
-	@$(CXX) -o $@ -c $< $(CFLAGS)
+	$(CXX) -o $@ -c $< $(CFLAGS)
 
 # for test files
 $(OBJ_DIR)/%.o: $(SRC_DIR_T)/%.cpp $(HEADER_FILES) $(THE_FILE) mkfolders
