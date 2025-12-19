@@ -28,7 +28,7 @@ A C++ library useful for simple and easy Finite State Machine (FSM) building
 ## General information
 
 ### What is this ?
-This library provides a container and API functions to easily implement an event-driven Finite State Machine
+This library provides a container and API functions to easily implement at runtime an event-driven Finite State Machine
 (see [WP link](https://en.wikipedia.org/wiki/Finite-state_machine)).
 It can be used for FSM requiring the handling of hardware events, or time out situations.
 It has been designed with good "Modern C++" practices, but provides an API as simple as possible to the developer.
@@ -46,7 +46,7 @@ Feedback welcome, please post issue on Github in case of any problems.
 
 - single-file header-only library, just fetch the file `spaghetti.hpp` and store it on your machine somewhere where your compiler can find it
 - C++11, no dependencies if no event loop required.
-To get full features, you will need Boost::asio.
+To get full features, you will need [Boost::asio](https://www.boost.org/libs/asio/).
 - ease of use and performance
 - [full manual included](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md)
 - runtime logging capability
@@ -133,7 +133,7 @@ int main()
 
 #### 1 - State callback function
 ```C++
-void callback( std::string v )
+void fcallback( std::string v )
 {
 	std::cout << "cb, value=" << v << '\n';
 }
@@ -156,14 +156,14 @@ int main()
 	fsm.assignTimeOut( st_Green,  5, st_Orange ); // 5 s. from green to orange
 	fsm.assignTimeOut( st_Orange, 1, st_Red   );  // 1 s. from orange to red
 
-	fsm.assignCallback( st_Red,    callback, std::string("RED") );
-	fsm.assignCallback( st_Orange, callback, std::string("ORANGE") );
-	fsm.assignCallback( st_Green,  callback, std::string("GREEN") );
+	fsm.assignCallback( st_Red,    fcallback, "RED"    );
+	fsm.assignCallback( st_Orange, fcallback, "ORANGE" );
+	fsm.assignCallback( st_Green,  fcallback, "GREEN"  );
 ```
 
 #### 4 - Running and event dispatch
 ```C++
-	fsm.start(); // now blocking function
+	fsm.start(); // is now a blocking function
 ```
 
 
