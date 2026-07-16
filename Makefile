@@ -33,7 +33,8 @@ SPAG_USE_SIGNALS
 
 
 # this is needed for the demo programs
-LDFLAGS += -lboost_system -lboost_thread -pthread
+#LDFLAGS += -lboost_system -lboost_thread -pthread
+LDFLAGS += -lboost_thread -pthread
 
 # needed, so object files that are inner part of successive pattern rules don't get erased at the end of build
 #.PRECIOUS: obj/demo/%.o obj/lib/release/%.o obj/lib/debug/%.o
