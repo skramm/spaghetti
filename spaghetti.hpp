@@ -2628,6 +2628,7 @@ struct AsioWrapper
 		SPAG_LOG << "Starting timer with duration=" << duration.first << '\n';
 		switch( duration.second )
 		{
+#if BOOST_VERSION < 106600
 			case DurUnit::ms:
 				_asioTimer->expires_from_now( std::chrono::milliseconds(duration.first) );
 			break;
@@ -2637,6 +2638,17 @@ struct AsioWrapper
 			case DurUnit::min:
 				_asioTimer->expires_from_now( std::chrono::minutes(duration.first) );
 			break;
+#else
+			case DurUnit::ms:
+				_asioTimer->expires_after( std::chrono::milliseconds(duration.first) );
+			break;
+			case DurUnit::sec:
+				_asioTimer->expires_after( std::chrono::seconds(duration.first) );
+			break;
+			case DurUnit::min:
+				_asioTimer->expires_after( std::chrono::minutes(duration.first) );
+			break;
+#endif
 			default: assert(0); // this should not happen...
 		}
 		_asioTimer->async_wait(
