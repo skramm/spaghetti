@@ -29,7 +29,8 @@ std::mutex* g_mutex;
 /// Concrete class, implements UdpServer and SpagFSM, and triggers event on the FSM
 struct MyServer : public UdpServer<1024>
 {
-	MyServer( boost::asio::io_service& io_service, int port_no )
+//	MyServer( boost::asio::io_service& io_service, int port_no )
+	MyServer( boost::asio::io_context& io_service, int port_no )
 		: UdpServer( io_service, port_no )
 	{}
 

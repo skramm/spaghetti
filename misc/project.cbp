@@ -6,10 +6,16 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
+			<Target title="default">
+				<Option output="project" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="../.github/workflows/c-cpp.yml" />
 		<Unit filename="../CHANGELOG" />
 		<Unit filename="../Makefile" />
 		<Unit filename="../README.md" />
@@ -22,7 +28,6 @@
 		<Unit filename="../docs/spaghetti_rendering.md" />
 		<Unit filename="../docs/spaghetti_summary.md" />
 		<Unit filename="../docs/spaghetti_timeout.md" />
-		<Unit filename="../misc/doxyfile" />
 		<Unit filename="../spaghetti.hpp" />
 		<Unit filename="../src/common_stuff_samples.hpp" />
 		<Unit filename="../src/doc_fig_1.cpp" />
@@ -35,7 +40,6 @@
 		<Unit filename="../src/sample_3.cpp" />
 		<Unit filename="../src/sample_3b.cpp" />
 		<Unit filename="../src/sample_3c.cpp" />
-		<Unit filename="../misc/spaghetti.css" />
 		<Unit filename="../src/traffic_lights_1.cpp" />
 		<Unit filename="../src/traffic_lights_1b.cpp" />
 		<Unit filename="../src/traffic_lights_1c.cpp" />
@@ -61,6 +65,8 @@
 		<Unit filename="../tests/testA_3.stdout" />
 		<Unit filename="../tests/testB_4.cpp" />
 		<Unit filename="../tests/testB_5.cpp" />
+		<Unit filename="doxyfile" />
+		<Unit filename="spaghetti.css" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

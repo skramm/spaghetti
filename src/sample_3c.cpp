@@ -51,7 +51,8 @@ int main( int, char* argv[] )
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
-	boost::asio::io_service io_service;
+//	boost::asio::io_service io_service;
+	boost::asio::io_context io_service;
 	spag::AsioEL asio(io_service);
 #else
 	spag::AsioEL asio;

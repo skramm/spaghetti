@@ -51,7 +51,8 @@ int main( int, char* argv[] )
 	fsm_A.printConfig( std::cout, "FSM-A" );
 	fsm_B.printConfig( std::cout, "FSM-B" );
 
-	boost::asio::io_service io_service;
+//	boost::asio::io_service io_service;
+	boost::asio::io_context io_service;
 	spag::AsioEL asio_A( io_service );
 	spag::AsioEL asio_B( io_service );
 	fsm_A.assignEventHandler( &asio_A );

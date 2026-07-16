@@ -2539,8 +2539,7 @@ struct AsioWrapper
 	#if BOOST_VERSION < 106600
 		AsioWrapper( boost::asio::io_service& io ) : _asio_service(io), _work( _io_service )
 	#else
-		AsioWrapper( boost::asio::io_service& io ) : _asio_service(io)
-
+		AsioWrapper( boost::asio::io_context& io ) : _asio_service(io)
 	#endif
 #else
 	#if BOOST_VERSION < 106600
@@ -2559,7 +2558,11 @@ struct AsioWrapper
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
 
+#if BOOST_VERSION < 106600
 	boost::asio::io_service& get_io_service()
+#else
+	boost::asio::io_context& get_io_service()
+#endif
 	{
 		return _asio_service;
 	}

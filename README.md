@@ -4,6 +4,8 @@
 
 Current test status: [![GH actions build status](https://github.com/skramm/spaghetti/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/skramm/spaghetti/actions)
 
+(Testing is done with both GCC and clang, on Ubuntu 24.04 and Ubuntu 26.04)
+
 [![Latest release](https://img.shields.io/github/v/release/skramm/spaghetti)](https://github.com/skramm/spaghetti/releases)
 [![License: BSL](https://img.shields.io/badge/licence-BSL1.0-yellowgreen)](https://opensource.org/licenses/bsl1.0.html)
 

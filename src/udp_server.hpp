@@ -32,7 +32,8 @@ class UdpServer
 	public:
 		using Buffer_t = std::array<BYTE, BUF_SIZE>;
 
-		UdpServer( boost::asio::io_service& io_service, int port_no ) //, bool sendack=false )
+//		UdpServer( boost::asio::io_service& io_service, int port_no ) //, bool sendack=false )
+		UdpServer( boost::asio::io_context& io_service, int port_no ) //, bool sendack=false )
 			: _socket( io_service, boost::asio::ip::udp::endpoint( boost::asio::ip::udp::v4(), port_no ) ) //, _sendack(sendack)
 		{}
 
