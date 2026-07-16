@@ -10,8 +10,9 @@ Current test status: [![GH actions build status](https://github.com/skramm/spagh
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## RECENT NEWS
+ - 2026-07-17: replaced Ubuntu20.04 by Ubuntu26.04 (along with Ubuntu22.04), but some changes occured in the Boost::asio library, thus tests fail with Ubuntu26 (but ok with Ubuntu24).
+Currently under investigation
  - 2024-03-01: enable GH Actions testing
- - 2020-07-08: changed licence to BSL1.0<br>
  ([changelog](docs/spaghetti_changelog.md))
 
 ## Key points

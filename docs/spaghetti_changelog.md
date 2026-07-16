@@ -1,5 +1,7 @@
 ## Changelog
 
+2024-03-01: enable GH Actions testing
+
 2024/03: clarified/cleaned demo build process
 
 2020-XXX:
