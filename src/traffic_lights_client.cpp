@@ -1,9 +1,14 @@
 /**
-\file test_traffic_lights_client.cpp
+\file
 \brief client-side for test_traffic_lights_1.cpp .
 sends udp frames to the server, using port 12345
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
+
+usage: first start `$ traffic_lights_3`
+then, in another terminal:
+`$ traffic_lights_client [host]`
+(`localhost` usually)
 
 Homepage: https://github.com/skramm/spaghetti
 */
@@ -25,11 +30,14 @@ int main( int argc, char* argv[] )
 			return 1;
 		}
 
-//		boost::asio::io_service io_service;
 		boost::asio::io_context io_service;
 		udp::resolver resolver(io_service);
-		udp::resolver::query query(udp::v4(), argv[1], "12345" );
-		udp::endpoint endpoint = *resolver.resolve(query);
+
+		auto results = resolver.resolve( udp::v4(), argv[1], "12345" );
+		udp::endpoint endpoint = *results.begin();
+
+//		udp::resolver::query query(udp::v4(), argv[1], "12345" );
+//		udp::endpoint endpoint = *resolver.resolve(query);
 
 		std::cout << "endpoint: " << endpoint << "\n";
 		udp::socket socket( io_service );
