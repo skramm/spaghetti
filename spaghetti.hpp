@@ -1941,7 +1941,7 @@ when C++20 available.
 #endif
 
 #ifdef SPAG_EMBED_ASIO_WRAPPER
-		AsioWrapper<ST,EV,CBA> _asioWrapper; ///< optional wrapper around boost::asio::io_service
+		AsioWrapper<ST,EV,CBA> _asioWrapper; ///< optional wrapper around boost::asio::io_service (now `io_context`)
 #endif
 
 		std::function<void(ST,EV)> _ignEventCallback;     ///< ignored events callback function
@@ -2510,17 +2510,17 @@ struct AsioWrapper
 
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
 	#if BOOST_VERSION < 106600
-		boost::asio::io_service& _io_service;
+		boost::asio::io_service& _asio_service;
 		boost::asio::io_service::work _work;
 	#else
-		boost::asio::io_context& _io_service;
+		boost::asio::io_context& _asio_service;
 	#endif
 #else
 	#if BOOST_VERSION < 106600
-		boost::asio::io_service _io_service;
+		boost::asio::io_service _asio_service;
 		boost::asio::io_service::work _work;
 	#else
-		boost::asio::io_context _io_service;
+		boost::asio::io_context _asio_service;
 		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _ewg;
 	#endif
 #endif
@@ -2537,31 +2537,31 @@ struct AsioWrapper
 /// Constructor
 #ifdef SPAG_EXTERNAL_EVENT_LOOP
 	#if BOOST_VERSION < 106600
-		AsioWrapper( boost::asio::io_service& io ) : _io_service(io), _work( _io_service )
+		AsioWrapper( boost::asio::io_service& io ) : _asio_service(io), _work( _io_service )
 	#else
-		AsioWrapper( boost::asio::io_service& io ) : _io_service(io)
+		AsioWrapper( boost::asio::io_service& io ) : _asio_service(io)
 
 	#endif
 #else
 	#if BOOST_VERSION < 106600
-		AsioWrapper() :  _work( _io_service )
+		AsioWrapper() :  _work( _asio_service )
 	#else
-		AsioWrapper() : _ewg( boost::asio::make_work_guard( _io_service ) )
+		AsioWrapper() : _ewg( boost::asio::make_work_guard( _asio_service ) )
 	#endif
 #endif
 
 #ifdef SPAG_USE_SIGNALS
-	, _signals( _io_service, SPAG_SIGNAL )
+	, _signals( _asio_service, SPAG_SIGNAL )
 #endif
 	{
-		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_io_service) );
+		_asioTimer = std::unique_ptr<SteadyClock>( new SteadyClock(_asio_service) );
 	}
 
 	AsioWrapper( const AsioWrapper& ) = delete; // non copyable
 
 	boost::asio::io_service& get_io_service()
 	{
-		return _io_service;
+		return _asio_service;
 	}
 
 /// Mandatory function for SpagFSM. Called only once, when FSM is started. Blocking
@@ -2579,7 +2579,7 @@ struct AsioWrapper
 			)
 		);
 #endif
-		_io_service.run();          // blocking call !!!
+		_asio_service.run();          // blocking call !!!
 	}
 
 /// terminates all pending events, timers events or signals
@@ -2590,7 +2590,7 @@ struct AsioWrapper
 		_signals.cancel();
 		_signals.clear();
 #endif
-		_io_service.stop();
+		_asio_service.stop();
 	}
 
 /// Timer callback function, called when timer expires.
