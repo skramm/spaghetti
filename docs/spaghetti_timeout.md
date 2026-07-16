@@ -21,17 +21,17 @@ Please read [this for more info on how to use timeouts](spaghetti_manual.md#show
 ### 1 - Single Timeout on a state
 
 * `fsm.assignTimeOut( st_curr, st_next );`<br>
-Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
+Assigns a timeout event on state `st_curr`, will switch to state `st_next`.
 Duration value will depend on the situation:
- - if a timeout has been previously assigned to `st_curr`, then its value will be retained.
- - if not, the default value and units will be used.
+- if a timeout has been previously assigned to `st_curr`, then its value will be retained.
+- if not, the default value and units will be used.
 
 * `fsm.assignTimeOut( st_curr, dur, st_next );`<br>
-Assigns a timeout event on state `st_curr`, will switch to event `st_next`.
+Assigns a timeout event on state `st_curr`, will switch to state `st_next`.
 Duration will be `dur`, with the current default unit.
 
 * `fsm.assignTimeOut( st_curr, dur, unit, st_next );`<br>
-Assigns a timeout event of duration `dur` with unit `unit` on state `st_curr`, will switch to event `st_next`.
+Assigns a timeout event of duration `dur` with unit `unit` on state `st_curr`, will switch to state `st_next`.
 
 
 ### 2 - Global operations
@@ -60,11 +60,11 @@ Assigns the (integer) value `val` as default timer value, will be used for all f
 * `fsm.setTimerDefaultUnit( unit )`<br>
 Assign `unit` as default timer unit for all further timer configuration not specifying a unit.
 Value `unit` must be either
-a member of enum spag::DurUnit (see top of page),
-or a string among these values: "ms" or "msec" for milliseconds, "s" or "sec" for seconds, or "mn" or "min" for minutes.
+- a member of enum `spag::DurUnit` (see top of page),
+- or a string among these values: `ms` or `msec` for milliseconds, `s` or `sec` for seconds, or `mn` or `min` for minutes.
 
 * `fsm.setTimerDefault( val, unit );`<br>
 Calls the 2 above functions.
 
 
---- Copyright S. Kramm - 2018-2020 ---
+--- Copyright S. Kramm - 2018-2026 ---

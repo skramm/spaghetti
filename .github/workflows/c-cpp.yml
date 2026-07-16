@@ -11,17 +11,17 @@ jobs:
     name: CI-testing
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-22.04]
+        os: [ubuntu-24.04, ubuntu-26.04]
         compiler: [g++, clang++]
     runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
-    - name: -- boost install -- 
+    - name: -- boost install --
       run: sudo apt-get install -y libboost-all-dev
     - name: check version
-      run: gcc --version; clang --version
+      run: gcc --version; clang --version; cat /usr/include/boost/version.hpp | grep "BOOST_LIB_VERSION"
     - name:  --- make demo  ---
       run: make demo
     - name:  --- make test  ---
-      run: make test      
+      run: make test

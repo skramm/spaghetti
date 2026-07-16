@@ -140,4 +140,4 @@ You can also access these strings at runtime with `fsm.getString( some_state/eve
 * `SPAG_NO_VERBOSE` : If defined, this will mute all warning and error messages on stdout.
 
 
---- Copyright S. Kramm - 2018-2020 ---
+--- Copyright S. Kramm - 2018-2026 ---
