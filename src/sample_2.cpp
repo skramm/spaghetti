@@ -1,6 +1,6 @@
 /**
 \file sample_2.cpp
-\brief demo program of concurrent FSM, each with its own timeouts, using ASIO.
+\brief demo program of concurrent FSM, each with its own timeouts, using boost::asio.
 Uses the same enum for events and states.
 Needs symbol SPAG_EXTERNAL_EVENT_LOOP
 
@@ -15,11 +15,11 @@ Homepage: https://github.com/skramm/spaghetti
 
 #define SPAG_ENABLE_LOGGING
 
-//#define SPAG_ENUM_STRINGS
+#define SPAG_ENUM_STRINGS
 //#define SPAG_FRIENDLY_CHECKING
 #include "spaghetti.hpp"
 
-enum States { st_1, st_2, NB_STATES };
+enum States { stA_1, stA_2, stB_1, stB_2, NB_STATES };
 enum Events { NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_ASIO( fsm_t, States, Events, std::string );
@@ -35,23 +35,35 @@ int main( int, char* argv[] )
 
 	fsm_t fsm_A, fsm_B;
 
-	fsm_A.assignTimeOut( st_1, 2, st_2 );
-	fsm_A.assignTimeOut( st_2, 2, st_1 );
+	fsm_A.assignString2State( stA_1, "stA1" );
+	fsm_A.assignString2State( stA_2, "stA2" );
 
-	fsm_B.assignConfig( fsm_A );
+	fsm_B.assignString2State( stB_1, "stB1" );
+	fsm_B.assignString2State( stB_2, "stB2" );
 
-	fsm_B.assignTimeOut( st_1, 800, "ms", st_2 );
-	fsm_B.assignTimeOut( st_2, 500, "ms", st_1 );
+	fsm_A.assignTimeOut( stA_1, 2, stA_2 );
+	fsm_A.assignTimeOut( stA_2, 2, stA_1 );
 
-	fsm_A.assignCallback( st_1, cb, "st1-A" );
-	fsm_A.assignCallback( st_2, cb, "st2-A" );
-	fsm_B.assignCallback( st_1, cb, "st1-B" );
-	fsm_B.assignCallback( st_2, cb, "st2-B" );
+	fsm_B.assignTimeOut( stB_1, 800, "ms", stB_2 );
+	fsm_B.assignTimeOut( stB_2, 500, "ms", stB_1 );
+
+//	fsm_B.assignConfig( fsm_A );
+
+//	fsm_B.assignTimeOut( st_1, 800, "ms", st_2 );
+//	fsm_B.assignTimeOut( st_2, 500, "ms", st_1 );
+
+	fsm_A.assignCallbackAutoval( cb );
+	fsm_B.assignCallbackAutoval( cb );
+
+/*	fsm_A.assignCallback( stA_1, cb, "st1-A" );
+	fsm_A.assignCallback( stA_2, cb, "st2-A" );
+	fsm_B.assignCallback( stB_1, cb, "st1-B" );
+	fsm_B.assignCallback( stB_2, cb, "st2-B" );
+*/
 
 	fsm_A.printConfig( std::cout, "FSM-A" );
 	fsm_B.printConfig( std::cout, "FSM-B" );
 
-//	boost::asio::io_service io_service;
 	boost::asio::io_context io_service;
 	spag::AsioEL asio_A( io_service );
 	spag::AsioEL asio_B( io_service );
@@ -63,7 +75,9 @@ int main( int, char* argv[] )
 	try
 	{
 		fsm_A.start();  // non-blocking: external event loop !
+		std::cout << "fsm A started\n";
 		fsm_B.start();
+		std::cout << "fsm B started\n";
 		io_service.run();
 	}
 	catch( std::exception& e )

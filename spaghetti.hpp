@@ -3,7 +3,7 @@
 \brief single header file of Spaghetti FSM C++ library, see home page for full details:
 https://github.com/skramm/spaghetti
 
-Copyright 2018-2020 Sebastien Kramm
+Copyright 2018-2026 Sebastien Kramm
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
@@ -61,6 +61,7 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 #if defined (SPAG_USE_ASIO_WRAPPER)
+	#define BOOST_BIND_GLOBAL_PLACEHOLDERS // to avoid some nasty warning
 	#include <boost/bind.hpp>
 	#include <boost/asio.hpp>
 #endif
@@ -1216,13 +1217,29 @@ See https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 */
 		void assignCallbackAutoval( Callback_t func )
 		{
-			static_assert( std::numeric_limits<CBA>::is_integer, "To use this, Callback function argument MUST be 'int'" );
-			for( size_t i=0; i<nbStates(); i++ )
+			static_assert(
+				(std::numeric_limits<CBA>::is_integer || std::is_same<CBA,std::string>::value),
+				"To use this, Callback function argument MUST be an integer type, or a std::string"
+			);
+			if constexpr( std::is_same<CBA,std::string>::value )
 			{
-				_stateInfo[ i ]._callback = func;
-				_stateInfo[ i ]._callbackArg = static_cast<CBA>(i);
-				if( i > std::numeric_limits<CBA>::max() )
-					SPAG_P_THROW_ERROR_CFG( "type of callback argument too small to hold all the states" );
+				for( size_t i=0; i<nbStates(); i++ )
+				{
+					_stateInfo[ i ]._callback = func;
+					std::ostringstream oss;
+					oss << "ST" << i;
+					_stateInfo[ i ]._callbackArg = oss.str();
+				}
+			}
+			else
+			{
+				for( size_t i=0; i<nbStates(); i++ )
+				{
+					_stateInfo[ i ]._callback = func;
+					_stateInfo[ i ]._callbackArg = static_cast<CBA>(i);
+					if( i > std::numeric_limits<CBA>::max() )
+						SPAG_P_THROW_ERROR_CFG( "type of callback argument too small to hold all the states" );
+				}
 			}
 		}
 

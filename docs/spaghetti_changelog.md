@@ -1,5 +1,9 @@
 ## Changelog
 
+2026-07-17:
+- added Ubuntu 26.04 in GH action test suite, fixed some boost::asio issues
+- switch to C++17, to enable `if constexpr`
+
 2024-03-01: enable GH Actions testing
 
 2024/03: clarified/cleaned demo build process

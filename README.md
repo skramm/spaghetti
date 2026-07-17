@@ -12,9 +12,10 @@ Current test status: [![GH actions build status](https://github.com/skramm/spagh
 A C++ library useful for simple and easy Finite State Machine (FSM) building
 
 ## RECENT NEWS
- - 2026-07-17: replaced Ubuntu20.04 by Ubuntu26.04 (along with Ubuntu22.04), but some changes occured in the Boost::asio library, thus tests fail with Ubuntu26 (but ok with Ubuntu24).
-Currently under investigation
- - 2024-03-01: enable GH Actions testing
+- 2026-07-17:
+  - CI actions for testing: removed Ubuntu 20.04 and added Ubuntu 26.04 (along with Ubuntu 22.04), all tests pass.
+  - switch to C++17
+- 2024-03-01: enable GH Actions testing
  ([changelog](docs/spaghetti_changelog.md))
 
 ## Key points
@@ -22,9 +23,9 @@ Currently under investigation
 - Audience: C++ developper having to implement a FSM
 - Webpage: https://github.com/skramm/spaghetti
 - Manual : [online here](docs/spaghetti_manual.md)
-- Language: C++11
-- OS: any one, as long as you have a C++11 compiler
-- Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018-2020.
+- Language: C++17
+- OS: any one, as long as you have a decent C++ compiler
+- Author: Sebastien Kramm, LITIS, University of Rouen, France - 2018-2026.
 
 ![FSM gif](https://github.com/skramm/spaghetti/blob/master/docs/out.gif)
 
@@ -48,7 +49,7 @@ Feedback welcome, please post issue on Github in case of any problems.
 ### Main features
 
 - single-file header-only library, just fetch the file `spaghetti.hpp` and store it on your machine somewhere where your compiler can find it
-- C++11, no dependencies if no event loop required.
+- C++17, no dependencies if no event loop required.
 To get full features, you will need [Boost::asio](https://www.boost.org/libs/asio/).
 - ease of use and performance
 - [full manual included](https://github.com/skramm/spaghetti/blob/master/docs/spaghetti_manual.md)

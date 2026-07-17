@@ -31,7 +31,7 @@ If for some reason (templated function in a header, as in `src/traffic_lights_co
 ```C++
 	fsm.assignTimeOut( st_Red, 5, "min", st_Green );
 ```
-Internally, the timing is handled through the C++11 `chrono` library
+Internally, the timing is handled through the C++ `chrono` library
 [duration type](http://en.cppreference.com/w/cpp/chrono/duration).
 
 - **Q**: *How does this library differ from the other ones?*<br>
@@ -82,8 +82,8 @@ I have a lot of states, and assigning these one by one (with `assignCallbackValu
 then you can use `assignCallbackAutoval( cb )`.
 This will assign to all the states the callback function `cb(int)`
 and will assign as callback argument value the **index** of the corresponding state.
-Of course, this requires that you have defined the FSM type with some kind of integer type as callback argument.
-But don't worry, if you don't, you will get a compiler error, this is checked at build time.
+This requires that you have defined the FSM type with some kind of integer type as callback argument, or a `std::string`.
+If you don't, you will get a compiler error, this is checked at build time.
 
 - **Q**: *Can I have as callback function a class member function?*<br>
 **A**: Sure! This is of course useful so that the callback can handle some data.
@@ -99,7 +99,7 @@ Fortunately, you can use two helper macros to avoid that uglyness:
 
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
-If you do, then this has been tested as successful against Boost 1.54 to 1.70.
+If you do, then this has been tested as successful against Boost 1.54 to 1.90 (see GH actions job using Ubuntu 26.04, that ships with 1.90).
 Please post issue in case of trouble with a later Boost release, so it can be fixed.
 
 - **Q**: *How does this library relate to the UML state machine definition
@@ -120,6 +120,10 @@ or
 - **Q**: *Can I have two concurrent FSM working at the same time?*<br>
 **A**: Yes! See sample program [`src/sample_2.cpp`](../../../tree/master/src/sample_2.cpp) that demonstrates this.
 This requires defining the symbol `SPAG_EXTERNAL_EVENT_LOOP`, see [build options](spaghetti_options.md).
+At present, the constraint is that there must be a unique type of the "timing/event loop" class
+(aka `AsioEL` if you use the one provided).
+Because it is (internally) templated by states, events, and callback type.
+So also a unique set (enum) of states and events.
 
 - **Q**: *Does this library provide serialization of the configuration of the FSM, so I can easily save it to a file?*<br>
 **A**: No, because it holds objects of type `std::function` to store the callback functions.

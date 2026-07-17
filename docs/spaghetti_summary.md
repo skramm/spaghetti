@@ -85,7 +85,8 @@ assigns value `some_value` to the callback function assigned to state `st1`
 
 * `fsm.assignCallbackAutoval( cb_func );`<br>
 assigns the function `cb_func` as callback to all the states, with passed argument value being the state value/index, converted to an `int`.
-Requires that argument type is an "integer" type, see https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
+If argument type is a string, then the value will be `STx`, with `x` being the state index.
+Requires that callback argument type is either a `std::string` or an "integer" type, see https://en.cppreference.com/w/cpp/types/numeric_limits/is_integer
 
 * `fsm.assignIgnoredEventsCallback( func );`<br>
 assigns the function `func` that will be called when an ignored event occurs.

@@ -12,7 +12,7 @@ THE_FILE:=spaghetti.hpp
 
 #--------------------------------
 # general compiler flags
-CFLAGS = -std=c++11 -Wall -O2 -I.
+CFLAGS = -std=c++17 -Wall -O2 -I.
 
 ifeq "$(DEBUG)" "Y"
 	CFLAGS += -DSPAG_PRINT_STATES
