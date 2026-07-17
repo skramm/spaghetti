@@ -39,6 +39,8 @@ Internally, the timing is handled through the C++ `chrono` library
 While this can have some advantages, it requires you to create a struct/class for each state.
 With Spaghetti, you just add an enumerator value and define callback functions and transitions with member function calls.
 If you need advanced features of the UML state machine, then this is not for you.
+The other keypoint is that the transistion matrix (how and when states changes from one to another) is defined at runtime, thus enabling building complex and dynamic FSM.
+
 
 - **Q**: What are the requirements on the event loop/timer class template, if I want to use a different then the one that is provided?<br>
 **A**: TODO
@@ -99,7 +101,8 @@ Fortunately, you can use two helper macros to avoid that uglyness:
 
 - **Q**: *What version of Boost libraries does this require?*<br>
 **A**: None, if you do not intend to use the provided Asio Wrapper class.
-If you do, then this has been tested as successful against Boost 1.54 to 1.90 (see GH actions job using Ubuntu 26.04, that ships with 1.90).
+If you do, then this has been tested as successful against Boost 1.54 to 1.90,
+see [GH actions job](https://github.com/skramm/spaghetti/actions) using Ubuntu 26.04, that ships with 1.90.
 Please post issue in case of trouble with a later Boost release, so it can be fixed.
 
 - **Q**: *How does this library relate to the UML state machine definition
@@ -118,12 +121,17 @@ or
 [boost::statechart](https://www.boost.org/doc/libs/release/libs/statechart/).
 
 - **Q**: *Can I have two concurrent FSM working at the same time?*<br>
-**A**: Yes! See sample program [`src/sample_2.cpp`](../../../tree/master/src/sample_2.cpp) that demonstrates this.
+**A**: **Yes!** See sample program [`src/sample_2.cpp`](../../../tree/master/src/sample_2.cpp) that demonstrates this.
 This requires defining the symbol `SPAG_EXTERNAL_EVENT_LOOP`, see [build options](spaghetti_options.md).
-At present, the constraint is that there must be a unique type of the "timing/event loop" class
+At present, the constraint is that these use the same FSM type, same callback signature, and a unique type of the "timing/event loop" class
 (aka `AsioEL` if you use the one provided).
 Because it is (internally) templated by states, events, and callback type.
 So also a unique set (enum) of states and events.
+**Warning**: since they will share the same set of states, you **need** to remember that any FSM will **always** start from the first event in the enum.
+So if you don't plan some transition (event) from that state, the second one might never start.
+
+**Q**: *With two concurent FSM, do they need to share the same callback function?*<br>
+**A**: **No**, as you can see in the above example, you can have a different callback function for each FSM.
 
 - **Q**: *Does this library provide serialization of the configuration of the FSM, so I can easily save it to a file?*<br>
 **A**: No, because it holds objects of type `std::function` to store the callback functions.
