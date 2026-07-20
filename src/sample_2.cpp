@@ -14,6 +14,7 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_EXTERNAL_EVENT_LOOP
 
 #define SPAG_ENABLE_LOGGING
+#define SPAG_PRINT_STATES
 
 #define SPAG_USE_SIGNALS
 #define SPAG_ENUM_STRINGS
@@ -48,7 +49,8 @@ int main( int, char* argv[] )
 	fsm_A.assignTimeOut( stA_1, 2, stA_2 );
 	fsm_A.assignTimeOut( stA_2, 2, stA_1 );
 
-	fsm_B.assignTimeOut( stA_1, 400, "ms", stB_1 );
+	fsm_B.assignAAT( stA_1, stB_1 );
+//	fsm_B.assignTimeOut( stA_1, 800, "ms", stB_2 );
 	fsm_B.assignTimeOut( stB_1, 800, "ms", stB_2 );
 	fsm_B.assignTimeOut( stB_2, 500, "ms", stB_1 );
 

@@ -1558,6 +1558,7 @@ then we need to raise the signal right away! (instead of waiting)
 /// This is to be called by event loop wrapper, by the signal handler.
 /// <strong>DO NOT CALL in user code</strong>.
 /**
+\todo 20260717: Then, why not private?
 This function will be called by the signal handler of the event handler class ONLY (see AsioWrapper::signalHandler() )
 \warning Only available when \ref SPAG_USE_SIGNALS is defined, see manual.
 */
