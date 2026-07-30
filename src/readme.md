@@ -8,8 +8,8 @@
 | [`sample_1b.cpp`](sample_1b.cpp) | Similar to sample_1.cpp but with a timer (and subsequently, the UI in a thread). simple FSM with 2 events (key press), 5 states, 1 timeout and 1 pass state.<br> Also demonstrates how string states values can be used as callback arguments |
 | [`sample_1.cpp`](sample_1.cpp) | Demo program of a simple FSM with 3 events (key press) and 5 states. No Timer  |
 | [`sample_2.cpp`](sample_2.cpp) | Demo program of concurrent FSM, each with its own timeouts, using boost::asio. Uses the same enum for events and states. Needs symbol `SPAG_EXTERNAL_EVENT_LOOP` |
-| [`sample_3.cpp`](sample_3.cpp) | Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable. Also demonstrates how user code can stop the running FSM (without using signals). |
-| [`sample_3b.cpp`](sample_3b.cpp) | Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable. Also demonstrates how user code can stop the running FSM, using signals. |
+| [`sample_3.cpp`](sample_3.cpp) | A simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable. Also demonstrates how user code can stop the running FSM, with some callback action. |
+| [`sample_3b.cpp`](sample_3b.cpp) | Similar to `sample_3.cpp`, but demonstrates how user code can stop the running FSM, using signals. |
 | [`sample_3c.cpp`](sample_3c.cpp) | Similar to `sample_3b.cpp`, but with external event handler |
 | [`traffic_lights_1.cpp`](.cpp) | A simple traffic light example, build using the embedded boost::asio timer |
 | [`traffic_lights_1b.cpp`](.cpp) | Same as `traffic_lights_1.cpp` (traffic light), but with the boost.Asio Wrapper **not** embedded inside the FSM, provided separately |

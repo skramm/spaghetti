@@ -1,7 +1,7 @@
 /**
 \file sample_3.cpp
 \brief Demo program of a simple FSM: 5 states with 1, 2, 3... ms between each, and with FSM as a global variable.
-Also demonstrates how user code can stop the running FSM (without using signals).
+Also demonstrates how user code can stop the running FSM, without using signals, with some callback action
 
 \image html sample_3.svg
 
@@ -41,7 +41,6 @@ int main( int, char* argv[] )
 {
 	std::cout << argv[0] << ": " << fsm_t::buildOptions() << '\n';
 	options.showActiveState = true;
-
 	fsm.setTimerDefaultUnit( "ms" );
 
 	fsm.assignCallback( cb_func );

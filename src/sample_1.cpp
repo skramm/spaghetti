@@ -17,20 +17,36 @@ enum Events { ev_1, ev_2, ev_3, NB_EVENTS };
 
 SPAG_DECLARE_FSM_TYPE_NOTIMER( fsm_t, States, Events, std::string );
 
+
 void cb_func( std::string s )
 {
 	std::cout << "callback: " << s << '\n';
 }
 
+
+std::map<States,std::string> stateStrings = {
+{ st0, "State0" },
+{ st1, "State1" },
+{ st2, "State2" },
+{ st3, "State3" },
+{ st4, "State4" }
+};
+
+std::map<Events,std::string> eventStrings = {
+{ ev_1, "Event1" },
+{ ev_2, "Event2" },
+{ ev_3, "Event3" }
+};
+
 void cb_ign( States st, Events ev )
 {
-	std::cout << "- detected ignored event " << (int)ev << " while on state " << (int)st << '\n';
+	std::cout << "- detected ignored event '" << eventStrings[ev] << "' while on state '" << stateStrings[st] << "'\n";
 }
 
 
 void pr( std::string e )
 {
-	std::cout << "processing event " << e << '\n';
+	std::cout << "processing " << e << '\n';
 }
 
 int main( int, char* argv[] )
@@ -69,9 +85,9 @@ int main( int, char* argv[] )
 		std::cin >> key;
 		switch( key )
 		{
-			case '1': pr("1"); fsm.processEvent( ev_1 ); break;
-			case '2': pr("2"); fsm.processEvent( ev_2 ); break;
-			case '3': pr("3"); fsm.processEvent( ev_3 ); break;
+			case '1': pr("event 1"); fsm.processEvent( ev_1 ); break;
+			case '2': pr("event 2"); fsm.processEvent( ev_2 ); break;
+			case '3': pr("event 3"); fsm.processEvent( ev_3 ); break;
 			case 'q': quit = true; break;
 			default: std::cout << "invalid key\n";
 		}

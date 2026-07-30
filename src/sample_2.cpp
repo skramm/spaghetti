@@ -14,7 +14,7 @@ Homepage: https://github.com/skramm/spaghetti
 #define SPAG_EXTERNAL_EVENT_LOOP
 
 #define SPAG_ENABLE_LOGGING
-#define SPAG_PRINT_STATES
+//#define SPAG_PRINT_STATES
 
 #define SPAG_USE_SIGNALS
 #define SPAG_ENUM_STRINGS

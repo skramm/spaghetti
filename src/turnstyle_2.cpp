@@ -1,6 +1,8 @@
 /**
 \file turnstyle_2.cpp
-\brief Turnstyle example: similar to turnstyle_1.cpp but with an added timeout.
+\brief Turnstyle example: similar to turnstyle_1.cpp but with added timeouts:
+- after inserting a coin, is nobody pushes the gate in 3 seconds, it goes back to lock state.
+- after 6 seconds without anybody doing anything, the system get into a blocking state, you need to issue the "reset" event.
 
 This file is part of Spaghetti, a C++ library for implementing Finite State Machines
 

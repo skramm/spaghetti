@@ -64,6 +64,7 @@ EXEC_FILES_T := $(patsubst $(SRC_DIR_T)/%.cpp, $(BIN_DIR)/%,   $(SRC_FILES_T))
 
 DOT_FILES := $(wildcard *.dot)
 DOT_FILES += $(wildcard src/*.dot)
+DOT_FILES += $(wildcard BUILD/bin/*.dot)
 SVG_FILES := $(DOT_FILES:.dot=.svg)
 
 
